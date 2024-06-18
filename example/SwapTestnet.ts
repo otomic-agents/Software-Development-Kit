@@ -13,6 +13,7 @@ const bridge: Bridge = {
     dst_token: '0xacda8bf66c2cadac9e99aa1aa75743f536e71094',
     bridge_name: undefined
 }
+const amount = '0.008'
 
 const relay = new Relay(RELA_URL)
 
@@ -20,7 +21,7 @@ const Ask = () => new Promise<Quote>((resolve, reject) => {
     
     relay.ask({
         bridge,
-        amount: '20'
+        amount: amount
     }, {
         OnQuote: (quote: Quote) => {
             console.log('new quote', quote)
@@ -76,7 +77,7 @@ const swap = async () => {
 
     const quote = await Ask()
 
-    const signData: {signData: SignData, signed: string} = await evm.signQuoteEIP712ByPrivateKey(NETWORK, quote, process.env.WALLET_KEY as string, '20', 0, '0x1C55a22A2AD9c2921706306ADFBdBee009987fce', 
+    const signData: {signData: SignData, signed: string} = await evm.signQuoteEIP712ByPrivateKey(NETWORK, quote, process.env.WALLET_KEY as string, amount, 0, '0x1C55a22A2AD9c2921706306ADFBdBee009987fce', 
         undefined, RPC_BSC, RPC_BSC)
     
     console.log('signData', signData)

@@ -53,6 +53,14 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
     resolve(cache.tokensInfo[system_chain_id][token_address].decimals)
 })
 
+export const symbol = (system_chain_id: number, token_address: string, rpc: string) => new Promise<string>(async (resolve, reject) => {
+    checkTokenInfoBoxExist(system_chain_id, token_address)
+    if(cache.tokensInfo[system_chain_id][token_address].symbol == undefined){
+        cache.tokensInfo[system_chain_id][token_address].symbol = await getCache(system_chain_id, token_address, rpc).symbol()
+    } 
+    resolve(cache.tokensInfo[system_chain_id][token_address].symbol)
+})
+
 export const getDefaultRPC = (system_chain_id: number, network: string) => {
     
     const isMainnet = network == 'mainnet'

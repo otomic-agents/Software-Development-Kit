@@ -1,7 +1,28 @@
+export const getChainName = (systemChainId: number) => {
+    switch (systemChainId) {
+        case 9000:
+            return "AVAX"
+        case 9006:
+            return "BSC"
+        case 60:
+            return "ETH"
+        case 614:
+            return "OPT"
+        case 966:
+            return "Polygon"
+        case 397:
+            return "NEAR"
+        case 144:
+            return "XRP"
+        default:
+            throw new Error(`not support chainId: ${systemChainId}`);
+    }
+}
 
-export const getChainId = (system_chain_id: number, network: string) => {
+
+export const getChainId = (systemChainId: number, network: string) => {
     const isMainnet = network == 'mainnet'
-    switch (system_chain_id) {
+    switch (systemChainId) {
         case 9006:
             return isMainnet ? 56 : 97
         case 9000:
@@ -17,9 +38,9 @@ export const getChainId = (system_chain_id: number, network: string) => {
     }
 }
 
-export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst: number): number => {
+export const getStepTimeLock = (systemChainIdSrc: number, systemChainIdDst: number): number => {
     let srcTimeLock = 0
-    switch (system_chain_id_src) {
+    switch (systemChainIdSrc) {
         case 9000:
             srcTimeLock = 2 * 60;
             break;
@@ -36,11 +57,11 @@ export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst
             srcTimeLock =  1 * 60;
             break;
         default:
-            throw new Error(`no support this chain for now: ${system_chain_id_src}`)
+            throw new Error(`no support this chain for now: ${systemChainIdSrc}`)
     }
 
     let dstTimeLock = 0
-    switch (system_chain_id_dst) {
+    switch (systemChainIdDst) {
         case 9000:
             dstTimeLock = 2 * 60;
             break;
@@ -57,7 +78,7 @@ export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst
             dstTimeLock =  1 * 60;
             break;
         default:
-            throw new Error(`no support this chain for now: ${system_chain_id_dst}`)
+            throw new Error(`no support this chain for now: ${systemChainIdDst}`)
     }
 
     if (dstTimeLock > srcTimeLock) {
@@ -68,10 +89,10 @@ export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst
 
 }
 
-export const getOtmoicAddressBySystemChainId = (system_chain_id: number, network: string): string => {
+export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: string): string => {
     const isMainnet = network == 'mainnet'
 
-    switch (system_chain_id) {
+    switch (systemChainId) {
         case 9000:
             return isMainnet ? "" : "0x1016A0886b4AeD69043367d501a99cfBAaB052B5"
         case 9006:
@@ -87,6 +108,6 @@ export const getOtmoicAddressBySystemChainId = (system_chain_id: number, network
         case 144:
             return isMainnet ? '' : 'wss://s.altnet.rippletest.net:51233'
         default:
-            throw new Error(`no support this chain for now: ${system_chain_id}`)
+            throw new Error(`no support this chain for now: ${systemChainId}`)
     }
 }

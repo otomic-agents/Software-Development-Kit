@@ -20,10 +20,13 @@ import { BusinessFullData } from './interface/interface';
 export { BusinessFullData };
 import { Business } from './interface/interface';
 export { Business };
+import { TranslatedBridge } from './interface/api';
+export { TranslatedBridge }
 
 
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
+import { translateBridge } from './api/TranslateBridge';
 import { _getSignDataEIP712 } from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from "./api/evm/SignQuoteEIP712ByPrivateKey";
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
@@ -71,6 +74,10 @@ export namespace evm {
     export const transferOutConfirmByMetamaskAPI =
         (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) => 
             _transferOutConfirmByMetamaskAPI(preBusiness, metamaskAPI, network, rpc)
+}
+
+export namespace assistive {
+    export const TranslateBridge = translateBridge;
 }
 
 export class Relay {

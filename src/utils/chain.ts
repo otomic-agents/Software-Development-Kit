@@ -14,6 +14,8 @@ export const getChainName = (systemChainId: number) => {
             return "NEAR"
         case 144:
             return "XRP"
+        case 501:
+            return "Solana"
         default:
             throw new Error(`not support chainId: ${systemChainId}`);
     }

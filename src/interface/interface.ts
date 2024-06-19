@@ -138,7 +138,7 @@ export interface PreBusiness {
     hashlock_evm: string,
     hashlock_xrp: string,
     hashlock_near: string,
-    locked: true,
+    locked: boolean,
     preimage: string,
     relay_hashlock_evm: string,
     relay_hashlock_xrp: string,

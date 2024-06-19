@@ -24,6 +24,7 @@ import { TranslatedBridge } from './interface/api';
 export { TranslatedBridge }
 
 
+import { getChainName } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
@@ -41,6 +42,7 @@ import { _getBridge } from './api/GetBridge';
 import { QuoteManager } from "./api/Quote";
 
 export namespace utils {
+    export const GetChainName = getChainName;
     export const GetChainId = getChainId;
     export const Sleep = sleep;
 }

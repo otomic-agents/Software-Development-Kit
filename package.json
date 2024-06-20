@@ -1,6 +1,6 @@
 {
   "name": "otmoic-software-development-kit",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "You can use this SDK to perform cross-chain and exchange on the otmoic platform",
   "main": "dist/index.js",
   "scripts": {
@@ -12,7 +12,8 @@
     "bignumber.js": "^9.1.2",
     "ethers": "^6.13.0",
     "needle": "^3.3.1",
-    "socket.io-client": "^4.7.5"
+    "socket.io-client": "^4.7.5",
+    "typescript": "^5.4.5"
   },
   "devDependencies": {
     "@types/needle": "^3.3.0"

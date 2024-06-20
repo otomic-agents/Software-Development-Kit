@@ -40,11 +40,13 @@ import { _getHistory } from './api/GetHistory';
 import { _getBusiness } from './api/GetBusiness';
 import { _getBridge } from './api/GetBridge';
 import { QuoteManager } from "./api/Quote";
+import { mathReceived } from './utils/math';
 
 export namespace utils {
     export const GetChainName = getChainName;
     export const GetChainId = getChainId;
     export const Sleep = sleep;
+    export const MathReceived = mathReceived;
 }
 
 export namespace evm {

@@ -68,7 +68,7 @@ export const getStepTimeLock = (systemChainIdSrc: number, systemChainIdDst: numb
             dstTimeLock = 2 * 60;
             break;
         case 9006:
-            dstTimeLock = 1 * 60;
+            dstTimeLock = 2 * 60;
             break;
         case 614:
             dstTimeLock = 1 * 60;
@@ -111,5 +111,25 @@ export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: 
             return isMainnet ? '' : 'wss://s.altnet.rippletest.net:51233'
         default:
             throw new Error(`no support this chain for now: ${systemChainId}`)
+    }
+}
+
+export const getChainType = (systemChainId: number): string => {
+    switch (systemChainId) {
+        case 9000:
+        case 9006:
+        case 60:
+        case 966:
+        case 614:
+            return 'evm'
+        case 397:
+            return 'near'
+        case 144:
+            return 'xrp'
+        case 501:
+            return 'solana'
+    
+        default:
+            throw new Error(`not support chain: ${systemChainId}`);
     }
 }

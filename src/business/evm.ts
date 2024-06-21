@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import ABI from "./evmABI"
 import { PreBusiness, Quote } from "../interface/interface";
 import { getChainId, getOtmoicAddressBySystemChainId, getStepTimeLock } from "../utils/chain";
-import { convertMinimumUnits, convertNativeMinimumUnits } from "../utils/math";
+import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { getTransferOutConfirmData, getTransferOutData } from "../utils/data";
 
 interface Tokens {
@@ -95,12 +95,12 @@ export const _getSignDataEIP712 = async (quote: Quote, network: string, amount: 
         src_chain_id: quote.quote_base.bridge.src_chain_id,
         src_address: quote.quote_base.lp_bridge_address,
         src_token: quote.quote_base.bridge.src_token,
-        src_amount: convertMinimumUnits(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, amount, srcDecimals),
+        src_amount: convertMinimumUnits(amount, srcDecimals),
 
         dst_chain_id: quote.quote_base.bridge.dst_chain_id,
         dst_address: receivingAddress,
         dst_token: quote.quote_base.bridge.dst_token,
-        dst_amount: convertMinimumUnits(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, dstAmount, dstDecimals),
+        dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
         dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
 
         requestor: '', //user_address.value,
@@ -211,7 +211,7 @@ export const doTransferOutConfirm =
 
     const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic, provider).connect(wallet == undefined ? await provider.getSigner() : wallet)
     const data = getTransferOutConfirmData(preBusiness)
-    const transferOutTx = await otmoic.getFunction('confirmTransferOut').send(
+    const transferOutCfmTx = await otmoic.getFunction('confirmTransferOut').send(
         data.sender,
         data.receiver,
         data.token,
@@ -225,5 +225,40 @@ export const doTransferOutConfirm =
         data.agreementReachedTime
     )
 
-    resolve(transferOutTx)
+    resolve(transferOutCfmTx)
 })
+
+export const doTransferOutRefund =
+    (preBusiness: PreBusiness, provider: JsonRpcProvider, wallet: Wallet | undefined, network: string) =>
+        new Promise<ContractTransactionResponse>(async (resolve, reject) => {
+
+    const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
+
+    const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic, provider).connect(wallet == undefined ? await provider.getSigner() : wallet)
+    const data = getTransferOutConfirmData(preBusiness)
+    const transferOutRfdTx = await otmoic.getFunction('refundTransferOut').send(
+        data.sender,
+        data.receiver,
+        data.token,
+        data.token_amount,
+        data.eth_amount,
+        data.hashlock,
+        data.relayHashlock,
+        data.stepTimelock,
+        data.agreementReachedTime
+    )
+
+    resolve(transferOutRfdTx)
+})
+
+export const getBalance = async (network: string, systemChainId: number, token: string, address: string, rpc: string | undefined) => {
+    
+    const erc20 = new ethers.Contract(token, ABI.erc20, getProvider(rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc));
+    const balance = await erc20.balanceOf(address)
+    const decimals = await erc20.decimals()
+
+    //TODO FIXME 乘除的方向反了
+    return convertStandardUnits(balance, decimals)
+}
+
+

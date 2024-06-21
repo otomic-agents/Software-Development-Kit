@@ -1,7 +1,9 @@
 import Bignumber from 'bignumber.js'
 import { Quote } from '../interface/interface'
 
-export const convertMinimumUnits = (system_chain_id: number, token_address: string, amount: any, decimals: any) => new Bignumber(amount).times(new Bignumber(10).pow(decimals)).toFixed(0)
+export const convertMinimumUnits = (amount: any, decimals: any) => new Bignumber(amount).times(new Bignumber(10).pow(decimals)).toFixed(0)
+
+export const convertStandardUnits = (amount: any, decimals: any) => new Bignumber(amount).div(new Bignumber(10).pow(decimals)).toFixed(8)
 
 export const mathReceived = (quote: Quote, amount: string, swapToNative: number) => {
 

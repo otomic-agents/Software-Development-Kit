@@ -16,7 +16,7 @@ export const _transferOutByMetamaskAPI = (preBusiness: PreBusiness, metamaskAPI:
         network))
     {
         approveTx = await doApprove(preBusiness, provider, undefined, network)
-        console.log(approveTx)
+        // console.log(approveTx)
     }
 
     if (provider == undefined || approveTx == undefined) {

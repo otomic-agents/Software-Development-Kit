@@ -24,7 +24,7 @@ export const _transferOutByPrivateKey =
     {
 
         approveTx = await doApprove(preBusiness, provider, web3Wallet.connect(provider), network)
-        console.log(approveTx)
+        // console.log(approveTx)
 
         while (await isNeedApprove(
             preBusiness,

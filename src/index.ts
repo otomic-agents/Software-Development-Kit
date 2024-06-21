@@ -24,7 +24,7 @@ import { TranslatedBridge } from './interface/api';
 export { TranslatedBridge }
 
 
-import { getChainName } from './utils/chain';
+import { getChainName, getChainType } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
@@ -36,11 +36,14 @@ import { _transferOutByPrivateKey } from './api/evm/TransferOutByPrivateKey';
 import { _transferOutByMetamaskAPI } from './api/evm/TransferOutByMetamaskAPI';
 import { _transferOutConfirmByPrivateKey } from './api/evm/TransferOutConfirmByPrivateKey';
 import { _transferOutConfirmByMetamaskAPI } from './api/evm/TransferOutConfirmByMetamaskAPI';
+import { _transferOutRefundByPrivateKey } from './api/evm/TransferOutRefundByPrivateKey';
+import { _transferOutRefundByMetamaskAPI } from './api/evm/TransferOutRefundByMetamaskAPI';
 import { _getHistory } from './api/GetHistory';
 import { _getBusiness } from './api/GetBusiness';
 import { _getBridge } from './api/GetBridge';
 import { QuoteManager } from "./api/Quote";
 import { mathReceived } from './utils/math';
+import { getBalance } from './api/GetBalance';
 
 export namespace utils {
     export const GetChainName = getChainName;
@@ -78,10 +81,74 @@ export namespace evm {
     export const transferOutConfirmByMetamaskAPI =
         (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) => 
             _transferOutConfirmByMetamaskAPI(preBusiness, metamaskAPI, network, rpc)
+
+    export const transferOutRefundByPrivateKey = 
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) =>
+            _transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc)
+
+    export const transferOutRefundByMetamaskAPI = 
+        (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) =>
+            _transferOutRefundByMetamaskAPI(preBusiness, metamaskAPI, network, rpc)
+}
+
+export namespace business {
+    export const signQuoteByPrivateKey = 
+        (network: string, quote: Quote, privateKey: string, amount: string, swapToNative: number, 
+            receivingAddress: string, stepTimeLock: number | undefined, rpcSrc: string | undefined, 
+            rpcDst: string | undefined) => {
+
+        switch (getChainType(quote.quote_base.bridge.src_chain_id)) {
+            case 'evm':
+                return evm.signQuoteEIP712ByPrivateKey(network, quote, privateKey, amount, swapToNative, 
+                    receivingAddress, stepTimeLock, rpcSrc, rpcDst)
+        
+            default:
+                throw new Error(`not support chain: ${quote.quote_base.bridge.src_chain_id}`);
+        }
+    }
+
+    export const transferOutByPrivateKey =
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => {
+        
+        switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+            case 'evm':
+                return evm.transferOutByPrivateKey(preBusiness, privateKey, network, rpc)
+        
+            default:
+                throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
+        }
+
+    }
+
+    export const transferOutConfirmByPrivateKey = 
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => {
+                  
+        switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+            case 'evm':
+                return evm.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc)
+        
+            default:
+                throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
+        }
+    }
+
+    export const transferOutRefundByPrivateKey =
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => {
+
+        switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+            case 'evm':
+                return evm.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc)
+        
+            default:
+                throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
+        }
+    }
+
 }
 
 export namespace assistive {
     export const TranslateBridge = translateBridge;
+    export const GetBalance = getBalance;
 }
 
 export class Relay {

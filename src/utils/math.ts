@@ -58,6 +58,8 @@ export const convertNativeMinimumUnits = (system_chain_id: number, amount: any):
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0)
         case 614:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0)
+        case 501:
+            return new Bignumber(amount).times(new Bignumber(10).pow(9)).toFixed(0)
         default:
             throw new Error(`not support chain for now: ${system_chain_id}`);
     }

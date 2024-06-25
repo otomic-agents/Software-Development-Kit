@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { PreBusiness } from "../interface/interface";
+import { keccak_256 } from '@noble/hashes/sha3';
 
 export const jsonParser = (src: string) => {
     let parsed = JSON.parse (src);
@@ -45,4 +46,18 @@ export const getTransferOutConfirmData = (preBusiness: PreBusiness) => {
         preimage: preBusiness.preimage,
         agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time
     }
+}
+
+export const getPreBusinessHashForSolana = (preBusiness: PreBusiness) => {
+    let data = {
+        sender: preBusiness.swap_asset_information.sender,
+        receiver: preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address,
+        hashlock: preBusiness.hashlock_solana,
+        agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
+        stepTimelock: preBusiness.swap_asset_information.step_time_lock,
+        token: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token,
+        tokenAmount: preBusiness.swap_asset_information.amount
+    }
+
+    return Buffer.from(keccak_256(Buffer.from(JSON.stringify(data)))).toString('hex')
 }

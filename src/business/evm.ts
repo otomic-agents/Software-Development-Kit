@@ -257,7 +257,6 @@ export const getBalance = async (network: string, systemChainId: number, token: 
     const balance = await erc20.balanceOf(address)
     const decimals = await erc20.decimals()
 
-    //TODO FIXME 乘除的方向反了
     return convertStandardUnits(balance, decimals)
 }
 

@@ -2,14 +2,12 @@ import { PublicKey, Connection, Keypair, SystemProgram } from "@solana/web3.js";
 import { getMint, getOrCreateAssociatedTokenAccount, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet } from "@coral-xyz/anchor";
-import crypto from "crypto";
 import msgpack5 from "msgpack5";
 import pako from "pako";
 import idl from "./solanaIdl";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { PreBusiness, Quote } from "../interface/interface";
 import { getOtmoicAddressBySystemChainId, getFeeRecepientAddressBySystemChainId, getStepTimeLock } from "../utils/chain";
-import { getPreBusinessHashForSolana } from "../utils/data";
 
 type Lock = {
     hash: Array<number>;
@@ -29,8 +27,6 @@ interface Cache {
 const cache: Cache = {
     tokensInfo: {},
 }
-
-const uuidMap: Map<string, number[]> = new Map()
 
 export const getProvider = (rpc: string): Connection => {
     return new Connection(rpc, 'confirmed')
@@ -132,7 +128,7 @@ export const getJsonRpcProvider =
 }
 
 export const doTransferOut = 
-    (preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
+    (uuid: string, preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
         new Promise<string>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
@@ -154,16 +150,13 @@ export const doTransferOut =
     const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
 
     // uuid
-    let preBusinessHash = getPreBusinessHashForSolana(preBusiness)
-    let _uuid = new Uint8Array(16)
-    let uuid = Array.from(crypto.getRandomValues(_uuid))
-    uuidMap.set(preBusinessHash, uuid)
+    let uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
 
     // user
     let user = new PublicKey(preBusiness.swap_asset_information.sender)
     
-    // receiver
-    let receiver = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address)
+    // // receiver
+    // let receiver = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address)
 
     // mint token
     let token = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
@@ -242,7 +235,7 @@ export const doTransferOut =
 
     let tx = await otmoic.methods
     .prepare(
-        uuid,
+        uuidBuf,
         user,
         solAmount,
         amount,
@@ -273,7 +266,7 @@ export const doTransferOut =
 })
 
 export const doTransferOutConfirm = 
-    (preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
+    (uuid: string, preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
         new Promise<string>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
@@ -295,12 +288,8 @@ export const doTransferOutConfirm =
     const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
     
     // uuid
-    let preBusinessHash = getPreBusinessHashForSolana(preBusiness)
-    let uuid = uuidMap.get(preBusinessHash)
-    if (uuid == undefined) {
-        reject('uuid not found')
-    }
-   
+    let uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+
     // receiver
     let lp = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address)
    
@@ -345,7 +334,7 @@ export const doTransferOutConfirm =
     let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
 
     let tx = await otmoic.methods
-        .confirm(uuid, preimage)
+        .confirm(uuidBuf, preimage)
         .accounts({
             to: lp,
             destination: destination.address,
@@ -364,7 +353,7 @@ export const doTransferOutConfirm =
 })
 
 export const doTransferOutRefund = 
-    (preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
+    (uuid: string, preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
         new Promise<string>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
@@ -386,11 +375,7 @@ export const doTransferOutRefund =
     const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
     
     // uuid
-    let preBusinessHash = getPreBusinessHashForSolana(preBusiness)
-    let uuid = uuidMap.get(preBusinessHash)
-    if (uuid == undefined) {
-        reject('uuid not found')
-    }
+    let uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
    
     // user
     let user = new PublicKey(preBusiness.swap_asset_information.sender)
@@ -417,7 +402,7 @@ export const doTransferOutRefund =
     let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
 
     let tx = await otmoic.methods
-        .refund(uuid)
+        .refund(uuidBuf)
         .accounts({
             from: user,
             source: source.address,

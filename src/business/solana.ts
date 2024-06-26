@@ -221,11 +221,19 @@ export const doTransferOut =
     // memo
     let memo = msgpack5()
         .encode({
-            // stepTimeLock: stepTimeLock,
-            // agreementReachedTime: agreementReachedTime,
-            // srcChainId: command_transfer_in.src_chain_id,
-            // srcTransferId: command_transfer_in.src_transfer_id,
-            method: '0',
+            stepTimeLock: stepTimeLock,
+            agreementReachedTime: agreementReachedTime,
+            dstAddress: preBusiness.swap_asset_information.dst_address,
+            dstChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
+            amountDst: preBusiness.swap_asset_information.dst_amount,
+            nativeAmountDst: preBusiness.swap_asset_information.dst_native_amount,
+            bidId: preBusiness.hash,
+            tokenDst: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token,
+            requestor: preBusiness.swap_asset_information.requestor,
+            lpId: preBusiness.swap_asset_information.quote.lp_info.name,
+            userSign: preBusiness.swap_asset_information.user_sign,
+            lpSign: preBusiness.swap_asset_information.lp_sign,
+            method: "0",
         })
         .slice()
 

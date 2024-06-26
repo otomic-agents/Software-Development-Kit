@@ -5,7 +5,7 @@ import { Quote } from "../../interface/interface";
 import { mathReceived } from "../../utils/math";
 import { getOtmoicAddressBySystemChainId } from "../../utils/chain";
 
-export const _signQuoteEIP712ByPhantomAPI = (quote: Quote, phantomAPI: any, sender: string, network: string, amount: string, swapToNative: number, receivingAddress: string, stepTimeLock: number | undefined, rpcSrc: string | undefined, rpcDst: string | undefined) => new Promise<{signData: any, signed: string}>(async (resolve, reject) => {
+export const _signQuoteByWalletPlugin = (quote: Quote, phantomAPI: any, sender: string, network: string, amount: string, swapToNative: number, receivingAddress: string, stepTimeLock: number | undefined, rpcSrc: string | undefined, rpcDst: string | undefined) => new Promise<{signData: any, signed: string}>(async (resolve, reject) => {
     const {dstAmount, dstNativeAmount} = mathReceived(quote, amount, swapToNative)
     
     const signData = await _getSignDataEIP712(quote, network, amount, dstAmount, dstNativeAmount, swapToNative, receivingAddress, stepTimeLock, rpcSrc, rpcDst)

@@ -45,6 +45,16 @@ import { QuoteManager } from "./api/Quote";
 import { mathReceived } from './utils/math';
 import { getBalance } from './api/GetBalance';
 
+import { _getSignDataEIP712 as _getSignDataSolana, _getSignPreambleEIP712} from './business/solana';
+import { _signQuoteByPrivateKey } from './api/solana/SignQuoteByPrivateKey';
+import { _signQuoteByWalletPlugin } from './api/solana/SignQuoteByWalletPlugin';
+import { _transferOutByPrivateKey as _transferOutSolanaByPrivateKey } from './api/solana/TransferOutByPrivateKey';
+import { _transferOutByWalletPlugin } from './api/solana/TransferOutByWalletPlugin';
+import { _transferOutConfirmByPrivateKey as _transferOutConfirmSolanaByPrivateKey } from './api/solana/TransferOutConfirmByPrivateKey';
+import { _transferOutConfirmByWalletPlugin } from './api/solana/TransferOutConfirmByWalletPlugin';
+import { _transferOutRefundByPrivateKey as _transferOutRefundSolanaByPrivateKey } from './api/solana/TransferOutRefundByPrivateKey';
+import { _transferOutRefundByWalletPlugin } from './api/solana/TransferOutRefundByWalletPlugin';
+
 export namespace utils {
     export const GetChainName = getChainName;
     export const GetChainId = getChainId;
@@ -91,6 +101,46 @@ export namespace evm {
             _transferOutRefundByMetamaskAPI(preBusiness, metamaskAPI, network, rpc)
 }
 
+export namespace solana {
+    export const getSignData = _getSignDataSolana;
+    export const getSignPreamble = _getSignPreambleEIP712
+    export const signQuoteByPrivateKey = 
+        (network: string, quote: Quote, privateKey: string, amount: string, swapToNative: number, 
+            receivingAddress: string, stepTimeLock: number | undefined, rpcSrc: string | undefined, 
+            rpcDst: string | undefined) => _signQuoteByPrivateKey(
+                quote, privateKey, network, amount, swapToNative, receivingAddress, stepTimeLock, rpcSrc, rpcDst)
+
+    export const signQuoteByWalletPlugin = 
+        (network: string, quote: Quote, phantomAPI: any, sender: string, amount: string,
+             swapToNative: number, receivingAddress: string, stepTimeLock: number | undefined, 
+             rpcSrc: string | undefined, rpcDst: string | undefined) => _signQuoteByWalletPlugin(
+                quote, phantomAPI, sender, network, amount, swapToNative, receivingAddress, stepTimeLock, rpcSrc, rpcDst)
+    
+    export const transferOutByPrivateKey = 
+        (uuid: string, preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => 
+            _transferOutSolanaByPrivateKey(uuid, preBusiness, privateKey, network, rpc)
+    
+    export const transferOutByWalletPlugin = 
+        (uuid: string, preBusiness: PreBusiness, phantomAPI: any, network: string, rpc: string | undefined) => 
+            _transferOutByWalletPlugin(uuid, preBusiness, phantomAPI, network, rpc)
+
+    export const transferOutConfirmByPrivateKey = 
+        (uuid: string, preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => 
+            _transferOutConfirmSolanaByPrivateKey(uuid, preBusiness, privateKey, network, rpc)
+
+    export const transferOutConfirmByWalletPlugin =
+        (uuid: string, preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) => 
+            _transferOutConfirmByWalletPlugin(uuid, preBusiness, metamaskAPI, network, rpc)
+
+    export const transferOutRefundByPrivateKey = 
+        (uuid: string, preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) =>
+            _transferOutRefundSolanaByPrivateKey(uuid, preBusiness, privateKey, network, rpc)
+
+    export const transferOutRefundByWalletPlugin = 
+        (uuid: string, preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) =>
+            _transferOutRefundByWalletPlugin(uuid, preBusiness, metamaskAPI, network, rpc)
+}
+
 export namespace business {
     export const signQuoteByPrivateKey = 
         (network: string, quote: Quote, privateKey: string, amount: string, swapToNative: number, 
@@ -101,6 +151,10 @@ export namespace business {
             case 'evm':
                 return evm.signQuoteEIP712ByPrivateKey(network, quote, privateKey, amount, swapToNative, 
                     receivingAddress, stepTimeLock, rpcSrc, rpcDst)
+
+            case 'solana':
+                return solana.signQuoteByPrivateKey(network, quote, privateKey, amount, swapToNative,
+                    receivingAddress, stepTimeLock, rpcSrc, rpcDst)
         
             default:
                 throw new Error(`not support chain: ${quote.quote_base.bridge.src_chain_id}`);
@@ -108,11 +162,14 @@ export namespace business {
     }
 
     export const transferOutByPrivateKey =
-        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => {
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) => {
         
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
                 return evm.transferOutByPrivateKey(preBusiness, privateKey, network, rpc)
+            
+            case 'solana':
+                return solana.transferOutByPrivateKey(uuid!, preBusiness, privateKey, network, rpc)
         
             default:
                 throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
@@ -121,11 +178,14 @@ export namespace business {
     }
 
     export const transferOutConfirmByPrivateKey = 
-        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => {
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) => {
                   
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
                 return evm.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc)
+
+            case 'solana':
+                return solana.transferOutConfirmByPrivateKey(uuid!, preBusiness, privateKey, network, rpc)
         
             default:
                 throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
@@ -133,11 +193,14 @@ export namespace business {
     }
 
     export const transferOutRefundByPrivateKey =
-        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => {
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) => {
 
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
                 return evm.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc)
+
+            case 'solana':
+                return solana.transferOutRefundByPrivateKey(uuid!, preBusiness, privateKey, network, rpc)
         
             default:
                 throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);

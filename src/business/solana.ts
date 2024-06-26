@@ -1,5 +1,5 @@
-import { PublicKey, Connection, Keypair, SystemProgram } from "@solana/web3.js";
-import { getMint, getOrCreateAssociatedTokenAccount, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
+import { PublicKey, Connection, Keypair, SystemProgram, Transaction } from "@solana/web3.js";
+import { getMint, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet } from "@coral-xyz/anchor";
 import msgpack5 from "msgpack5";
@@ -128,8 +128,8 @@ export const getJsonRpcProvider =
 }
 
 export const doTransferOut = 
-    (uuid: string, preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
-        new Promise<string>(async (resolve, reject) => {
+    (uuid: string, preBusiness: PreBusiness, provider: Connection, network: string) => 
+        new Promise<Transaction>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
     // setup a dummy provider
@@ -189,16 +189,7 @@ export const doTransferOut =
     }
 
     // source ata token account
-    let source = await getOrCreateAssociatedTokenAccount(
-        provider,
-        wallet!,
-        token,
-        user,
-        true,
-        undefined,
-        undefined,
-        tokenProgramId,
-    )
+    let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId)
 
     // escrow and escrowAta
     let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId)
@@ -255,10 +246,10 @@ export const doTransferOut =
         compressedBuffer,
     )
     .accounts({
-        payer: wallet!.publicKey,
+        payer: user,
         from: user,
         mint: token,
-        source: source.address,
+        source: source,
         escrow: escrow,
         escrowAta: escrowAta,
         adminSettings: adminSettings,
@@ -267,15 +258,14 @@ export const doTransferOut =
         systemProgram: SystemProgram.programId,
         tokenProgram: tokenProgramId,
     })
-    .signers([wallet!])
-    .rpc()
+    .transaction()
 
     resolve(tx)
 })
 
 export const doTransferOutConfirm = 
-    (uuid: string, preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
-        new Promise<string>(async (resolve, reject) => {
+    (uuid: string, preBusiness: PreBusiness, provider: Connection, network: string) => 
+        new Promise<Transaction>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
     // setup a dummy provider
@@ -313,29 +303,11 @@ export const doTransferOutConfirm =
     let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId)
    
     // destination
-    let destination = await getOrCreateAssociatedTokenAccount(
-        provider,
-        wallet!,
-        token,
-        lp,
-        true,
-        undefined,
-        undefined,
-        tokenProgramId,
-    );
+    let destination = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId)
    
     // fee recepient
     let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network))
-    let feeDestination = await getOrCreateAssociatedTokenAccount(
-        provider,
-        wallet!,
-        token,
-        feeRecepient,
-        true,
-        undefined,
-        undefined,
-        tokenProgramId,
-    );
+    let feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId)
    
     // escrow and escrowAta
     let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid!)], otmoic.programId)
@@ -345,24 +317,23 @@ export const doTransferOutConfirm =
         .confirm(uuidBuf, preimage)
         .accounts({
             to: lp,
-            destination: destination.address,
+            destination: destination,
             escrow: escrow,
             escrowAta: escrowAta,
             adminSettings: adminSettings,
             feeRecepient: feeRecepient,
-            feeDestination: feeDestination.address,
+            feeDestination: feeDestination,
             systemProgram: SystemProgram.programId,
             tokenProgram: tokenProgramId,
         })
-        .signers([wallet!])
-        .rpc()
+        .transaction()
     
     resolve(tx)
 })
 
 export const doTransferOutRefund = 
-    (uuid: string, preBusiness: PreBusiness, provider: Connection, wallet: Keypair | undefined, network: string) => 
-        new Promise<string>(async (resolve, reject) => {
+    (uuid: string, preBusiness: PreBusiness, provider: Connection, network: string) => 
+        new Promise<Transaction>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
     // setup a dummy provider
@@ -394,16 +365,7 @@ export const doTransferOutRefund =
     let tokenProgramId = mintTokenAccountInfo!.owner
    
     // source
-    let source = await getOrCreateAssociatedTokenAccount(
-        provider,
-        wallet!,
-        token,
-        user,
-        true,
-        undefined,
-        undefined,
-        tokenProgramId,
-    );
+    let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId)
    
     // escrow and escrowAta
     let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid!)], otmoic.programId)
@@ -413,14 +375,13 @@ export const doTransferOutRefund =
         .refund(uuidBuf)
         .accounts({
             from: user,
-            source: source.address,
+            source: source,
             escrow: escrow,
             escrowAta: escrowAta,
             systemProgram: SystemProgram.programId,
             tokenProgram: tokenProgramId,
         })
-        .signers([wallet!])
-        .rpc()
+        .transaction()
     
     resolve(tx)
 })

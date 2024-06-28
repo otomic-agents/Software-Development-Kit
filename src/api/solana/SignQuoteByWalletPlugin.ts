@@ -13,15 +13,15 @@ export const _signQuoteByWalletPlugin = (quote: Quote, phantomAPI: any, sender: 
 
     let contractAddress = new PublicKey(getOtmoicAddressBySystemChainId(quote.quote_base.bridge.src_chain_id, network))
     let signerPubkey = new PublicKey(sender)
-    let msgLen = Buffer.from(signDataStr).length
+    let msgLen = decodeUTF8(signDataStr).length
 
     const signPreamble = _getSignPreambleEIP712(contractAddress, [signerPubkey], msgLen)
-    let messageBytes = decodeUTF8(signPreamble.toString('base64') + signDataStr)
+    let messageBytes = decodeUTF8(signDataStr)
 
     const signedMessage = await phantomAPI.signMessage(messageBytes, "utf8")
 
     resolve({
-        signData: signPreamble.toString('base64') + signDataStr,
+        signData: signDataStr,
         signed: '0x' + Buffer.from(signedMessage.signature).toString('hex')
     })
 })

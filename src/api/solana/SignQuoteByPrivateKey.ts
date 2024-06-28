@@ -19,14 +19,14 @@ export const _signQuoteByPrivateKey =
     let contractAddress = new PublicKey(getOtmoicAddressBySystemChainId(quote.quote_base.bridge.src_chain_id, network))
     let keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(privateKey, 'hex')))
     let signerPubkeys = [keypair.publicKey]
-    let msgLen = Buffer.from(signDataStr).length
+    let msgLen = decodeUTF8(signDataStr).length
 
     const signPreamble = _getSignPreambleEIP712(contractAddress, signerPubkeys, msgLen)
-    let messageBytes = decodeUTF8(signPreamble.toString('base64') + signDataStr)
+    let messageBytes = decodeUTF8(signDataStr)
     let signed = nacl.sign.detached(messageBytes, keypair.secretKey);
     
     resolve({
-        signData: signPreamble.toString('base64') + signDataStr,
+        signData: signDataStr,
         signed: '0x' + Buffer.from(signed).toString('hex')
     })
 })

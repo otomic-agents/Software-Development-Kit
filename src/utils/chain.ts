@@ -127,7 +127,7 @@ export const getFeeRecepientAddressBySystemChainId = (systemChainId: number, net
 
     switch (systemChainId) {
         case 501:
-            return isMainnet ? '' : '8os21rmBjg63xMWuRK4vza3DxZ69AoQD6SffBBmnrpiQ'
+            return isMainnet ? 'Gexuvyazbb48d5U6voRna5ef1SLPRUNLiwavqEx8otgy' : '8os21rmBjg63xMWuRK4vza3DxZ69AoQD6SffBBmnrpiQ'
         default:
             throw new Error(`no support this chain for now: ${systemChainId}`)
     }

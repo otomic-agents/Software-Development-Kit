@@ -3,25 +3,28 @@ import { doTransferOut, getJsonRpcProvider } from "../../business/solana";
 import { PreBusiness } from "../../interface/interface";
 
 export const _transferOutByPrivateKey = 
-    (uuid: string, preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => 
-        new Promise<string>(async (resolve, reject) => {
+    (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) => 
+        new Promise<{txHash: string, uuid: string}>(async (resolve, reject) => {
     
     const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(privateKey, 'hex')))
 
     const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network)
 
     //transfer out
-    const transferOutTx = await doTransferOut(uuid, preBusiness, provider, network)
+    let {tx, uuidBack} = await doTransferOut(preBusiness, provider, network, uuid)
     
     const latestBlockhash = await provider.getLatestBlockhash()
-    transferOutTx.recentBlockhash = latestBlockhash.blockhash
-    transferOutTx.feePayer = keypair.publicKey
-    transferOutTx.sign(keypair)
+    tx.recentBlockhash = latestBlockhash.blockhash
+    tx.feePayer = keypair.publicKey
+    tx.sign(keypair)
 
     try {
-        let txHash = await provider.sendRawTransaction(transferOutTx.serialize())
+        let txHash = await provider.sendRawTransaction(tx.serialize())
 
-        resolve(txHash)
+        resolve({
+            txHash,
+            uuid: uuidBack
+        })
     } catch (err) {
         reject(err)
     }

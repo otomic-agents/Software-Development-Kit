@@ -4,6 +4,7 @@ import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet } from "@coral-xyz/anchor";
 import msgpack5 from "msgpack5";
 import pako from "pako";
+import crypto from 'crypto';
 import idl from "./solanaIdl";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { PreBusiness, Quote } from "../interface/interface";
@@ -128,8 +129,8 @@ export const getJsonRpcProvider =
 }
 
 export const doTransferOut = 
-    (uuid: string, preBusiness: PreBusiness, provider: Connection, network: string) => 
-        new Promise<Transaction>(async (resolve, reject) => {
+    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+        new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
     // setup a dummy provider
@@ -150,7 +151,14 @@ export const doTransferOut =
     const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
 
     // uuid
-    let uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+    let uuidBuf: number[] = []
+    if (uuid) {
+        uuid = uuid.startsWith('0x') ? uuid.slice(2) : uuid
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    } else {
+        uuid = crypto.randomBytes(16).toString('hex')
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    }
 
     // user
     let user = new PublicKey(preBusiness.swap_asset_information.sender)
@@ -192,7 +200,7 @@ export const doTransferOut =
     let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId)
 
     // escrow and escrowAta
-    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId)
+    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId)
     let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
 
     // adminSettings
@@ -260,12 +268,15 @@ export const doTransferOut =
     })
     .transaction()
 
-    resolve(tx)
+    resolve({
+        tx,
+        uuidBack: uuid
+    })
 })
 
 export const doTransferOutConfirm = 
-    (uuid: string, preBusiness: PreBusiness, provider: Connection, network: string) => 
-        new Promise<Transaction>(async (resolve, reject) => {
+    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+        new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
     // setup a dummy provider
@@ -286,7 +297,14 @@ export const doTransferOutConfirm =
     const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
     
     // uuid
-    let uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+    let uuidBuf: number[] = []
+    if (uuid) {
+        uuid = uuid.startsWith('0x') ? uuid.slice(2) : uuid
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    } else {
+        uuid = crypto.randomBytes(16).toString('hex')
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    }
 
     // receiver
     let lp = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address)
@@ -310,7 +328,7 @@ export const doTransferOutConfirm =
     let feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId)
    
     // escrow and escrowAta
-    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid!)], otmoic.programId)
+    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId)
     let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
 
     let tx = await otmoic.methods
@@ -328,12 +346,15 @@ export const doTransferOutConfirm =
         })
         .transaction()
     
-    resolve(tx)
+    resolve({
+        tx,
+        uuidBack: uuid
+    })
 })
 
 export const doTransferOutRefund = 
-    (uuid: string, preBusiness: PreBusiness, provider: Connection, network: string) => 
-        new Promise<Transaction>(async (resolve, reject) => {
+    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+        new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id
 
     // setup a dummy provider
@@ -354,7 +375,14 @@ export const doTransferOutRefund =
     const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
     
     // uuid
-    let uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+    let uuidBuf: number[] = []
+    if (uuid) {
+        uuid = uuid.startsWith('0x') ? uuid.slice(2) : uuid
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    } else {
+        uuid = crypto.randomBytes(16).toString('hex')
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    }
    
     // user
     let user = new PublicKey(preBusiness.swap_asset_information.sender)
@@ -368,7 +396,7 @@ export const doTransferOutRefund =
     let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId)
    
     // escrow and escrowAta
-    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid!)], otmoic.programId)
+    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId)
     let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
 
     let tx = await otmoic.methods
@@ -383,7 +411,10 @@ export const doTransferOutRefund =
         })
         .transaction()
     
-    resolve(tx)
+    resolve({
+        tx,
+        uuidBack: uuid
+    })
 })
 
 export const getBalance = async (network: string, systemChainId: number, token: string, address: string, rpc: string | undefined) => {

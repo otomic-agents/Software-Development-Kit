@@ -117,28 +117,28 @@ export namespace solana {
                 quote, phantomAPI, sender, network, amount, swapToNative, receivingAddress, stepTimeLock, rpcSrc, rpcDst)
     
     export const transferOutByPrivateKey = 
-        (uuid: string, preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => 
-            _transferOutSolanaByPrivateKey(uuid, preBusiness, privateKey, network, rpc)
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) => 
+            _transferOutSolanaByPrivateKey(preBusiness, privateKey, network, rpc, uuid)
     
     export const transferOutByWalletPlugin = 
-        (uuid: string, preBusiness: PreBusiness, phantomAPI: any, network: string, rpc: string | undefined) => 
-            _transferOutByWalletPlugin(uuid, preBusiness, phantomAPI, network, rpc)
+        (preBusiness: PreBusiness, phantomAPI: any, network: string, rpc: string | undefined, uuid?: string) => 
+            _transferOutByWalletPlugin(preBusiness, phantomAPI, network, rpc, uuid)
 
     export const transferOutConfirmByPrivateKey = 
-        (uuid: string, preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) => 
-            _transferOutConfirmSolanaByPrivateKey(uuid, preBusiness, privateKey, network, rpc)
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) => 
+            _transferOutConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc, uuid)
 
     export const transferOutConfirmByWalletPlugin =
-        (uuid: string, preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) => 
-            _transferOutConfirmByWalletPlugin(uuid, preBusiness, metamaskAPI, network, rpc)
+        (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined, uuid?: string) => 
+            _transferOutConfirmByWalletPlugin(preBusiness, metamaskAPI, network, rpc, uuid)
 
     export const transferOutRefundByPrivateKey = 
-        (uuid: string, preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined) =>
-            _transferOutRefundSolanaByPrivateKey(uuid, preBusiness, privateKey, network, rpc)
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) =>
+            _transferOutRefundSolanaByPrivateKey(preBusiness, privateKey, network, rpc, uuid)
 
     export const transferOutRefundByWalletPlugin = 
-        (uuid: string, preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) =>
-            _transferOutRefundByWalletPlugin(uuid, preBusiness, metamaskAPI, network, rpc)
+        (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined, uuid?: string) =>
+            _transferOutRefundByWalletPlugin(preBusiness, metamaskAPI, network, rpc, uuid)
 }
 
 export namespace business {
@@ -169,7 +169,7 @@ export namespace business {
                 return evm.transferOutByPrivateKey(preBusiness, privateKey, network, rpc)
             
             case 'solana':
-                return solana.transferOutByPrivateKey(uuid!, preBusiness, privateKey, network, rpc)
+                return solana.transferOutByPrivateKey(preBusiness, privateKey, network, rpc, uuid)
         
             default:
                 throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
@@ -185,7 +185,7 @@ export namespace business {
                 return evm.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc)
 
             case 'solana':
-                return solana.transferOutConfirmByPrivateKey(uuid!, preBusiness, privateKey, network, rpc)
+                return solana.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc, uuid)
         
             default:
                 throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
@@ -200,7 +200,7 @@ export namespace business {
                 return evm.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc)
 
             case 'solana':
-                return solana.transferOutRefundByPrivateKey(uuid!, preBusiness, privateKey, network, rpc)
+                return solana.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc, uuid)
         
             default:
                 throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);

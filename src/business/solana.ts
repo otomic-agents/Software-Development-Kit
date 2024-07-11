@@ -7,8 +7,11 @@ import pako from "pako";
 import crypto from 'crypto';
 import idl from "./solanaIdl";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
+import { toBs58Address } from "../utils/format";
 import { PreBusiness, Quote } from "../interface/interface";
-import { getOtmoicAddressBySystemChainId, getFeeRecepientAddressBySystemChainId, getStepTimeLock } from "../utils/chain";
+import { getOtmoicAddressBySystemChainId, getFeeRecepientAddressBySystemChainId, getStepTimeLock, getChainType } from "../utils/chain";
+import { decimals as evmDecimals} from "../business/evm";
+import { removePrefix0x } from "../utils/format";
 
 type Lock = {
     hash: Array<number>;
@@ -41,7 +44,7 @@ export const checkTokenInfoBoxExist = (system_chain_id: number, token_address: s
 export const decimals = (system_chain_id: number, token_address: string, rpc: string) => new Promise(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if (cache.tokensInfo[system_chain_id][token_address].decimals == undefined) {
-        let mintToken = new PublicKey(token_address)
+        let mintToken = new PublicKey(toBs58Address(token_address))
         let connection = getProvider(rpc)
         let mintTokenAccountInfo = await connection.getAccountInfo(mintToken)
         let tokenProgramId = mintTokenAccountInfo?.owner
@@ -54,7 +57,7 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
 export const symbol = (system_chain_id: number, token_address: string, rpc: string) => new Promise(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if (cache.tokensInfo[system_chain_id][token_address].symbol == undefined) {
-        let mintToken = new PublicKey(token_address)
+        let mintToken = new PublicKey(toBs58Address(token_address))
         let connection = getProvider(rpc)
         let metadata = await Metadata.findByMint(connection, mintToken)
         if (metadata && metadata.data && metadata.data.data) {
@@ -75,8 +78,19 @@ export const getDefaultRPC = (system_chain_id: number, network: string) => {
 }
 
 export const _getSignDataEIP712 = async (quote: Quote, network: string, amount: string, dstAmount: string, dstNativeAmount: string, swapToNative: number, receivingAddress: string, stepTimeLock: number | undefined, rpcSrc: string | undefined, rpcDst: string | undefined) => {
-    const srcDecimals = await decimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
-    const dstDecimals = await decimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+    let srcDecimals: any
+    if (getChainType(quote.quote_base.bridge.src_chain_id) === 'solana') {
+        srcDecimals = await decimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
+    } else if (getChainType(quote.quote_base.bridge.src_chain_id) === 'evm') {
+        srcDecimals = await evmDecimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
+    }
+
+    let dstDecimals: any
+    if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'solana') {
+        dstDecimals = await decimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+    } else if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'evm') {
+        dstDecimals = await evmDecimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+    }
 
     const signMessage = {
         src_chain_id: quote.quote_base.bridge.src_chain_id,
@@ -96,7 +110,9 @@ export const _getSignDataEIP712 = async (quote: Quote, network: string, amount: 
         agreement_reached_time: parseInt(((Date.now() + 1000 * 60 * 1) / 1000).toFixed(0)),
     }
 
-    return signMessage
+    return {
+        message: signMessage,
+    }
 }
 
 export const _getSignPreambleEIP712 = (contractAddress: PublicKey, signerPubkeys: PublicKey[], msgLen: number) => {
@@ -153,7 +169,7 @@ export const doTransferOut =
     // uuid
     let uuidBuf: number[] = []
     if (uuid) {
-        uuid = uuid.startsWith('0x') ? uuid.slice(2) : uuid
+        uuid = removePrefix0x(uuid)
         uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
     } else {
         uuid = crypto.randomBytes(16).toString('hex')
@@ -161,13 +177,13 @@ export const doTransferOut =
     }
 
     // user
-    let user = new PublicKey(preBusiness.swap_asset_information.sender)
+    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
     
-    // // receiver
-    // let receiver = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address)
+    // receiver
+    let receiver = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
 
     // mint token
-    let token = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+    let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token))
     let mintTokenAccountInfo = await provider.getAccountInfo(token)
     let tokenProgramId = mintTokenAccountInfo!.owner
 
@@ -186,13 +202,13 @@ export const doTransferOut =
     // hash lock
     let hashLock = preBusiness.hashlock_solana
     let lockUser: Lock = {
-        hash: Array.from(Buffer.from(hashLock, 'hex')),
+        hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
         deadline: new BN(agreementReachedTime + 3 * stepTimeLock),
     }
 
     let relayHashLock = preBusiness.relay_hashlock_solana
     let lockRelay: Lock = {
-        hash: Array.from(Buffer.from(relayHashLock, 'hex')),
+        hash: Array.from(Buffer.from(removePrefix0x(relayHashLock), 'hex')),
         deadline: new BN(agreementReachedTime + 6 * stepTimeLock),
     }
 
@@ -243,7 +259,7 @@ export const doTransferOut =
     let tx = await otmoic.methods
     .prepare(
         uuidBuf,
-        user,
+        receiver,
         solAmount,
         amount,
         lockUser,
@@ -261,7 +277,7 @@ export const doTransferOut =
         escrow: escrow,
         escrowAta: escrowAta,
         adminSettings: adminSettings,
-        tokenSettings: tokenSettings === null ? undefined : tokenSettings,
+        tokenSettings: tokenSettings!,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         tokenProgram: tokenProgramId,
@@ -299,7 +315,7 @@ export const doTransferOutConfirm =
     // uuid
     let uuidBuf: number[] = []
     if (uuid) {
-        uuid = uuid.startsWith('0x') ? uuid.slice(2) : uuid
+        uuid = removePrefix0x(uuid)
         uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
     } else {
         uuid = crypto.randomBytes(16).toString('hex')
@@ -307,15 +323,15 @@ export const doTransferOutConfirm =
     }
 
     // receiver
-    let lp = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address)
+    let lp = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
    
     // mint token
-    let token = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+    let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token))
     let mintTokenAccountInfo = await provider.getAccountInfo(token)
     let tokenProgramId = mintTokenAccountInfo!.owner
    
     // hash preimage
-    let preimage = Array.from(Buffer.from(preBusiness.preimage, 'hex'))
+    let preimage = Array.from(Buffer.from(removePrefix0x(preBusiness.preimage), 'hex'))
    
     // adminSettings
     let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId)
@@ -377,7 +393,7 @@ export const doTransferOutRefund =
     // uuid
     let uuidBuf: number[] = []
     if (uuid) {
-        uuid = uuid.startsWith('0x') ? uuid.slice(2) : uuid
+        uuid = removePrefix0x(uuid)
         uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
     } else {
         uuid = crypto.randomBytes(16).toString('hex')
@@ -385,10 +401,10 @@ export const doTransferOutRefund =
     }
    
     // user
-    let user = new PublicKey(preBusiness.swap_asset_information.sender)
+    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
    
     // mint token
-    let token = new PublicKey(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+    let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token))
     let mintTokenAccountInfo = await provider.getAccountInfo(token)
     let tokenProgramId = mintTokenAccountInfo!.owner
    
@@ -419,8 +435,8 @@ export const doTransferOutRefund =
 
 export const getBalance = async (network: string, systemChainId: number, token: string, address: string, rpc: string | undefined) => {
     let provider = getProvider(rpc === undefined ? getDefaultRPC(systemChainId, network) : rpc)
-    let tokenAccounts = await provider.getTokenAccountsByOwner(new PublicKey(address), {
-        mint: new PublicKey(token),
+    let tokenAccounts = await provider.getTokenAccountsByOwner(new PublicKey(toBs58Address(address)), {
+        mint: new PublicKey(toBs58Address(token)),
     })
 
     if (tokenAccounts.value.length == 0) {

@@ -180,7 +180,7 @@ export const doTransferOut =
     let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
     
     // receiver
-    let receiver = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
+    let lp = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
 
     // mint token
     let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token))
@@ -259,7 +259,7 @@ export const doTransferOut =
     let tx = await otmoic.methods
     .prepare(
         uuidBuf,
-        receiver,
+        lp,
         solAmount,
         amount,
         lockUser,
@@ -419,6 +419,281 @@ export const doTransferOutRefund =
         .refund(uuidBuf)
         .accounts({
             from: user,
+            source: source,
+            escrow: escrow,
+            escrowAta: escrowAta,
+            systemProgram: SystemProgram.programId,
+            tokenProgram: tokenProgramId,
+        })
+        .transaction()
+    
+    resolve({
+        tx,
+        uuidBack: uuid
+    })
+})
+
+export const doTransferIn = 
+    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+        new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
+    const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id
+
+    // setup a dummy provider
+    setProvider(
+        new AnchorProvider(
+            new Connection('http://localhost'),
+            new AnchorWallet(
+                Keypair.fromSeed(
+                    Uint8Array.from([
+                        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        1,
+                    ]),
+                ),
+            ),
+            {},
+        ),
+    )
+    const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
+
+    // uuid
+    let uuidBuf: number[] = []
+    if (uuid) {
+        uuid = removePrefix0x(uuid)
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    } else {
+        uuid = crypto.randomBytes(16).toString('hex')
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    }
+
+    // lp
+    let lp = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
+
+    // receiver
+    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
+    
+    // mint token
+    let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token))
+    let mintTokenAccountInfo = await provider.getAccountInfo(token)
+    let tokenProgramId = mintTokenAccountInfo!.owner
+
+    // amount
+    let amount = new BN(preBusiness.swap_asset_information.dst_amount)
+
+    // sol amount
+    let solAmount = new BN(preBusiness.swap_asset_information.dst_native_amount)
+
+    // agreement reached time and step time lock
+    let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time
+    let stepTimeLock = preBusiness.swap_asset_information.step_time_lock
+    let transferInDeadline = new BN(agreementReachedTime + 2 * stepTimeLock);
+    let refundDeadline = new BN(agreementReachedTime + 7 * stepTimeLock)
+    
+    // hash lock
+    let hashLock = preBusiness.hashlock_solana
+    let lockLp: Lock = {
+        hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
+        deadline: new BN(agreementReachedTime + 5 * stepTimeLock),
+    }
+
+    // source ata token account
+    let source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId)
+
+    // escrow and escrowAta
+    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId)
+    let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
+
+    // adminSettings
+    let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId)
+
+    // tokenSettings
+    let tokenSettings: PublicKey | null
+    [tokenSettings] = PublicKey.findProgramAddressSync(
+        [Buffer.from('token'), token.toBytes()],
+        otmoic.programId,
+    )
+    let tokenSettingsAccount = await provider.getAccountInfo(tokenSettings)
+    if (tokenSettingsAccount == null) {
+        tokenSettings = null
+    }
+
+    // memo
+    let memo = msgpack5()
+        .encode({
+            stepTimeLock: stepTimeLock,
+            agreementReachedTime: agreementReachedTime,
+            srcChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
+            srcTransferId: preBusiness.swap_asset_information.src_transfer_id,
+            method: "1",
+        })
+        .slice()
+
+    let compressedData = pako.deflate(memo, { level: 9 })
+
+    let compressedBuffer = Buffer.from(compressedData)
+
+    let tx = await otmoic.methods
+    .prepare(
+        uuidBuf,
+        user,
+        solAmount,
+        amount,
+        lockLp,
+        null,
+        transferInDeadline,
+        refundDeadline,
+        Buffer.from([]),
+        compressedBuffer,
+    )
+    .accounts({
+        payer: lp,
+        from: lp,
+        mint: token,
+        source: source,
+        escrow: escrow,
+        escrowAta: escrowAta,
+        adminSettings: adminSettings,
+        tokenSettings: tokenSettings!,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: tokenProgramId,
+    })
+    .transaction()
+
+    resolve({
+        tx,
+        uuidBack: uuid
+    })
+})
+
+export const doTransferInConfirm = 
+    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+        new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
+    const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id
+
+    // setup a dummy provider
+    setProvider(
+        new AnchorProvider(
+            new Connection('http://localhost'),
+            new AnchorWallet(
+                Keypair.fromSeed(
+                    Uint8Array.from([
+                        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        1,
+                    ]),
+                ),
+            ),
+            {},
+        ),
+    )
+    const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
+    
+    // uuid
+    let uuidBuf: number[] = []
+    if (uuid) {
+        uuid = removePrefix0x(uuid)
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    } else {
+        uuid = crypto.randomBytes(16).toString('hex')
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    }
+
+    // receiver
+    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
+   
+    // mint token
+    let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token))
+    let mintTokenAccountInfo = await provider.getAccountInfo(token)
+    let tokenProgramId = mintTokenAccountInfo!.owner
+   
+    // hash preimage
+    let preimage = Array.from(Buffer.from(removePrefix0x(preBusiness.preimage), 'hex'))
+   
+    // adminSettings
+    let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId)
+   
+    // destination
+    let destination = getAssociatedTokenAddressSync(token, user, true, tokenProgramId)
+   
+    // fee recepient
+    let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network))
+    let feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId)
+   
+    // escrow and escrowAta
+    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId)
+    let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
+
+    let tx = await otmoic.methods
+        .confirm(uuidBuf, preimage)
+        .accounts({
+            to: user,
+            destination: destination,
+            escrow: escrow,
+            escrowAta: escrowAta,
+            adminSettings: adminSettings,
+            feeRecepient: feeRecepient,
+            feeDestination: feeDestination,
+            systemProgram: SystemProgram.programId,
+            tokenProgram: tokenProgramId,
+        })
+        .transaction()
+    
+    resolve({
+        tx,
+        uuidBack: uuid
+    })
+})
+
+export const doTransferInRefund = 
+    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+        new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
+    const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id
+
+    // setup a dummy provider
+    setProvider(
+        new AnchorProvider(
+            new Connection('http://localhost'),
+            new AnchorWallet(
+                Keypair.fromSeed(
+                    Uint8Array.from([
+                        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        1,
+                    ]),
+                ),
+            ),
+            {},
+        ),
+    )
+    const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network))
+    
+    // uuid
+    let uuidBuf: number[] = []
+    if (uuid) {
+        uuid = removePrefix0x(uuid)
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    } else {
+        uuid = crypto.randomBytes(16).toString('hex')
+        uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
+    }
+   
+    // lp
+    let lp = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
+   
+    // mint token
+    let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token))
+    let mintTokenAccountInfo = await provider.getAccountInfo(token)
+    let tokenProgramId = mintTokenAccountInfo!.owner
+   
+    // source
+    let source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId)
+   
+    // escrow and escrowAta
+    let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId)
+    let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId)
+
+    let tx = await otmoic.methods
+        .refund(uuidBuf)
+        .accounts({
+            from: lp,
             source: source,
             escrow: escrow,
             escrowAta: escrowAta,

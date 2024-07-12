@@ -103,7 +103,8 @@ export interface SwapAssetInformation {
     did: string,
     requestor: string,
     user_sign: string,
-    lp_sign: string
+    lp_sign: string,
+    src_transfer_id?: string
 }
 
 export interface KycInfo {

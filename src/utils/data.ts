@@ -37,12 +37,39 @@ export const getTransferOutConfirmData = (preBusiness: PreBusiness) => {
         sender: preBusiness.swap_asset_information.sender,
         receiver: preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address,
         token: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token,
-        token_amount: preBusiness.swap_asset_information.amount,
-        eth_amount: 0,
+        tokenAmount: preBusiness.swap_asset_information.amount,
+        ethAmount: 0,
         hashlock: ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32'], [preBusiness.preimage])),
         relayHashlock: preBusiness.relay_hashlock_evm,
         stepTimelock: preBusiness.swap_asset_information.step_time_lock,
         preimage: preBusiness.preimage,
+        agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time
+    }
+}
+
+export const getTransferInConfirmData = (preBusiness: PreBusiness, sender: string) => {
+
+    // wallet_address, // address _sender,
+    // ethers.BigNumber.from(
+    //   command_transfer_confirm.user_receiver_address
+    // ).toHexString(), // address _receiver,
+    // ethers.BigNumber.from(command_transfer_confirm.token).toHexString(), // address _token,
+    // command_transfer_confirm.token_amount, // uint256 _token_amount,
+    // command_transfer_confirm.eth_amount, // uint256 _eth_amount,
+    // ethers.utils.arrayify(command_transfer_confirm.hash_lock), // bytes32 _hashlock,
+    // command_transfer_confirm.step_time_lock, // uint64 _timelock,
+    // ethers.utils.arrayify(command_transfer_confirm.preimage), // bytes32 _preimage
+    // command_transfer_confirm.agreement_reached_time,
+
+    return {
+        sender: sender,
+        receiver: preBusiness.swap_asset_information.dst_address,
+        token: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token,
+        amount: preBusiness.swap_asset_information.dst_amount,
+        nativeAmount: preBusiness.swap_asset_information.dst_native_amount,
+        hashlock: ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32'], [preBusiness.preimage])),
+        preimage: preBusiness.preimage,
+        stepTimeLock: preBusiness.swap_asset_information.step_time_lock,
         agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time
     }
 }

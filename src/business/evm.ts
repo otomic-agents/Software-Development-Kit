@@ -5,7 +5,7 @@ import ABI from "./evmABI"
 import { PreBusiness, Quote } from "../interface/interface";
 import { getChainId, getOtmoicAddressBySystemChainId, getStepTimeLock } from "../utils/chain";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
-import { getTransferOutConfirmData, getTransferOutData } from "../utils/data";
+import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from "../utils/data";
 
 interface Tokens {
     [key: number]: {
@@ -215,8 +215,8 @@ export const doTransferOutConfirm =
         data.sender,
         data.receiver,
         data.token,
-        data.token_amount,
-        data.eth_amount,
+        data.tokenAmount,
+        data.ethAmount,
         data.hashlock,
         data.relayHashlock,
         data.stepTimelock,
@@ -226,6 +226,29 @@ export const doTransferOutConfirm =
     )
 
     resolve(transferOutCfmTx)
+})
+
+export const doTransferInConfirm =
+    (preBusiness: PreBusiness, provider: JsonRpcProvider, wallet: Wallet | undefined, network: string, sender: string) =>
+        new Promise<ContractTransactionResponse>(async (resolve, reject) => {
+  
+    const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id
+
+    const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic, provider).connect(wallet == undefined ? await provider.getSigner() : wallet)
+    const data = getTransferInConfirmData(preBusiness, sender)
+    const transferInCfmTx = await otmoic.getFunction('confirmTransferIn').send(
+        data.sender,
+        data.receiver,
+        data.token,
+        data.amount,
+        data.nativeAmount,
+        data.hashlock,
+        data.stepTimeLock,
+        data.preimage,
+        data.agreementReachedTime
+    )   
+
+    resolve(transferInCfmTx)
 })
 
 export const doTransferOutRefund =
@@ -240,8 +263,8 @@ export const doTransferOutRefund =
         data.sender,
         data.receiver,
         data.token,
-        data.token_amount,
-        data.eth_amount,
+        data.tokenAmount,
+        data.ethAmount,
         data.hashlock,
         data.relayHashlock,
         data.stepTimelock,
@@ -260,4 +283,63 @@ export const getBalance = async (network: string, systemChainId: number, token: 
     return convertStandardUnits(balance, decimals)
 }
 
+export const _getComplainSignData = async (preBusiness: PreBusiness, network: string) => {
 
+    const eip712Domain = {
+        name: 'Otmoic Reputation',
+        version: '1',
+        chainId: network == 'mainnet' ? 10 : 11155420,
+        verifyingContract: network == 'mainnet' ? '0xE924F7f68D1dcd004720e107F62c6303aF271ed3' : '0xe69257d83b2c50b2d7496348d053d76c744753e4'
+    };
+
+    const complaintType = {
+        EIP712Domain: [
+                    { name: 'name', type: 'string' },
+                    { name: 'version', type: 'string' },
+                    { name: 'chainId', type: 'uint256' }, 
+                    {"name":"verifyingContract","type":"address"}
+                ],
+        Complaint: [
+            { name: 'srcChainId', type: 'uint64' },
+            { name: 'srcAddress', type: 'uint256' },
+            { name: 'srcToken', type: 'string' },
+            { name: 'dstChainId', type: 'uint64' },
+            { name: 'dstAddress', type: 'uint256' },
+            { name: 'dstToken', type: 'string' },
+            { name: 'srcAmount', type: 'string' },
+            { name: 'dstAmount', type: 'string' },
+            { name: 'dstNativeAmount', type: 'string' },
+            { name: 'requestor', type: 'string' },
+            { name: 'lpId', type: 'string' },
+            { name: 'stepTimeLock', type: 'uint64' },
+            { name: 'agreementReachedTime', type: 'uint64' },
+            { name: 'userSign', type: 'string' },
+            { name: 'lpSign', type: 'string' },
+        ]
+    }
+
+    const complaintValue = {
+        srcChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
+        srcAddress: preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address,
+        srcToken: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token,
+        dstChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
+        dstAddress: preBusiness.swap_asset_information.dst_address,
+        dstToken: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token,
+        srcAmount: preBusiness.swap_asset_information.amount,
+        dstAmount: preBusiness.swap_asset_information.dst_amount,
+        dstNativeAmount: preBusiness.swap_asset_information.dst_native_amount,
+        requestor: preBusiness.swap_asset_information.sender,
+        lpId: preBusiness.swap_asset_information.quote.lp_info.name,
+        stepTimeLock: preBusiness.swap_asset_information.step_time_lock,
+        agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
+        userSign: preBusiness.swap_asset_information.user_sign,
+        lpSign: preBusiness.swap_asset_information.lp_sign
+    }
+
+    return {
+        types: complaintType,
+        primaryType: 'Complaint',
+        domain: eip712Domain,
+        message: complaintValue
+    }
+}

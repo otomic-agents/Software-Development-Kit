@@ -28,9 +28,11 @@ import { getChainName, getChainType } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
-import { _getSignDataEIP712 } from './business/evm';
+import { _getComplainSignData, _getSignDataEIP712 } from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from "./api/evm/SignQuoteEIP712ByPrivateKey";
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
+import { _signComplainEIP712ByPrivateKey } from './api/evm/SignComplainEIP712ByPrivateKey';
+import { _signComplainEIP712ByTermiPass } from './api/evm/SignComplainEIP712ByTermiPass';
 import { _swap } from './api/Swap';
 import { _transferOutByPrivateKey } from './api/evm/TransferOutByPrivateKey'; 
 import { _transferOutByMetamaskAPI } from './api/evm/TransferOutByMetamaskAPI';
@@ -38,6 +40,8 @@ import { _transferOutConfirmByPrivateKey } from './api/evm/TransferOutConfirmByP
 import { _transferOutConfirmByMetamaskAPI } from './api/evm/TransferOutConfirmByMetamaskAPI';
 import { _transferOutRefundByPrivateKey } from './api/evm/TransferOutRefundByPrivateKey';
 import { _transferOutRefundByMetamaskAPI } from './api/evm/TransferOutRefundByMetamaskAPI';
+import { _transferInConfirmByPrivateKey } from './api/evm/TransferInConfirmByPrivateKey';
+import { _transferInConfirmByMetamaskAPI } from './api/evm/TransferInConfirmByMetamaskAPI';
 import { _getHistory } from './api/GetHistory';
 import { _getBusiness } from './api/GetBusiness';
 import { _getBridge } from './api/GetBridge';
@@ -54,6 +58,8 @@ import { _transferOutConfirmByPrivateKey as _transferOutConfirmSolanaByPrivateKe
 import { _transferOutConfirmByWalletPlugin } from './api/solana/TransferOutConfirmByWalletPlugin';
 import { _transferOutRefundByPrivateKey as _transferOutRefundSolanaByPrivateKey } from './api/solana/TransferOutRefundByPrivateKey';
 import { _transferOutRefundByWalletPlugin } from './api/solana/TransferOutRefundByWalletPlugin';
+import { submitComplain } from './api/SubmitComplain';
+import { getDidName } from './utils/did';
 
 export namespace utils {
     export const GetChainName = getChainName;
@@ -63,7 +69,15 @@ export namespace utils {
 }
 
 export namespace evm {
+
+    export const getComplainSignData = _getComplainSignData;
+
+    export const signComplainEIP712ByTermiPass = _signComplainEIP712ByTermiPass
+
+    export const signComplainEIP712ByPrivateKey = _signComplainEIP712ByPrivateKey;
+
     export const getSignDataEIP712 = _getSignDataEIP712;
+    
     export const signQuoteEIP712ByPrivateKey = 
         (network: string, quote: Quote, privateKey: string, amount: string, swapToNative: number, 
             receivingAddress: string, stepTimeLock: number | undefined, rpcSrc: string | undefined, 
@@ -99,6 +113,14 @@ export namespace evm {
     export const transferOutRefundByMetamaskAPI = 
         (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined) =>
             _transferOutRefundByMetamaskAPI(preBusiness, metamaskAPI, network, rpc)
+
+    export const transferInConfirmByPrivateKey = 
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, sender: string) => 
+            _transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender)
+
+    export const transferInConfirmByMetamaskAPI =
+        (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined, sender: string) =>
+            _transferInConfirmByMetamaskAPI(preBusiness, metamaskAPI, network, rpc, sender)
 }
 
 export namespace solana {
@@ -207,6 +229,17 @@ export namespace business {
         }
     }
 
+    export const complainByPrivateKey = 
+        async (preBusiness: PreBusiness, privateKey: string, network: string) => {
+            const name = getDidName(privateKey)
+            if (name != undefined) {
+                const signed = await evm.signComplainEIP712ByPrivateKey(preBusiness, privateKey, network)
+                return await submitComplain(network, signed.signData.message, signed.signed, name)
+
+            } else {
+                return 'wallet not terminus did owner'
+            }
+        }
 }
 
 export namespace assistive {

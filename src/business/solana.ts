@@ -1,6 +1,8 @@
 import { PublicKey, Connection, Keypair, SystemProgram, Transaction } from "@solana/web3.js";
 import { getMint, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { fetchDigitalAsset } from "@metaplex-foundation/mpl-token-metadata";
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
+import { publicKey } from '@metaplex-foundation/umi'
 import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet } from "@coral-xyz/anchor";
 import msgpack5 from "msgpack5";
 import pako from "pako";
@@ -58,10 +60,10 @@ export const symbol = (system_chain_id: number, token_address: string, rpc: stri
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if (cache.tokensInfo[system_chain_id][token_address].symbol == undefined) {
         let mintToken = new PublicKey(toBs58Address(token_address))
-        let connection = getProvider(rpc)
-        let metadata = await Metadata.findByMint(connection, mintToken)
-        if (metadata && metadata.data && metadata.data.data) {
-            cache.tokensInfo[system_chain_id][token_address].symbol = metadata.data.data.symbol
+        const umi = createUmi(rpc)
+        let asset = await fetchDigitalAsset(umi, publicKey(mintToken.toBase58()))
+        if (asset && asset.metadata) {
+            cache.tokensInfo[system_chain_id][token_address].symbol = asset.metadata.symbol
         }
     }
     resolve(cache.tokensInfo[system_chain_id][token_address].symbol)

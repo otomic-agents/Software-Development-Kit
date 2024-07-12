@@ -12,3 +12,8 @@ export interface TranslatedBridge extends Bridge{
     srcTokenSymbol: string,
     dstTokenSymbol: string
 }
+
+export interface ResponseSolana {
+    txHash: string,
+    uuid: string
+}

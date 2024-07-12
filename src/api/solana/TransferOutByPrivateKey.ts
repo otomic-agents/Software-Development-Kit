@@ -2,10 +2,11 @@ import { Connection, Keypair } from "@solana/web3.js";
 import { doTransferOut, getJsonRpcProvider } from "../../business/solana";
 import { PreBusiness } from "../../interface/interface";
 import { removePrefix0x } from "../../utils/format"
+import { ResponseSolana } from "../../interface/api"
 
 export const _transferOutByPrivateKey = 
     (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, uuid?: string) => 
-        new Promise<{txHash: string, uuid: string}>(async (resolve, reject) => {
+        new Promise<ResponseSolana>(async (resolve, reject) => {
     const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')))
 
     const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network)

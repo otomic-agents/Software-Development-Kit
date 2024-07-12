@@ -22,7 +22,10 @@ import { Business } from './interface/interface';
 export { Business };
 import { TranslatedBridge } from './interface/api';
 export { TranslatedBridge }
-
+import { ResponseTransferOut } from './interface/api'
+export { ResponseTransferOut }
+import { ResponseSolana } from './interface/api'
+export { ResponseSolana }
 
 import { getChainName, getChainType } from './utils/chain';
 import { getChainId } from './utils/chain';
@@ -66,6 +69,7 @@ export namespace utils {
     export const GetChainId = getChainId;
     export const Sleep = sleep;
     export const MathReceived = mathReceived;
+    export const GetChainType = getChainType;
 }
 
 export namespace evm {

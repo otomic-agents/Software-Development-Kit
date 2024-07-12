@@ -56,7 +56,7 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
     resolve(cache.tokensInfo[system_chain_id][token_address].decimals)
 })
 
-export const symbol = (system_chain_id: number, token_address: string, rpc: string) => new Promise(async (resolve, reject) => {
+export const symbol = (system_chain_id: number, token_address: string, rpc: string): Promise<string> => new Promise(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if (cache.tokensInfo[system_chain_id][token_address].symbol == undefined) {
         let mintToken = new PublicKey(toBs58Address(token_address))

@@ -1,7 +1,7 @@
 import { Bridge, Relay, assistive } from '../src/index'
 
-const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud'
-const NETWORK = 'mainnet'
+const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com'
+const NETWORK = 'testnet'
 const RPCS = {}
 
 const GetBridge = async () => {

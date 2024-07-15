@@ -68,7 +68,7 @@ export const getDefaultRPC = (system_chain_id: number, network: string) => {
         case 9000:
             return isMainnet ? 'https://rpc.ankr.com/avalanche' : 'https://rpc.ankr.com/avalanche_fuji';
         case 9006:
-            return isMainnet ? 'https://endpoints.omniatech.io/v1/bsc/mainnet/a6561bfe08614178a5a993e03df2c6d1' : 'https://alpha-wild-layer.bsc-testnet.discover.quiknode.pro/36e6335f383755d8fcceb64fe90000b3aecb516d';
+            return isMainnet ? 'https://endpoints.omniatech.io/v1/bsc/mainnet/a6561bfe08614178a5a993e03df2c6d1' : 'https://bsc-testnet.public.blastapi.io';
         case 60:
             return isMainnet ? 'https://rpc.ankr.com/eth' : 'https://ethereum-sepolia-rpc.publicnode.com'
         case 966:

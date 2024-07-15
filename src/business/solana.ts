@@ -60,10 +60,16 @@ export const symbol = (system_chain_id: number, token_address: string, rpc: stri
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if (cache.tokensInfo[system_chain_id][token_address].symbol == undefined) {
         let mintToken = new PublicKey(toBs58Address(token_address))
-        const umi = createUmi(rpc)
-        let asset = await fetchDigitalAsset(umi, publicKey(mintToken.toBase58()))
-        if (asset && asset.metadata) {
-            cache.tokensInfo[system_chain_id][token_address].symbol = asset.metadata.symbol
+        try {
+            const umi = createUmi(rpc)
+            let asset = await fetchDigitalAsset(umi, publicKey(mintToken.toBase58()))
+            if (asset && asset.metadata) {
+                cache.tokensInfo[system_chain_id][token_address].symbol = asset.metadata.symbol
+            }
+        } catch (err) {
+            if ((err as any).name === 'AccountNotFoundError') {
+                cache.tokensInfo[system_chain_id][token_address].symbol = undefined
+            }
         }
     }
     resolve(cache.tokensInfo[system_chain_id][token_address].symbol)

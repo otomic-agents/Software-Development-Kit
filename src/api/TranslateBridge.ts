@@ -27,7 +27,7 @@ export const translateBridge = (bridges: Bridge[], network: string, rpcs: {[key:
         if (getChainType(bridge.dst_chain_id) === 'evm') {
             dstTokenSymbol = await symbol(bridge.dst_chain_id, bridge.dst_token, 
                 dstRpc == undefined ? getDefaultRPC(bridge.dst_chain_id, network) : dstRpc)
-        } else if (getChainType(bridge.src_chain_id) === 'solana') {
+        } else if (getChainType(bridge.dst_chain_id) === 'solana') {
             dstTokenSymbol = await solanaSymbol(bridge.dst_chain_id, bridge.dst_token,
                 dstRpc == undefined ? getSolanaDefaultRPC(bridge.dst_chain_id, network) : dstRpc)
         }

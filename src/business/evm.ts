@@ -91,16 +91,16 @@ export const _getSignDataEIP712 = async (quote: Quote, network: string, amount: 
 
     let srcDecimals: any
     if (getChainType(quote.quote_base.bridge.src_chain_id) === 'evm') {
-        const srcDecimals = await decimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
+        srcDecimals = await decimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
     } else if (getChainType(quote.quote_base.bridge.src_chain_id) === 'solana') {
-        const srcDecimals = await solanaDecimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getSolanaDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
+        srcDecimals = await solanaDecimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getSolanaDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
     }
 
     let dstDecimals: any
     if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'evm') {
-        const dstDecimals = await decimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+        dstDecimals = await decimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
     } else if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'solana') {
-        const dstDecimals = await solanaDecimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getSolanaDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+        dstDecimals = await solanaDecimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getSolanaDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
     }
  
     const signMessage = {

@@ -7,7 +7,8 @@ const bridge: Bridge = {
     src_chain_id: 9006,
     dst_chain_id: 614,
     src_token: '0x55d398326f99059ff775485246999027b3197955',
-    dst_token: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58'
+    dst_token: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+    bridge_name: undefined
 }
 
 const Ask = async () => {

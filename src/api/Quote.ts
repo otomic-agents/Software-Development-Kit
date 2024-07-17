@@ -21,8 +21,7 @@ export class QuoteManager {
         this.socket = io(`${relayUrl}`, {withCredentials: true})
 
         let connectionTimeout = setTimeout(() => {
-            console.error('connection timed out');
-            this.socket?.disconnect();
+            throw new Error('connection timed out')
           }, timeout);
 
         this.socket.on("quote", data => {          
@@ -32,16 +31,16 @@ export class QuoteManager {
         this.socket.on("connect", () => {
             const bridgeName = `${askIF.bridge.src_chain_id}_${askIF.bridge.dst_chain_id}_${askIF.bridge.src_token}_${askIF.bridge.dst_token}`
             this.socket?.emit("ask", bridgeName, askIF.amount);
-            clearTimeout(connectionTimeout);
+            clearTimeout(connectionTimeout)
         })
 
         this.socket.on("disconnect", () => {
             this.asking = false
-            clearTimeout(connectionTimeout);
+            clearTimeout(connectionTimeout)
         })
 
         this.socket.on('connect_error', (error: any) => {
-            clearTimeout(connectionTimeout);
+            clearTimeout(connectionTimeout)
             throw new Error(error)
         });
     }

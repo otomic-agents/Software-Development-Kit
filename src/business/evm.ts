@@ -3,9 +3,10 @@ import BigNumber from "bignumber.js";
 
 import ABI from "./evmABI"
 import { PreBusiness, Quote } from "../interface/interface";
-import { getChainId, getOtmoicAddressBySystemChainId, getStepTimeLock } from "../utils/chain";
+import { getChainId, getChainType, getOtmoicAddressBySystemChainId, getStepTimeLock } from "../utils/chain";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from "../utils/data";
+import { decimals as solanaDecimals, getDefaultRPC as getSolanaDefaultRPC} from "../business/solana";
 
 interface Tokens {
     [key: number]: {
@@ -88,9 +89,20 @@ export const _getSignDataEIP712 = async (quote: Quote, network: string, amount: 
         chainId: getChainId(quote.quote_base.bridge.src_chain_id, network),
     };
 
-    const srcDecimals = await decimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
-    const dstDecimals = await decimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+    let srcDecimals: any
+    if (getChainType(quote.quote_base.bridge.src_chain_id) === 'evm') {
+        const srcDecimals = await decimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
+    } else if (getChainType(quote.quote_base.bridge.src_chain_id) === 'solana') {
+        const srcDecimals = await solanaDecimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getSolanaDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
+    }
 
+    let dstDecimals: any
+    if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'evm') {
+        const dstDecimals = await decimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+    } else if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'solana') {
+        const dstDecimals = await solanaDecimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getSolanaDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+    }
+ 
     const signMessage = {
         src_chain_id: quote.quote_base.bridge.src_chain_id,
         src_address: quote.quote_base.lp_bridge_address,

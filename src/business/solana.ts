@@ -12,7 +12,7 @@ import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } 
 import { toBs58Address } from "../utils/format";
 import { PreBusiness, Quote } from "../interface/interface";
 import { getOtmoicAddressBySystemChainId, getFeeRecepientAddressBySystemChainId, getStepTimeLock, getChainType } from "../utils/chain";
-import { decimals as evmDecimals} from "../business/evm";
+import { decimals as evmDecimals, getDefaultRPC as getEvmDefaultRPC} from "../business/evm";
 import { removePrefix0x } from "../utils/format";
 
 type Lock = {
@@ -90,14 +90,14 @@ export const _getSignDataEIP712 = async (quote: Quote, network: string, amount: 
     if (getChainType(quote.quote_base.bridge.src_chain_id) === 'solana') {
         srcDecimals = await decimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
     } else if (getChainType(quote.quote_base.bridge.src_chain_id) === 'evm') {
-        srcDecimals = await evmDecimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
+        srcDecimals = await evmDecimals(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.src_token, rpcSrc == undefined ? getEvmDefaultRPC(quote.quote_base.bridge.src_chain_id, network) : rpcSrc)
     }
 
     let dstDecimals: any
     if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'solana') {
         dstDecimals = await decimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
     } else if (getChainType(quote.quote_base.bridge.dst_chain_id) === 'evm') {
-        dstDecimals = await evmDecimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
+        dstDecimals = await evmDecimals(quote.quote_base.bridge.dst_chain_id, quote.quote_base.bridge.dst_token, rpcDst == undefined ? getEvmDefaultRPC(quote.quote_base.bridge.dst_chain_id, network) : rpcDst)
     }
 
     const signMessage = {

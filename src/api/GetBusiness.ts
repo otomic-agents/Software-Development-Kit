@@ -1,5 +1,5 @@
 import needle from 'needle'
-import { Business } from '../interface/interface'
+import { Business, BusinessFullData } from '../interface/interface'
 
 export const _getBusiness = (relayUrl: string, hash: string) => new Promise<Business>((resolve, reject) => {
     needle('post', `${relayUrl}/relay/web/fetch_business`, 
@@ -19,7 +19,7 @@ export const _getBusiness = (relayUrl: string, hash: string) => new Promise<Busi
     
 })
 
-export const _getBusinessFull = (relayUrl: string, hash: string) => new Promise<Business>((resolve, reject) => {
+export const _getBusinessFull = (relayUrl: string, hash: string) => new Promise<BusinessFullData>((resolve, reject) => {
     needle('post', `${relayUrl}/relay/web/fetch_business_hash`, 
     {
         business_hash: hash

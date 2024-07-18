@@ -442,7 +442,7 @@ export const doTransferOutRefund =
 })
 
 export const doTransferIn = 
-    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+    (preBusiness: PreBusiness, provider: Connection, network: string, sender: string, uuid?: string) => 
         new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id
 
@@ -474,10 +474,10 @@ export const doTransferIn =
     }
 
     // lp
-    let lp = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
+    let lp = new PublicKey(toBs58Address(sender))
 
     // receiver
-    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
+    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.dst_address))
     
     // mint token
     let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token))
@@ -574,7 +574,7 @@ export const doTransferIn =
 })
 
 export const doTransferInConfirm = 
-    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+    (preBusiness: PreBusiness, provider: Connection, network: string, sender: string, uuid?: string) => 
         new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id
 
@@ -606,7 +606,7 @@ export const doTransferInConfirm =
     }
 
     // receiver
-    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
+    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.dst_address))
    
     // mint token
     let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token))
@@ -652,7 +652,7 @@ export const doTransferInConfirm =
 })
 
 export const doTransferInRefund = 
-    (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
+    (preBusiness: PreBusiness, provider: Connection, network: string, sender: string, uuid?: string) => 
         new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id
 
@@ -684,7 +684,7 @@ export const doTransferInRefund =
     }
    
     // lp
-    let lp = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
+    let lp = new PublicKey(toBs58Address(sender))
    
     // mint token
     let token = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token))

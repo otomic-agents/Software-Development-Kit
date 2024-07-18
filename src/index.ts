@@ -46,7 +46,7 @@ import { _transferOutRefundByMetamaskAPI } from './api/evm/TransferOutRefundByMe
 import { _transferInConfirmByPrivateKey } from './api/evm/TransferInConfirmByPrivateKey';
 import { _transferInConfirmByMetamaskAPI } from './api/evm/TransferInConfirmByMetamaskAPI';
 import { _getHistory } from './api/GetHistory';
-import { _getBusiness } from './api/GetBusiness';
+import { _getBusiness, _getBusinessFull } from './api/GetBusiness';
 import { _getBridge } from './api/GetBridge';
 import { QuoteManager } from "./api/Quote";
 import { mathReceived } from './utils/math';
@@ -61,6 +61,8 @@ import { _transferOutConfirmByPrivateKey as _transferOutConfirmSolanaByPrivateKe
 import { _transferOutConfirmByWalletPlugin } from './api/solana/TransferOutConfirmByWalletPlugin';
 import { _transferOutRefundByPrivateKey as _transferOutRefundSolanaByPrivateKey } from './api/solana/TransferOutRefundByPrivateKey';
 import { _transferOutRefundByWalletPlugin } from './api/solana/TransferOutRefundByWalletPlugin';
+import { _transferInConfirmByPrivateKey as _transferInConfirmSolanaByPrivateKey } from './api/solana/TransferInConfirmByPrivateKey';
+import { _transferInConfirmByWalletPlugin } from './api/solana/TransferInConfirmByWalletPlugin';
 import { submitComplain } from './api/SubmitComplain';
 import { getDidName } from './utils/did';
 
@@ -165,6 +167,14 @@ export namespace solana {
     export const transferOutRefundByWalletPlugin = 
         (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined, uuid?: string) =>
             _transferOutRefundByWalletPlugin(preBusiness, metamaskAPI, network, rpc, uuid)
+
+    export const transferInConfirmByPrivateKey = 
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, sender: string, uuid?: string) => 
+            _transferInConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc, sender, uuid)
+
+    export const transferInConfirmByWalletPlugin =
+        (preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc: string | undefined, sender: string, uuid?: string) => 
+            _transferInConfirmByWalletPlugin(preBusiness, metamaskAPI, network, rpc, sender, uuid)    
 }
 
 export namespace business {
@@ -212,6 +222,21 @@ export namespace business {
 
             case 'solana':
                 return solana.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc, uuid)
+        
+            default:
+                throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
+        }
+    }
+
+    export const transferInConfirmByPrivateKey = 
+        (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, sender: string, uuid?: string) => {
+                  
+        switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+            case 'evm':
+                return evm.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender)
+
+            case 'solana':
+                return solana.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender, uuid)
         
             default:
                 throw new Error(`not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`);
@@ -278,6 +303,8 @@ export class Relay {
     getHistory = (address: string) => _getHistory(this.relayUrl, address)
 
     getBusiness = (hash: string) => _getBusiness(this.relayUrl, hash)
+
+    getBusinessFull = (hash: string) => _getBusinessFull(this.relayUrl, hash)
 }
 
 export namespace Otmoic {

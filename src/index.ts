@@ -231,7 +231,7 @@ export namespace business {
     export const transferInConfirmByPrivateKey = 
         (preBusiness: PreBusiness, privateKey: string, network: string, rpc: string | undefined, sender: string, uuid?: string) => {
                   
-        switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+        switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id)) {
             case 'evm':
                 return evm.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender)
 

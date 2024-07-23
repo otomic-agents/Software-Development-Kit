@@ -154,7 +154,13 @@ export interface PreBusiness {
 export interface Business {
     business_id: number,
     step: number,
-    business_hash: string
+    business_hash: string,
+    transfer_out_id: number,
+    transfer_in_id: number,
+    transfer_out_confirm_id: number,
+    transfer_in_confirm_id: number,
+    transfer_out_refund_id: number,
+    transfer_in_refund_id: number,
 }
 
 export interface BusinessFullData {

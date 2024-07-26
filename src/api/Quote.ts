@@ -18,7 +18,11 @@ export class QuoteManager {
 
         this.asking = true
 
-        this.socket = io(`${relayUrl}`, {withCredentials: true})
+        this.socket = io(`${relayUrl}`, {
+            withCredentials: true,
+            reconnection: true,
+            reconnectionAttempts: 5,
+        })
 
         let connectionTimeout = setTimeout(() => {
             throw new Error('connection timed out')
@@ -42,6 +46,10 @@ export class QuoteManager {
         this.socket.on('connect_error', (error: any) => {
             clearTimeout(connectionTimeout)
             throw new Error(error)
+        });
+
+        this.socket.on('reconnect', (attemptNumber) => {
+            console.log('Reconnected after', attemptNumber, 'attempts');
         });
     }
 

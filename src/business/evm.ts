@@ -305,12 +305,6 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
     };
 
     const complaintType = {
-        EIP712Domain: [
-                    { name: 'name', type: 'string' },
-                    { name: 'version', type: 'string' },
-                    { name: 'chainId', type: 'uint256' }, 
-                    {"name":"verifyingContract","type":"address"}
-                ],
         Complaint: [
             { name: 'srcChainId', type: 'uint64' },
             { name: 'srcAddress', type: 'uint256' },

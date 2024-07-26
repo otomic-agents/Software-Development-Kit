@@ -1,13 +1,13 @@
 import { ethers } from "ethers"
 import needle from "needle"
 
-export const getDidName = (privateKey: string) => new Promise<string | undefined>((resolve, reject) => {
+export const getDidName = (privateKey: string, network: string) => new Promise<string | undefined>((resolve, reject) => {
     
     const w = new ethers.Wallet(privateKey)
 
     needle(
-        'post',
-        `https://did-support.ursa-services.bttcdn.com/find/owner/${w.address}`,
+        'get',
+        `https://${network == 'mainnet' ? 'did-support.ursa-services.bttcdn.com' : 'testnet-did-support.ursa-services.bttcdn.com'}/find/owner/${w.address}`,
         {},
         {
             headers: {

@@ -260,7 +260,7 @@ export namespace business {
 
     export const complainByPrivateKey = 
         async (preBusiness: PreBusiness, privateKey: string, network: string) => {
-            const name = await getDidName(privateKey)
+            const name = await getDidName(privateKey, network)
             if (name != undefined) {
                 const signed = await evm.signComplainEIP712ByPrivateKey(preBusiness, privateKey, network)
                 return await submitComplain(network, signed.signData.message, signed.signed, name)

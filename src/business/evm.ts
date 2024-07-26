@@ -7,6 +7,7 @@ import { getChainId, getChainType, getOtmoicAddressBySystemChainId, getStepTimeL
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from "../utils/data";
 import { decimals as solanaDecimals, getDefaultRPC as getSolanaDefaultRPC} from "../business/solana";
+import { toHexAddress } from "../utils/format";
 
 interface Tokens {
     [key: number]: {
@@ -326,10 +327,10 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
 
     const complaintValue = {
         srcChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
-        srcAddress: preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address,
+        srcAddress: toHexAddress(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
         srcToken: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token,
         dstChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
-        dstAddress: preBusiness.swap_asset_information.dst_address,
+        dstAddress: toHexAddress(preBusiness.swap_asset_information.dst_address),
         dstToken: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token,
         srcAmount: preBusiness.swap_asset_information.amount,
         dstAmount: preBusiness.swap_asset_information.dst_amount,

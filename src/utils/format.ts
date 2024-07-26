@@ -23,6 +23,17 @@ export function toBs58Address(address: string): string {
     }
 }
 
+export function toHexAddress(address: string): string {
+    // is bs58 address
+    try {
+        return '0x' + Buffer.from(bs58.decode(address)).toString('hex');       
+    } catch (e) {
+        // is hex address
+        return address;
+    }
+    
+}
+
 export function removePrefix0x(address: string): string {
     return address.startsWith("0x") ? address.slice(2) : address;
 }

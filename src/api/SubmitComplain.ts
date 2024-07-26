@@ -39,7 +39,7 @@ export const submitComplain = (network: string, value: ComplaintValue, signed: s
         }
     )
     .then(resp => {
-        if (resp.body.data.code != 0) {
+        if (resp.body.code != 0) {
             resolve(`submit failed: ${resp.body.message}`)
         } else {
             resolve(true)

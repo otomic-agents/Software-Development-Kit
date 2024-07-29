@@ -14,7 +14,7 @@ export const _transferOutByPrivateKey =
     //transfer out
     let {tx, uuidBack} = await doTransferOut(preBusiness, provider, network, uuid)
     
-    const latestBlockhash = await provider.getLatestBlockhash()
+    const latestBlockhash = await provider.getLatestBlockhash('confirmed')
     tx.recentBlockhash = latestBlockhash.blockhash
     tx.feePayer = keypair.publicKey
     tx.sign(keypair)

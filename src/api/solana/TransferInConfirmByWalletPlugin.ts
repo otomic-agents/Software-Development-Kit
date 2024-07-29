@@ -13,7 +13,7 @@ export const _transferInConfirmByWalletPlugin =
     
     let {tx, uuidBack} = await doTransferInConfirm(preBusiness, provider, network, sender, uuid)
 
-    const latestBlockhash = await provider.getLatestBlockhash()
+    const latestBlockhash = await provider.getLatestBlockhash('confirmed')
     tx.recentBlockhash = latestBlockhash.blockhash
     tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender)
 

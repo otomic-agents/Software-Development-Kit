@@ -9,7 +9,7 @@ export const _transferOutByWalletPlugin = (preBusiness: PreBusiness, phantomAPI:
     //transfer out
     let {tx, uuidBack} = await doTransferOut(preBusiness, provider, network, uuid)
     
-    const latestBlockhash = await provider.getLatestBlockhash()
+    const latestBlockhash = await provider.getLatestBlockhash('confirmed')
     tx.recentBlockhash = latestBlockhash.blockhash
     tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender)
 

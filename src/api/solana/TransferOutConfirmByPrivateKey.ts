@@ -11,7 +11,7 @@ export const _transferOutConfirmByPrivateKey =
     const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network)
     let {tx, uuidBack} = await doTransferOutConfirm(preBusiness, provider, network, uuid)
     
-    const latestBlockhash = await provider.getLatestBlockhash()
+    const latestBlockhash = await provider.getLatestBlockhash('confirmed')
     tx.recentBlockhash = latestBlockhash.blockhash
     tx.feePayer = keypair.publicKey
     tx.sign(keypair)

@@ -70,7 +70,7 @@ export const getDefaultRPC = (system_chain_id: number, network: string) => {
         case 9000:
             return isMainnet ? 'https://rpc.ankr.com/avalanche' : 'https://rpc.ankr.com/avalanche_fuji';
         case 9006:
-            return isMainnet ? 'https://endpoints.omniatech.io/v1/bsc/mainnet/a6561bfe08614178a5a993e03df2c6d1' : 'https://bsc-testnet.public.blastapi.io';
+            return isMainnet ? 'https://bsc-dataseed.bnbchain.org' : 'https://bsc-testnet.public.blastapi.io';
         case 60:
             return isMainnet ? 'https://rpc.ankr.com/eth' : 'https://ethereum-sepolia-rpc.publicnode.com'
         case 966:
@@ -183,6 +183,7 @@ export const doApprove =
     const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider).connect(wallet == undefined ? await provider.getSigner() : wallet)
     // const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider)
     const approveTx = await erc20.getFunction('approve').send(getOtmoicAddressBySystemChainId(systemChainId, network), amount)
+    await approveTx.wait()
     resolve(approveTx)
 })
 
@@ -213,6 +214,7 @@ export const doTransferOut =
         data.userSign,
         data.lpSign
     )
+    await transferOutTx.wait()
     resolve(transferOutTx)
 })
 
@@ -237,7 +239,7 @@ export const doTransferOutConfirm =
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         data.agreementReachedTime
     )
-
+    await transferOutCfmTx.wait()
     resolve(transferOutCfmTx)
 })
 
@@ -260,7 +262,7 @@ export const doTransferInConfirm =
         data.preimage,
         data.agreementReachedTime
     )   
-
+    await transferInCfmTx.wait()
     resolve(transferInCfmTx)
 })
 
@@ -283,7 +285,7 @@ export const doTransferOutRefund =
         data.stepTimelock,
         data.agreementReachedTime
     )
-
+    await transferOutRfdTx.wait()
     resolve(transferOutRfdTx)
 })
 

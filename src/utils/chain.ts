@@ -1,4 +1,27 @@
-export const getChainName = (systemChainId: number) => {
+export const getNativeTokenName = (systemChainId: number): string => {
+    switch (systemChainId) {
+        case 9000:
+            return "AVAX"
+        case 9006:
+            return "BNB"
+        case 60:
+            return "ETH"
+        case 966:
+            return "MATIC"
+        case 614:
+            return "ETH"
+        case 501:
+            return "SOL"
+        case 397:
+            return "NEAR"
+        case 144:
+            return "XRP"
+        default:
+            throw new Error(`not support chainId: ${systemChainId}`);
+    }
+}
+
+export const getChainName = (systemChainId: number): string => {
     switch (systemChainId) {
         case 9000:
             return "AVAX"

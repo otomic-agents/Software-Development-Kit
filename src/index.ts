@@ -27,7 +27,7 @@ export { ResponseTransferOut }
 import { ResponseSolana } from './interface/api'
 export { ResponseSolana }
 
-import { getChainName, getChainType } from './utils/chain';
+import { getChainName, getChainType, getNativeTokenName } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
@@ -68,6 +68,7 @@ import { getDidName } from './utils/did';
 
 export namespace utils {
     export const GetChainName = getChainName;
+    export const GetNativeTokenName = getNativeTokenName;
     export const GetChainId = getChainId;
     export const Sleep = sleep;
     export const MathReceived = mathReceived;

@@ -31,7 +31,7 @@ import { getChainName, getChainType, getNativeTokenName } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
-import { _getComplainSignData, _getSignDataEIP712 } from './business/evm';
+import { _getComplainSignData, _getSignDataEIP712, decimals as _evmDecimals } from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from "./api/evm/SignQuoteEIP712ByPrivateKey";
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
 import { _signComplainEIP712ByPrivateKey } from './api/evm/SignComplainEIP712ByPrivateKey';
@@ -52,7 +52,7 @@ import { QuoteManager } from "./api/Quote";
 import { mathReceived } from './utils/math';
 import { getBalance } from './api/GetBalance';
 
-import { _getSignDataEIP712 as _getSignDataSolana, _getSignPreambleEIP712} from './business/solana';
+import { _getSignDataEIP712 as _getSignDataSolana, _getSignPreambleEIP712, decimals as _solanaDecimals} from './business/solana';
 import { _signQuoteByPrivateKey } from './api/solana/SignQuoteByPrivateKey';
 import { _signQuoteByWalletPlugin } from './api/solana/SignQuoteByWalletPlugin';
 import { _transferOutByPrivateKey as _transferOutSolanaByPrivateKey } from './api/solana/TransferOutByPrivateKey';
@@ -73,6 +73,15 @@ export namespace utils {
     export const Sleep = sleep;
     export const MathReceived = mathReceived;
     export const GetChainType = getChainType;
+    export const EvmDecimals = _evmDecimals;
+    export const SolanaDecimals = _solanaDecimals;
+    export const Decimals = (system_chain_id: number, token_address: string, rpc: string) => {
+        if (system_chain_id == 501) {
+            return SolanaDecimals(system_chain_id, token_address, rpc)
+        } else {
+            return EvmDecimals(system_chain_id, token_address, rpc)
+        }
+    }
 }
 
 export namespace evm {

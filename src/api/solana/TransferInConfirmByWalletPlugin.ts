@@ -7,7 +7,7 @@ export const _transferInConfirmByWalletPlugin =
     (preBusiness: PreBusiness, phantomAPI: any, network: string, rpc: string | undefined, sender: string, uuid?: string) => 
         new Promise<ResponseSolana>(async (resolve, reject) => {
 
-    let fakePreBusiness = preBusiness
+    let fakePreBusiness = structuredClone(preBusiness)
     fakePreBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id       
     const provider: Connection = getJsonRpcProvider(fakePreBusiness, rpc, network)
     

@@ -152,6 +152,12 @@ export const getJsonRpcProvider =
     return new Connection(rpc === undefined ? getDefaultRPC(systemChainId, network) : rpc, 'confirmed')
 }
 
+export const getJsonRpcProviderByChainId =
+    (chainId: number, rpc: string | undefined, network: string) => {
+
+    return new Connection(rpc === undefined ? getDefaultRPC(chainId, network) : rpc, 'confirmed')
+}
+
 export const doTransferOut = 
     (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) => 
         new Promise<{tx: Transaction, uuidBack: string}>(async (resolve, reject) => {

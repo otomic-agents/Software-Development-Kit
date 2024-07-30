@@ -158,6 +158,15 @@ export const getJsonRpcProvider =
     )
 }
 
+export const getJsonRpcProviderByChainId = 
+    (chainId: number, rpc: string | undefined, network: string) => {
+
+    return new ethers.JsonRpcProvider(
+        rpc == undefined ? getDefaultRPC(chainId, network) : rpc,
+        getChainId(chainId, network)
+    )
+}
+
 export const isNeedApprove = 
     (preBusiness: PreBusiness, user_wallet: string, rpc: string | undefined, network: string) => 
         new Promise<Boolean>(async (resolve, reject) => {

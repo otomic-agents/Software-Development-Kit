@@ -246,6 +246,11 @@ export default {
             "name": "confirm",
             "accounts": [
                 {
+                    "name": "from",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
                     "name": "to",
                     "isMut": true,
                     "isSigner": false

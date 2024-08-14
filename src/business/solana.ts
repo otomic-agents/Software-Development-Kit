@@ -336,6 +336,9 @@ export const doTransferOutConfirm =
         uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
     }
 
+    // user
+    let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender))
+
     // receiver
     let lp = new PublicKey(toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address))
    
@@ -364,6 +367,7 @@ export const doTransferOutConfirm =
     let tx = await otmoic.methods
         .confirm(uuidBuf, preimage)
         .accounts({
+            from: user,
             to: lp,
             destination: destination,
             escrow: escrow,
@@ -611,6 +615,9 @@ export const doTransferInConfirm =
         uuidBuf = Array.from(Buffer.from(uuid, 'hex'))
     }
 
+    // sender
+    let lp = new PublicKey(toBs58Address(sender))
+    
     // receiver
     let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.dst_address))
    
@@ -639,6 +646,7 @@ export const doTransferInConfirm =
     let tx = await otmoic.methods
         .confirm(uuidBuf, preimage)
         .accounts({
+            from: lp,
             to: user,
             destination: destination,
             escrow: escrow,

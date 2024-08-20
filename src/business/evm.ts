@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 
 import ABI from "./evmABI"
 import { PreBusiness, Quote } from "../interface/interface";
-import { getChainId, getChainType, getOtmoicAddressBySystemChainId, getStepTimeLock } from "../utils/chain";
+import { getChainId, getChainType, getOtmoicAddressBySystemChainId, getStepTimeLock, getDefaultGasPrice, getMaximumGasPrice } from "../utils/chain";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from "../utils/data";
 import { decimals as solanaDecimals, getDefaultRPC as getSolanaDefaultRPC} from "../business/solana";
@@ -191,7 +191,11 @@ export const doApprove =
 
     const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider).connect(wallet == undefined ? await provider.getSigner() : wallet)
     // const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider)
-    const approveTx = await erc20.getFunction('approve').send(getOtmoicAddressBySystemChainId(systemChainId, network), amount)
+    const approveTx = await erc20.getFunction('approve').send(getOtmoicAddressBySystemChainId(systemChainId, network), amount,
+        {
+            gasPrice: await getGasPrice(provider, systemChainId, network)
+        }
+    )
     await approveTx.wait()
     resolve(approveTx)
 })
@@ -221,7 +225,10 @@ export const doTransferOut =
         data.requestor,
         data.lpId,
         data.userSign,
-        data.lpSign
+        data.lpSign,
+        {
+            gasPrice: await getGasPrice(provider, systemChainId, network)
+        }
     )
     await transferOutTx.wait()
     resolve(transferOutTx)
@@ -246,7 +253,10 @@ export const doTransferOutConfirm =
         data.stepTimelock,
         data.preimage,
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        data.agreementReachedTime
+        data.agreementReachedTime,
+        {
+            gasPrice: await getGasPrice(provider, systemChainId, network)
+        }
     )
     await transferOutCfmTx.wait()
     resolve(transferOutCfmTx)
@@ -269,7 +279,10 @@ export const doTransferInConfirm =
         data.hashlock,
         data.stepTimeLock,
         data.preimage,
-        data.agreementReachedTime
+        data.agreementReachedTime,
+        {
+            gasPrice: await getGasPrice(provider, systemChainId, network)
+        }
     )   
     await transferInCfmTx.wait()
     resolve(transferInCfmTx)
@@ -292,7 +305,10 @@ export const doTransferOutRefund =
         data.hashlock,
         data.relayHashlock,
         data.stepTimelock,
-        data.agreementReachedTime
+        data.agreementReachedTime,
+        {
+            gasPrice: await getGasPrice(provider, systemChainId, network)
+        }
     )
     await transferOutRfdTx.wait()
     resolve(transferOutRfdTx)
@@ -360,4 +376,67 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
         domain: eip712Domain,
         message: complaintValue
     }
+}
+
+async function getGasPrice(provider: JsonRpcProvider, systemChainId: number, network: string): Promise<bigint> {
+    let gasPrice = await getGasPriceFromNode(provider);
+    if (!gasPrice) {
+        gasPrice = await getGasPriceFromHistory(provider);
+    }
+
+    if (gasPrice) {
+        if (gasPrice > getMaximumGasPrice(systemChainId, network)) {
+            gasPrice = getMaximumGasPrice(systemChainId, network);
+        }
+    } else {
+        gasPrice = getDefaultGasPrice(systemChainId, network);
+    }
+
+    let ret = addPremium(gasPrice);
+    console.log('get gas price', ret.toString());
+    return ret;
+}
+
+async function getGasPriceFromHistory(provider: JsonRpcProvider): Promise<bigint | undefined> {
+    return new Promise((resolve, reject) => {
+        provider
+            .send('eth_feeHistory', [1, 'latest', [20, 80]])
+            .then((result) => {
+                // console.log('get gas history result', result);
+                if (result.reward && result.reward[0] && result.reward[0][1]) {
+                    resolve(BigInt(result.reward[0][1]));
+                } else {
+                    resolve(undefined);
+                }
+                resolve(result);
+            })
+            .catch((error) => {
+                console.log('get gas history error', error);
+                resolve(undefined);
+            });
+    });
+}
+
+async function getGasPriceFromNode(provider: JsonRpcProvider): Promise<bigint | undefined> {
+    return new Promise((resolve, reject) => {
+        provider
+            .getFeeData()
+            .then((result) => {
+                // console.log('get gas price result', result);
+                if (result.gasPrice) {
+                    resolve(result.gasPrice);
+                } else {
+                    resolve(undefined);
+                }
+            })
+            .catch((error) => {
+                console.log('get gas price error', error);
+                resolve(undefined);
+            });
+    });
+}
+
+function addPremium(gasPrice: bigint): bigint {
+    // 1.5 times
+    return (gasPrice * BigInt(150)) / BigInt(100);
 }

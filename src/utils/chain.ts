@@ -175,3 +175,51 @@ export const getChainType = (systemChainId: number): string => {
             throw new Error(`not support chain: ${systemChainId}`);
     }
 }
+
+export const getDefaultGasPrice = (systemChainId: number, network: string): bigint => {
+    const isMainnet = network == 'mainnet'
+
+    // 1 gwei
+    switch (systemChainId) {
+        case 9000:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 9006:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 60:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 966:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 614:
+            // op is much lower than others
+            return isMainnet ? BigInt(1000000) : BigInt(1000000)
+        case 501:
+            // in micro lamports
+            return isMainnet ? BigInt(1) : BigInt(1)
+        default:
+            throw new Error(`not support chain: ${systemChainId}`);
+    }
+}
+
+export const getMaximumGasPrice = (systemChainId: number, network: string): bigint => {
+    const isMainnet = network == 'mainnet'
+
+    // 500 Gwei
+    switch (systemChainId) {
+        case 9000:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 9006:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 60:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 966:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 614:
+            // op is much lower than others
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 501:
+            // in micro lamports
+            return isMainnet ? BigInt(5000000) : BigInt(5000000)
+        default:
+            throw new Error(`not support chain: ${systemChainId}`);
+    }
+}

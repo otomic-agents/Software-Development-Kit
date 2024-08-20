@@ -1,4 +1,4 @@
-import { PublicKey, Connection, Keypair, SystemProgram, Transaction } from "@solana/web3.js";
+import { PublicKey, Connection, Keypair, SystemProgram, Transaction, ComputeBudgetProgram, TransactionInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getMint, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
 import { fetchDigitalAsset } from "@metaplex-foundation/mpl-token-metadata";
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
@@ -753,4 +753,24 @@ export const getBalance = async (network: string, systemChainId: number, token: 
     let decimals = mintInfo.decimals
     
     return convertStandardUnits(balance, decimals)
+}
+
+export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
+    const latestBlockhash = await provider.getLatestBlockhash('confirmed')
+    tx.recentBlockhash = latestBlockhash.blockhash
+    
+    const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: 0.0015 * LAMPORTS_PER_SOL,
+    });
+    tx.instructions.unshift(addPriorityFee);
+
+    tx.feePayer = keypair.publicKey
+    tx.sign(keypair)
+
+    let txHash = await provider.sendRawTransaction(tx.serialize(), {
+        skipPreflight: true,
+        maxRetries: 10,
+    });
+
+    return txHash
 }

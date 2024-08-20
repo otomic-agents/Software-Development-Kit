@@ -7,7 +7,7 @@ const RPC_SOLANA = 'https://api.devnet.solana.com'
 const RPC_BSC = 'https://data-seed-prebsc-2-s3.bnbchain.org:8545'
 
 const bridge: Bridge = {
-    bridge_id: 4,
+    bridge_id: 2,
     src_chain_id: 501,
     dst_chain_id: 9006,
     src_token: '0xd691ced994b9c641cf8f80b5f4dbdd80f0fd86af1b8604a702151fa7e46b7232',

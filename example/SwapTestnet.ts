@@ -6,11 +6,11 @@ const NETWORK = 'testnet'
 const RPC_BSC = 'https://data-seed-prebsc-2-s3.bnbchain.org:8545'
 
 const bridge: Bridge = {
-    bridge_id: 4,
+    bridge_id: 3,
     src_chain_id: 9006,
     dst_chain_id: 9006,
-    src_token: '0x57e73db0eebd89f722e064d4c209f86eba9daeec',
-    dst_token: '0xacda8bf66c2cadac9e99aa1aa75743f536e71094',
+    src_token: '0x57E73DB0eebd89F722e064d4c209f86ebA9DAEEc',
+    dst_token: '0xaCDA8BF66C2CADAc9e99Aa1aa75743F536E71094',
     bridge_name: undefined
 }
 const amount = '0.008'

@@ -1,5 +1,5 @@
 import { Connection, Keypair } from "@solana/web3.js";
-import { doTransferOutConfirm, getJsonRpcProvider } from "../../business/solana";
+import { doTransferOutConfirm, getJsonRpcProvider, ensureSendingTx } from "../../business/solana";
 import { PreBusiness } from "../../interface/interface";
 import { removePrefix0x } from "../../utils/format"
 import { ResponseSolana } from "../../interface/api"
@@ -10,14 +10,9 @@ export const _transferOutConfirmByPrivateKey =
     const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')))
     const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network)
     let {tx, uuidBack} = await doTransferOutConfirm(preBusiness, provider, network, uuid)
-    
-    const latestBlockhash = await provider.getLatestBlockhash('confirmed')
-    tx.recentBlockhash = latestBlockhash.blockhash
-    tx.feePayer = keypair.publicKey
-    tx.sign(keypair)
 
     try {
-        let txHash = await provider.sendRawTransaction(tx.serialize())
+        let txHash = await ensureSendingTx(provider, keypair, tx)
 
         resolve({
             txHash,

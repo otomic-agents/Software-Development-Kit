@@ -3,17 +3,17 @@ import { Bridge, Relay, Quote, SignData } from '../src/index'
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com'
 const NETWORK = 'testnet'
-const RPC_BSC = 'https://data-seed-prebsc-2-s3.bnbchain.org:8545'
+const RPC_BSC = 'https://bsc-testnet-rpc.publicnode.com'
 
 const bridge: Bridge = {
-    bridge_id: 3,
+    bridge_id: 6,
     src_chain_id: 9006,
     dst_chain_id: 9006,
-    src_token: '0x57E73DB0eebd89F722e064d4c209f86ebA9DAEEc',
+    src_token: '0x0000000000000000000000000000000000000000',
     dst_token: '0xaCDA8BF66C2CADAc9e99Aa1aa75743F536E71094',
     bridge_name: undefined
 }
-const amount = '0.008'
+const amount = '0.0708'
 
 const relay = new Relay(RELA_URL)
 

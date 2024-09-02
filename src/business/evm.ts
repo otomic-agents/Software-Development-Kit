@@ -182,6 +182,11 @@ export const isNeedApprove =
     const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token
     const amount = preBusiness.swap_asset_information.amount
 
+    if (tokenAddress == ZeroAddress) {
+        resolve(false)
+        return
+    }
+
     checkTokenInfoBoxExist(systemChainId, tokenAddress)
     let allowance = await getCache(
         systemChainId, tokenAddress, 
@@ -215,29 +220,58 @@ export const doTransferOut =
 
     const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic, provider).connect(wallet == undefined ? await provider.getSigner() : wallet)
     const data = getTransferOutData(preBusiness)
-    const transferOutTx = await otmoic.getFunction('transferOut').send(
-        data.sender,
-        data.bridge,
-        data.token,
-        data.amount,
-        data.hashlock,
-        data.relayHashlock,
-        data.stepTimelock,
-        data.dstChainId,
-        data.dstAddress,
-        data.bidId,
-        data.tokenDst,
-        data.amountDst,
-        data.nativeAmountDst,
-        data.agreementReachedTime,
-        data.requestor,
-        data.lpId,
-        data.userSign,
-        data.lpSign,
-        {
-            gasPrice: await getGasPrice(provider, systemChainId, network)
-        }
-    )
+
+    let transferOutTx: ContractTransactionResponse
+    if (data.token == ZeroAddress) {
+        transferOutTx = await otmoic.getFunction('transferOut').send(
+            data.sender,
+            data.bridge,
+            data.token,
+            data.amount,
+            data.hashlock,
+            data.relayHashlock,
+            data.stepTimelock,
+            data.dstChainId,
+            data.dstAddress,
+            data.bidId,
+            data.tokenDst,
+            data.amountDst,
+            data.nativeAmountDst,
+            data.agreementReachedTime,
+            data.requestor,
+            data.lpId,
+            data.userSign,
+            data.lpSign,
+            {
+                gasPrice: await getGasPrice(provider, systemChainId, network),
+                value: data.amount
+            }
+        )
+    } else {
+        transferOutTx = await otmoic.getFunction('transferOut').send(
+            data.sender,
+            data.bridge,
+            data.token,
+            data.amount,
+            data.hashlock,
+            data.relayHashlock,
+            data.stepTimelock,
+            data.dstChainId,
+            data.dstAddress,
+            data.bidId,
+            data.tokenDst,
+            data.amountDst,
+            data.nativeAmountDst,
+            data.agreementReachedTime,
+            data.requestor,
+            data.lpId,
+            data.userSign,
+            data.lpSign,
+            {
+                gasPrice: await getGasPrice(provider, systemChainId, network)
+            }
+        )
+    }
     await transferOutTx.wait()
     resolve(transferOutTx)
 })

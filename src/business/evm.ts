@@ -1,9 +1,9 @@
-import { Contract, ContractTransactionResponse, JsonRpcProvider, Provider, Wallet, ethers } from "ethers";
+import { Contract, ContractTransactionResponse, JsonRpcProvider, Wallet, ethers, ZeroAddress } from "ethers";
 import BigNumber from "bignumber.js";
 
 import ABI from "./evmABI"
 import { PreBusiness, Quote } from "../interface/interface";
-import { getChainId, getChainType, getOtmoicAddressBySystemChainId, getStepTimeLock, getDefaultGasPrice, getMaximumGasPrice } from "../utils/chain";
+import { getChainId, getChainType, getOtmoicAddressBySystemChainId, getStepTimeLock, getDefaultGasPrice, getMaximumGasPrice, getNativeTokenDecimals, getNativeTokenName } from "../utils/chain";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from "../utils/data";
 import { decimals as solanaDecimals, getDefaultRPC as getSolanaDefaultRPC} from "../business/solana";
@@ -50,7 +50,11 @@ export const checkTokenInfoBoxExist = (system_chain_id: number, token_address: s
 export const decimals = (system_chain_id: number, token_address: string, rpc: string) => new Promise(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if(cache.tokensInfo[system_chain_id][token_address].decimals == undefined){
-        cache.tokensInfo[system_chain_id][token_address].decimals = await getCache(system_chain_id, token_address, rpc).decimals()
+        if (token_address == ZeroAddress) {
+            cache.tokensInfo[system_chain_id][token_address].decimals = getNativeTokenDecimals(system_chain_id)
+        } else {
+            cache.tokensInfo[system_chain_id][token_address].decimals = await getCache(system_chain_id, token_address, rpc).decimals()
+        }
     } 
     resolve(cache.tokensInfo[system_chain_id][token_address].decimals)
 })
@@ -58,7 +62,11 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
 export const symbol = (system_chain_id: number, token_address: string, rpc: string) => new Promise<string>(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if(cache.tokensInfo[system_chain_id][token_address].symbol == undefined){
-        cache.tokensInfo[system_chain_id][token_address].symbol = await getCache(system_chain_id, token_address, rpc).symbol()
+        if (token_address == ZeroAddress) {
+            cache.tokensInfo[system_chain_id][token_address].symbol = getNativeTokenName(system_chain_id)
+        } else {
+            cache.tokensInfo[system_chain_id][token_address].symbol = await getCache(system_chain_id, token_address, rpc).symbol()
+        }
     } 
     resolve(cache.tokensInfo[system_chain_id][token_address].symbol)
 })
@@ -315,12 +323,17 @@ export const doTransferOutRefund =
 })
 
 export const getBalance = async (network: string, systemChainId: number, token: string, address: string, rpc: string | undefined) => {
-    
-    const erc20 = new ethers.Contract(token, ABI.erc20, getProvider(rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc));
-    const balance = await erc20.balanceOf(address)
-    const decimals = await erc20.decimals()
-
-    return convertStandardUnits(balance, decimals)
+    if (token == ZeroAddress) {
+        const provider = getProvider(rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc)
+        const balance = await provider.getBalance(address)
+        const decimals = getNativeTokenDecimals(systemChainId)
+        return convertStandardUnits(balance, decimals)
+    } else {
+        const erc20 = new ethers.Contract(token, ABI.erc20, getProvider(rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc));
+        const balance = await erc20.balanceOf(address)
+        const decimals = await erc20.decimals()
+        return convertStandardUnits(balance, decimals)
+    }
 }
 
 export const _getComplainSignData = async (preBusiness: PreBusiness, network: string) => {

@@ -21,6 +21,29 @@ export const getNativeTokenName = (systemChainId: number): string => {
     }
 }
 
+export const getNativeTokenDecimals = (systemChainId: number): number => {
+    switch (systemChainId) {
+        case 9000:
+            return 18
+        case 9006:
+            return 18
+        case 60:
+            return 18
+        case 966:
+            return 18
+        case 614:
+            return 18
+        case 501:
+            return 9
+        case 397:
+            return 24
+        case 144:
+            return 6
+        default:
+            throw new Error(`not support chainId: ${systemChainId}`);
+    }
+}
+
 export const getChainName = (systemChainId: number): string => {
     switch (systemChainId) {
         case 9000:

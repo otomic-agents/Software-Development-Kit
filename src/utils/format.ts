@@ -1,4 +1,5 @@
 import bs58 from "bs58";
+import { ZeroAddress } from "ethers";
 
 export function isBase58String(str: string): boolean {
     try {
@@ -36,4 +37,8 @@ export function toHexAddress(address: string): string {
 
 export function removePrefix0x(address: string): string {
     return address.startsWith("0x") ? address.slice(2) : address;
+}
+
+export function isZeroAddress(address: string): boolean {
+    return address == ZeroAddress || Number(address) == 0;
 }

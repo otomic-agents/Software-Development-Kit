@@ -1,4 +1,4 @@
-import { Contract, ContractTransactionResponse, JsonRpcProvider, Wallet, ethers, ZeroAddress } from "ethers";
+import { Contract, ContractTransactionResponse, JsonRpcProvider, Wallet, ethers } from "ethers";
 import BigNumber from "bignumber.js";
 
 import ABI from "./evmABI"
@@ -7,7 +7,7 @@ import { getChainId, getChainType, getOtmoicAddressBySystemChainId, getStepTimeL
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from "../utils/data";
 import { decimals as solanaDecimals, getDefaultRPC as getSolanaDefaultRPC} from "../business/solana";
-import { toHexAddress } from "../utils/format";
+import { toHexAddress, isZeroAddress } from "../utils/format";
 
 interface Tokens {
     [key: number]: {
@@ -50,7 +50,7 @@ export const checkTokenInfoBoxExist = (system_chain_id: number, token_address: s
 export const decimals = (system_chain_id: number, token_address: string, rpc: string) => new Promise(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if(cache.tokensInfo[system_chain_id][token_address].decimals == undefined){
-        if (token_address == ZeroAddress) {
+        if (isZeroAddress(token_address)) {
             cache.tokensInfo[system_chain_id][token_address].decimals = getNativeTokenDecimals(system_chain_id)
         } else {
             cache.tokensInfo[system_chain_id][token_address].decimals = await getCache(system_chain_id, token_address, rpc).decimals()
@@ -62,7 +62,7 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
 export const symbol = (system_chain_id: number, token_address: string, rpc: string) => new Promise<string>(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if(cache.tokensInfo[system_chain_id][token_address].symbol == undefined){
-        if (token_address == ZeroAddress) {
+        if (isZeroAddress(token_address)) {
             cache.tokensInfo[system_chain_id][token_address].symbol = getNativeTokenName(system_chain_id)
         } else {
             cache.tokensInfo[system_chain_id][token_address].symbol = await getCache(system_chain_id, token_address, rpc).symbol()
@@ -182,7 +182,7 @@ export const isNeedApprove =
     const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token
     const amount = preBusiness.swap_asset_information.amount
 
-    if (tokenAddress == ZeroAddress) {
+    if (isZeroAddress(tokenAddress)) {
         resolve(false)
         return
     }
@@ -222,7 +222,7 @@ export const doTransferOut =
     const data = getTransferOutData(preBusiness)
 
     let transferOutTx: ContractTransactionResponse
-    if (data.token == ZeroAddress) {
+    if (isZeroAddress(data.token)) {
         transferOutTx = await otmoic.getFunction('transferOut').send(
             data.sender,
             data.bridge,
@@ -357,7 +357,7 @@ export const doTransferOutRefund =
 })
 
 export const getBalance = async (network: string, systemChainId: number, token: string, address: string, rpc: string | undefined) => {
-    if (token == ZeroAddress) {
+    if (isZeroAddress(token)) {
         const provider = getProvider(rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc)
         const balance = await provider.getBalance(address)
         const decimals = getNativeTokenDecimals(systemChainId)

@@ -11,9 +11,9 @@ import idl from "./solanaIdl";
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from "../utils/math";
 import { toBs58Address } from "../utils/format";
 import { PreBusiness, Quote } from "../interface/interface";
-import { getOtmoicAddressBySystemChainId, getFeeRecepientAddressBySystemChainId, getStepTimeLock, getChainType } from "../utils/chain";
+import { getOtmoicAddressBySystemChainId, getFeeRecepientAddressBySystemChainId, getStepTimeLock, getChainType, getNativeTokenDecimals, getNativeTokenName } from "../utils/chain";
 import { decimals as evmDecimals, getDefaultRPC as getEvmDefaultRPC} from "../business/evm";
-import { removePrefix0x } from "../utils/format";
+import { removePrefix0x, isZeroAddress } from "../utils/format";
 
 type Lock = {
     hash: Array<number>;
@@ -46,12 +46,16 @@ export const checkTokenInfoBoxExist = (system_chain_id: number, token_address: s
 export const decimals = (system_chain_id: number, token_address: string, rpc: string) => new Promise(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if (cache.tokensInfo[system_chain_id][token_address].decimals == undefined) {
-        let mintToken = new PublicKey(toBs58Address(token_address))
-        let connection = getProvider(rpc)
-        let mintTokenAccountInfo = await connection.getAccountInfo(mintToken)
-        let tokenProgramId = mintTokenAccountInfo?.owner
-        let mintInfo = await getMint(connection, mintToken, 'confirmed', tokenProgramId)
-        cache.tokensInfo[system_chain_id][token_address].decimals = mintInfo.decimals
+        if (isZeroAddress(token_address)) {
+            cache.tokensInfo[system_chain_id][token_address].decimals = getNativeTokenDecimals(system_chain_id)
+        } else {
+            let mintToken = new PublicKey(toBs58Address(token_address))
+            let connection = getProvider(rpc)
+            let mintTokenAccountInfo = await connection.getAccountInfo(mintToken)
+            let tokenProgramId = mintTokenAccountInfo?.owner
+            let mintInfo = await getMint(connection, mintToken, 'confirmed', tokenProgramId)
+            cache.tokensInfo[system_chain_id][token_address].decimals = mintInfo.decimals
+        }
     }
     resolve(cache.tokensInfo[system_chain_id][token_address].decimals)
 })
@@ -59,16 +63,20 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
 export const symbol = (system_chain_id: number, token_address: string, rpc: string): Promise<string> => new Promise(async (resolve, reject) => {
     checkTokenInfoBoxExist(system_chain_id, token_address)
     if (cache.tokensInfo[system_chain_id][token_address].symbol == undefined) {
-        let mintToken = new PublicKey(toBs58Address(token_address))
-        try {
-            const umi = createUmi(rpc)
-            let asset = await fetchDigitalAsset(umi, publicKey(mintToken.toBase58()))
-            if (asset && asset.metadata) {
-                cache.tokensInfo[system_chain_id][token_address].symbol = asset.metadata.symbol
-            }
-        } catch (err) {
-            if ((err as any).name === 'AccountNotFoundError') {
-                cache.tokensInfo[system_chain_id][token_address].symbol = undefined
+        if (isZeroAddress(token_address)) {
+            cache.tokensInfo[system_chain_id][token_address].symbol = getNativeTokenName(system_chain_id)
+        } else {
+            let mintToken = new PublicKey(toBs58Address(token_address))
+            try {
+                const umi = createUmi(rpc)
+                let asset = await fetchDigitalAsset(umi, publicKey(mintToken.toBase58()))
+                if (asset && asset.metadata) {
+                    cache.tokensInfo[system_chain_id][token_address].symbol = asset.metadata.symbol
+                }
+            } catch (err) {
+                if ((err as any).name === 'AccountNotFoundError') {
+                    cache.tokensInfo[system_chain_id][token_address].symbol = undefined
+                }
             }
         }
     }
@@ -732,27 +740,33 @@ export const doTransferInRefund =
 
 export const getBalance = async (network: string, systemChainId: number, token: string, address: string, rpc: string | undefined) => {
     let provider = getProvider(rpc === undefined ? getDefaultRPC(systemChainId, network) : rpc)
-    let tokenAccounts = await provider.getTokenAccountsByOwner(new PublicKey(toBs58Address(address)), {
-        mint: new PublicKey(toBs58Address(token)),
-    })
-
-    if (tokenAccounts.value.length == 0) {
-        return '0'
-    }
-    let tokenAccount = tokenAccounts.value[0]
-    const accountData = AccountLayout.decode(tokenAccount.account.data)
-    let mintTokenAccountInfo = await provider.getAccountInfo(accountData.mint)
-    let tokenProgramId = mintTokenAccountInfo!.owner
-    let mintInfo = await getMint(
-        provider,
-        accountData.mint,
-        undefined,
-        tokenProgramId,
-    )
-    let balance = accountData.amount
-    let decimals = mintInfo.decimals
+    if (isZeroAddress(token)) {
+        let userAddress = new PublicKey(toBs58Address(address))
+        let balance = await provider.getBalance(userAddress)
+        return convertStandardUnits(balance, getNativeTokenDecimals(systemChainId))
+    } else {
+        let tokenAccounts = await provider.getTokenAccountsByOwner(new PublicKey(toBs58Address(address)), {
+            mint: new PublicKey(toBs58Address(token)),
+        })
     
-    return convertStandardUnits(balance, decimals)
+        if (tokenAccounts.value.length == 0) {
+            return '0'
+        }
+        let tokenAccount = tokenAccounts.value[0]
+        const accountData = AccountLayout.decode(tokenAccount.account.data)
+        let mintTokenAccountInfo = await provider.getAccountInfo(accountData.mint)
+        let tokenProgramId = mintTokenAccountInfo!.owner
+        let mintInfo = await getMint(
+            provider,
+            accountData.mint,
+            undefined,
+            tokenProgramId,
+        )
+        let balance = accountData.amount
+        let decimals = mintInfo.decimals
+        
+        return convertStandardUnits(balance, decimals)
+    }
 }
 
 export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {

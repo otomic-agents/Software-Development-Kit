@@ -3,16 +3,17 @@ import { Bridge, Relay, Quote, SignData } from '../src/index'
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com'
 const NETWORK = 'testnet'
-const RPC_BSC = 'https://data-seed-prebsc-2-s3.bnbchain.org:8545'
+const RPC_BSC = 'https://bsc-testnet-rpc.publicnode.com'
 
 const bridge: Bridge = {
-    bridge_id: 4,
+    bridge_id: 6,
     src_chain_id: 9006,
     dst_chain_id: 9006,
-    src_token: '0x57e73db0eebd89f722e064d4c209f86eba9daeec',
-    dst_token: '0xacda8bf66c2cadac9e99aa1aa75743f536e71094',
+    src_token: '0x0000000000000000000000000000000000000000',
+    dst_token: '0xaCDA8BF66C2CADAc9e99Aa1aa75743F536E71094',
     bridge_name: undefined
 }
+const amount = '0.0708'
 
 const relay = new Relay(RELA_URL)
 
@@ -20,7 +21,7 @@ const Ask = () => new Promise<Quote>((resolve, reject) => {
     
     relay.ask({
         bridge,
-        amount: '20'
+        amount: amount
     }, {
         OnQuote: (quote: Quote) => {
             console.log('new quote', quote)
@@ -76,7 +77,7 @@ const swap = async () => {
 
     const quote = await Ask()
 
-    const signData: {signData: SignData, signed: string} = await evm.signQuoteEIP712ByPrivateKey(NETWORK, quote, process.env.WALLET_KEY as string, '20', 0, '0x1C55a22A2AD9c2921706306ADFBdBee009987fce', 
+    const signData: {signData: SignData, signed: string} = await evm.signQuoteEIP712ByPrivateKey(NETWORK, quote, process.env.WALLET_KEY as string, amount, 0, '0x1C55a22A2AD9c2921706306ADFBdBee009987fce', 
         undefined, RPC_BSC, RPC_BSC)
     
     console.log('signData', signData)

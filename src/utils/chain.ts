@@ -1,7 +1,76 @@
+export const getNativeTokenName = (systemChainId: number): string => {
+    switch (systemChainId) {
+        case 9000:
+            return "AVAX"
+        case 9006:
+            return "BNB"
+        case 60:
+            return "ETH"
+        case 966:
+            return "MATIC"
+        case 614:
+            return "ETH"
+        case 501:
+            return "SOL"
+        case 397:
+            return "NEAR"
+        case 144:
+            return "XRP"
+        default:
+            throw new Error(`not support chainId: ${systemChainId}`);
+    }
+}
 
-export const getChainId = (system_chain_id: number, network: string) => {
+export const getNativeTokenDecimals = (systemChainId: number): number => {
+    switch (systemChainId) {
+        case 9000:
+            return 18
+        case 9006:
+            return 18
+        case 60:
+            return 18
+        case 966:
+            return 18
+        case 614:
+            return 18
+        case 501:
+            return 9
+        case 397:
+            return 24
+        case 144:
+            return 6
+        default:
+            throw new Error(`not support chainId: ${systemChainId}`);
+    }
+}
+
+export const getChainName = (systemChainId: number): string => {
+    switch (systemChainId) {
+        case 9000:
+            return "AVAX"
+        case 9006:
+            return "BSC"
+        case 60:
+            return "ETH"
+        case 614:
+            return "OPT"
+        case 966:
+            return "Polygon"
+        case 397:
+            return "NEAR"
+        case 144:
+            return "XRP"
+        case 501:
+            return "Solana"
+        default:
+            throw new Error(`not support chainId: ${systemChainId}`);
+    }
+}
+
+
+export const getChainId = (systemChainId: number, network: string) => {
     const isMainnet = network == 'mainnet'
-    switch (system_chain_id) {
+    switch (systemChainId) {
         case 9006:
             return isMainnet ? 56 : 97
         case 9000:
@@ -17,9 +86,9 @@ export const getChainId = (system_chain_id: number, network: string) => {
     }
 }
 
-export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst: number): number => {
+export const getStepTimeLock = (systemChainIdSrc: number, systemChainIdDst: number): number => {
     let srcTimeLock = 0
-    switch (system_chain_id_src) {
+    switch (systemChainIdSrc) {
         case 9000:
             srcTimeLock = 2 * 60;
             break;
@@ -35,17 +104,20 @@ export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst
         case 966:
             srcTimeLock =  1 * 60;
             break;
+        case 501:
+            srcTimeLock =  1 * 60;
+            break;
         default:
-            throw new Error(`no support this chain for now: ${system_chain_id_src}`)
+            throw new Error(`no support this chain for now: ${systemChainIdSrc}`)
     }
 
     let dstTimeLock = 0
-    switch (system_chain_id_dst) {
+    switch (systemChainIdDst) {
         case 9000:
             dstTimeLock = 2 * 60;
             break;
         case 9006:
-            dstTimeLock = 1 * 60;
+            dstTimeLock = 2 * 60;
             break;
         case 614:
             dstTimeLock = 1 * 60;
@@ -56,8 +128,11 @@ export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst
         case 966:
             dstTimeLock =  1 * 60;
             break;
+        case 501:
+            srcTimeLock =  1 * 60;
+            break;
         default:
-            throw new Error(`no support this chain for now: ${system_chain_id_dst}`)
+            throw new Error(`no support this chain for now: ${systemChainIdDst}`)
     }
 
     if (dstTimeLock > srcTimeLock) {
@@ -68,10 +143,10 @@ export const getStepTimeLock = (system_chain_id_src: number, system_chain_id_dst
 
 }
 
-export const getOtmoicAddressBySystemChainId = (system_chain_id: number, network: string): string => {
+export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: string): string => {
     const isMainnet = network == 'mainnet'
 
-    switch (system_chain_id) {
+    switch (systemChainId) {
         case 9000:
             return isMainnet ? "" : "0x1016A0886b4AeD69043367d501a99cfBAaB052B5"
         case 9006:
@@ -86,7 +161,88 @@ export const getOtmoicAddressBySystemChainId = (system_chain_id: number, network
             return isMainnet ? 'obridge.near' : 'otv1.saidev.testnet'
         case 144:
             return isMainnet ? '' : 'wss://s.altnet.rippletest.net:51233'
+        case 501:
+            return isMainnet ? 'FAqaHQHgBFFX8fJB6fQUqNdc8zABV5pGVRdCt7fLLYVo' : 'FAqaHQHgBFFX8fJB6fQUqNdc8zABV5pGVRdCt7fLLYVo'
         default:
-            throw new Error(`no support this chain for now: ${system_chain_id}`)
+            throw new Error(`no support this chain for now: ${systemChainId}`)
+    }
+}
+
+export const getFeeRecepientAddressBySystemChainId = (systemChainId: number, network: string): string => {
+    const isMainnet = network == 'mainnet'
+
+    switch (systemChainId) {
+        case 501:
+            return isMainnet ? 'Gexuvyazbb48d5U6voRna5ef1SLPRUNLiwavqEx8otgy' : '8os21rmBjg63xMWuRK4vza3DxZ69AoQD6SffBBmnrpiQ'
+        default:
+            throw new Error(`no support this chain for now: ${systemChainId}`)
+    }
+}
+
+export const getChainType = (systemChainId: number): string => {
+    switch (systemChainId) {
+        case 9000:
+        case 9006:
+        case 60:
+        case 966:
+        case 614:
+            return 'evm'
+        case 397:
+            return 'near'
+        case 144:
+            return 'xrp'
+        case 501:
+            return 'solana'
+    
+        default:
+            throw new Error(`not support chain: ${systemChainId}`);
+    }
+}
+
+export const getDefaultGasPrice = (systemChainId: number, network: string): bigint => {
+    const isMainnet = network == 'mainnet'
+
+    // 1 gwei
+    switch (systemChainId) {
+        case 9000:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 9006:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 60:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 966:
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 614:
+            // op is much lower than others
+            return isMainnet ? BigInt(1000000) : BigInt(1000000)
+        case 501:
+            // in micro lamports
+            return isMainnet ? BigInt(1) : BigInt(1)
+        default:
+            throw new Error(`not support chain: ${systemChainId}`);
+    }
+}
+
+export const getMaximumGasPrice = (systemChainId: number, network: string): bigint => {
+    const isMainnet = network == 'mainnet'
+
+    // 500 Gwei
+    switch (systemChainId) {
+        case 9000:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 9006:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 60:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 966:
+            return isMainnet ? BigInt(500000000000) : BigInt(500000000000)
+        case 614:
+            // op is much lower than others
+            return isMainnet ? BigInt(1000000000) : BigInt(1000000000)
+        case 501:
+            // in micro lamports
+            return isMainnet ? BigInt(5000000) : BigInt(5000000)
+        default:
+            throw new Error(`not support chain: ${systemChainId}`);
     }
 }

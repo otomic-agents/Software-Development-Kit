@@ -103,7 +103,8 @@ export interface SwapAssetInformation {
     did: string,
     requestor: string,
     user_sign: string,
-    lp_sign: string
+    lp_sign: string,
+    src_transfer_id?: string
 }
 
 export interface KycInfo {
@@ -138,11 +139,13 @@ export interface PreBusiness {
     hashlock_evm: string,
     hashlock_xrp: string,
     hashlock_near: string,
-    locked: true,
+    hashlock_solana: string,
+    locked: boolean,
     preimage: string,
     relay_hashlock_evm: string,
     relay_hashlock_xrp: string,
     relay_hashlock_near: string,
+    relay_hashlock_solana: string,
     timestamp: number,
     is_kyc: boolean,
     same_did: boolean,
@@ -151,7 +154,13 @@ export interface PreBusiness {
 export interface Business {
     business_id: number,
     step: number,
-    business_hash: string
+    business_hash: string,
+    transfer_out_id: number,
+    transfer_in_id: number,
+    transfer_out_confirm_id: number,
+    transfer_in_confirm_id: number,
+    transfer_out_refund_id: number,
+    transfer_in_refund_id: number,
 }
 
 export interface BusinessFullData {

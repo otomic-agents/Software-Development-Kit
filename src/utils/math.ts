@@ -1,7 +1,9 @@
 import Bignumber from 'bignumber.js'
 import { Quote } from '../interface/interface'
 
-export const convertMinimumUnits = (system_chain_id: number, token_address: string, amount: any, decimals: any) => new Bignumber(amount).times(new Bignumber(10).pow(decimals)).toFixed(0)
+export const convertMinimumUnits = (amount: any, decimals: any) => new Bignumber(amount).times(new Bignumber(10).pow(decimals)).toFixed(0)
+
+export const convertStandardUnits = (amount: any, decimals: any) => new Bignumber(amount).div(new Bignumber(10).pow(decimals)).toFixed(8)
 
 export const mathReceived = (quote: Quote, amount: string, swapToNative: number) => {
 
@@ -56,6 +58,8 @@ export const convertNativeMinimumUnits = (system_chain_id: number, amount: any):
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0)
         case 614:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0)
+        case 501:
+            return new Bignumber(amount).times(new Bignumber(10).pow(9)).toFixed(0)
         default:
             throw new Error(`not support chain for now: ${system_chain_id}`);
     }

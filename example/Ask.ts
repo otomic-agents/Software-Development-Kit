@@ -1,13 +1,14 @@
 import { Bridge, Relay, Quote } from '../src/index'
 
-const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud'
+const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com'
 
 const bridge: Bridge = {
-    bridge_id: 1,
+    bridge_id: 6,
     src_chain_id: 9006,
-    dst_chain_id: 614,
-    src_token: '0x55d398326f99059ff775485246999027b3197955',
-    dst_token: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58'
+    dst_chain_id: 9006,
+    src_token: '0x0000000000000000000000000000000000000000',
+    dst_token: '0xaCDA8BF66C2CADAc9e99Aa1aa75743F536E71094',
+    bridge_name: undefined
 }
 
 const Ask = async () => {
@@ -15,7 +16,7 @@ const Ask = async () => {
 
     relay.ask({
         bridge,
-        amount: '20'
+        amount: '1'
     }, {
         OnQuote: (quote: Quote) => {
             console.log('new quote', quote)

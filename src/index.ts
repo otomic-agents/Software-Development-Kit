@@ -281,11 +281,11 @@ export namespace solana {
 
     export const transferOutConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
-        metamaskAPI: any,
+        phantomAPI: any,
         network: string,
         rpc: string | undefined,
         uuid?: string,
-    ) => _transferOutConfirmByWalletPlugin(preBusiness, metamaskAPI, network, rpc, uuid);
+    ) => _transferOutConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc, uuid);
 
     export const transferOutRefundByPrivateKey = (
         preBusiness: PreBusiness,
@@ -297,11 +297,11 @@ export namespace solana {
 
     export const transferOutRefundByWalletPlugin = (
         preBusiness: PreBusiness,
-        metamaskAPI: any,
+        phantomAPI: any,
         network: string,
         rpc: string | undefined,
         uuid?: string,
-    ) => _transferOutRefundByWalletPlugin(preBusiness, metamaskAPI, network, rpc, uuid);
+    ) => _transferOutRefundByWalletPlugin(preBusiness, phantomAPI, network, rpc, uuid);
 
     export const transferInConfirmByPrivateKey = (
         preBusiness: PreBusiness,
@@ -314,12 +314,12 @@ export namespace solana {
 
     export const transferInConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
-        metamaskAPI: any,
+        phantomAPI: any,
         network: string,
         rpc: string | undefined,
         sender: string,
         uuid?: string,
-    ) => _transferInConfirmByWalletPlugin(preBusiness, metamaskAPI, network, rpc, sender, uuid);
+    ) => _transferInConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc, sender, uuid);
 }
 
 export namespace business {

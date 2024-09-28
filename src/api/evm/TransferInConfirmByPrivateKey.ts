@@ -10,20 +10,24 @@ export const _transferInConfirmByPrivateKey = (
     sender: string,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
-        const web3Wallet = new ethers.Wallet(privateKey);
-        let provider: JsonRpcProvider = getJsonRpcProviderByChainId(
-            preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
-            rpc,
-            network,
-        );
+        try {
+            const web3Wallet = new ethers.Wallet(privateKey);
+            let provider: JsonRpcProvider = getJsonRpcProviderByChainId(
+                preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
+                rpc,
+                network,
+            );
 
-        const transferOutConfirmTx = await doTransferInConfirm(
-            preBusiness,
-            provider,
-            web3Wallet.connect(provider),
-            network,
-            sender,
-        );
+            const transferOutConfirmTx = await doTransferInConfirm(
+                preBusiness,
+                provider,
+                web3Wallet.connect(provider),
+                network,
+                sender,
+            );
 
-        resolve(transferOutConfirmTx);
+            resolve(transferOutConfirmTx);
+        } catch (error) {
+            reject(error);
+        }
     });

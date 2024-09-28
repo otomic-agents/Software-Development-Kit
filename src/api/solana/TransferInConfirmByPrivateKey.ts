@@ -13,15 +13,15 @@ export const _transferInConfirmByPrivateKey = (
     uuid?: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
-        const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
-        const provider: Connection = getJsonRpcProviderByChainId(
-            preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
-            rpc,
-            network,
-        );
-        let { tx, uuidBack } = await doTransferInConfirm(preBusiness, provider, network, sender, uuid);
-
         try {
+            const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
+            const provider: Connection = getJsonRpcProviderByChainId(
+                preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
+                rpc,
+                network,
+            );
+            let { tx, uuidBack } = await doTransferInConfirm(preBusiness, provider, network, sender, uuid);
+
             let txHash = await ensureSendingTx(provider, keypair, tx);
 
             resolve({

@@ -140,6 +140,7 @@ export interface PreBusiness {
     hashlock_near: string;
     hashlock_solana: string;
     locked: boolean;
+    lock_message: string;
     preimage: string;
     relay_hashlock_evm: string;
     relay_hashlock_xrp: string;

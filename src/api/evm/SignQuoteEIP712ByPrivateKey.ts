@@ -15,29 +15,33 @@ export const _signQuoteEIP712ByPrivateKey = (
     rpcDst: string | undefined,
 ) =>
     new Promise<{ signData: SignData; signed: string }>(async (resolve, reject) => {
-        const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
+        try {
+            const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
 
-        const signData: SignData = await _getSignDataEIP712(
-            quote,
-            network,
-            amount,
-            dstAmount,
-            dstNativeAmount,
-            swapToNative,
-            receivingAddress,
-            stepTimeLock,
-            rpcSrc,
-            rpcDst,
-        );
+            const signData: SignData = await _getSignDataEIP712(
+                quote,
+                network,
+                amount,
+                dstAmount,
+                dstNativeAmount,
+                swapToNative,
+                receivingAddress,
+                stepTimeLock,
+                rpcSrc,
+                rpcDst,
+            );
 
-        const web3Wallet = new ethers.Wallet(privateKey);
+            const web3Wallet = new ethers.Wallet(privateKey);
 
-        signData.message.requestor = web3Wallet.address;
+            signData.message.requestor = web3Wallet.address;
 
-        const signed = await web3Wallet.signTypedData(signData.domain, signData.types, signData.message);
+            const signed = await web3Wallet.signTypedData(signData.domain, signData.types, signData.message);
 
-        resolve({
-            signData,
-            signed,
-        });
+            resolve({
+                signData,
+                signed,
+            });
+        } catch (error) {
+            reject(error);
+        }
     });

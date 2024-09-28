@@ -10,22 +10,26 @@ export const _transferOutByMetamaskAPI = (
     rpc: string | undefined,
 ) =>
     new Promise<ResponseTransferOut>(async (resolve, reject) => {
-        const provider = new ethers.JsonRpcProvider(metamaskAPI);
-        let approveTx: ContractTransactionResponse | undefined = undefined;
+        try {
+            const provider = new ethers.JsonRpcProvider(metamaskAPI);
+            let approveTx: ContractTransactionResponse | undefined = undefined;
 
-        //approve
-        if (await isNeedApprove(preBusiness, preBusiness.swap_asset_information.sender, rpc, network)) {
-            approveTx = await doApprove(preBusiness, provider, undefined, network);
-            // console.log(approveTx)
-        }
+            //approve
+            if (await isNeedApprove(preBusiness, preBusiness.swap_asset_information.sender, rpc, network)) {
+                approveTx = await doApprove(preBusiness, provider, undefined, network);
+                // console.log(approveTx)
+            }
 
-        if (provider == undefined || approveTx == undefined) {
-            throw new Error('provider or approveTx not exist');
+            if (provider == undefined || approveTx == undefined) {
+                throw new Error('provider or approveTx not exist');
+            }
+            //transfer out
+            const transferOutTx = await doTransferOut(preBusiness, provider, undefined, network);
+            resolve({
+                approve: approveTx,
+                transferOut: transferOutTx,
+            });
+        } catch (error) {
+            reject(error);
         }
-        //transfer out
-        const transferOutTx = await doTransferOut(preBusiness, provider, undefined, network);
-        resolve({
-            approve: approveTx,
-            transferOut: transferOutTx,
-        });
     });

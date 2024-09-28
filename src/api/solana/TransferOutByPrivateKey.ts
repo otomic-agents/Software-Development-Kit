@@ -12,14 +12,14 @@ export const _transferOutByPrivateKey = (
     uuid?: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
-        const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
-
-        const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
-
-        //transfer out
-        let { tx, uuidBack } = await doTransferOut(preBusiness, provider, network, uuid);
-
         try {
+            const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
+
+            const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
+
+            //transfer out
+            let { tx, uuidBack } = await doTransferOut(preBusiness, provider, network, uuid);
+
             let txHash = await ensureSendingTx(provider, keypair, tx);
 
             resolve({

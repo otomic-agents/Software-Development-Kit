@@ -9,9 +9,13 @@ export const _transferOutConfirmByMetamaskAPI = (
     rpc: string | undefined,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
-        const provider = new ethers.JsonRpcProvider(metamaskAPI);
+        try {
+            const provider = new ethers.JsonRpcProvider(metamaskAPI);
 
-        const transferOutConfirmTx = await doTransferOutConfirm(preBusiness, provider, undefined, network);
+            const transferOutConfirmTx = await doTransferOutConfirm(preBusiness, provider, undefined, network);
 
-        resolve(transferOutConfirmTx);
+            resolve(transferOutConfirmTx);
+        } catch (error) {
+            reject(error);
+        }
     });

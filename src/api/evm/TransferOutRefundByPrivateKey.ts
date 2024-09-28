@@ -9,15 +9,19 @@ export const _transferOutRefundByPrivateKey = (
     rpc: string | undefined,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
-        const web3Wallet = new ethers.Wallet(privateKey);
-        let provider: JsonRpcProvider = getJsonRpcProvider(preBusiness, rpc, network);
+        try {
+            const web3Wallet = new ethers.Wallet(privateKey);
+            let provider: JsonRpcProvider = getJsonRpcProvider(preBusiness, rpc, network);
 
-        const transferOutRefundTx = await doTransferOutRefund(
-            preBusiness,
-            provider,
-            web3Wallet.connect(provider),
-            network,
-        );
+            const transferOutRefundTx = await doTransferOutRefund(
+                preBusiness,
+                provider,
+                web3Wallet.connect(provider),
+                network,
+            );
 
-        resolve(transferOutRefundTx);
+            resolve(transferOutRefundTx);
+        } catch (error) {
+            reject(error);
+        }
     });

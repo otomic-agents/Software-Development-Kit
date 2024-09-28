@@ -12,19 +12,19 @@ export const _transferInConfirmByWalletPlugin = (
     uuid?: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
-        const provider: Connection = getJsonRpcProviderByChainId(
-            preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
-            rpc,
-            network,
-        );
-
-        let { tx, uuidBack } = await doTransferInConfirm(preBusiness, provider, network, sender, uuid);
-
-        const latestBlockhash = await provider.getLatestBlockhash('confirmed');
-        tx.recentBlockhash = latestBlockhash.blockhash;
-        tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
-
         try {
+            const provider: Connection = getJsonRpcProviderByChainId(
+                preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
+                rpc,
+                network,
+            );
+
+            let { tx, uuidBack } = await doTransferInConfirm(preBusiness, provider, network, sender, uuid);
+
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
             const { signature } = await phantomAPI.signAndSendTransaction(tx);
             resolve({
                 txHash: signature,

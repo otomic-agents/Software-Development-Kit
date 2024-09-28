@@ -18,33 +18,37 @@ export const _signQuoteByPrivateKey = (
     rpcDst: string | undefined,
 ) =>
     new Promise<{ signData: any; signed: string }>(async (resolve, reject) => {
-        const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
-        let keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
+        try {
+            const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
+            let keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
 
-        const signData = await _getSignDataEIP712(
-            quote,
-            network,
-            amount,
-            dstAmount,
-            dstNativeAmount,
-            swapToNative,
-            receivingAddress,
-            stepTimeLock,
-            rpcSrc,
-            rpcDst,
-        );
-        signData.message.requestor = keypair.publicKey.toBase58();
+            const signData = await _getSignDataEIP712(
+                quote,
+                network,
+                amount,
+                dstAmount,
+                dstNativeAmount,
+                swapToNative,
+                receivingAddress,
+                stepTimeLock,
+                rpcSrc,
+                rpcDst,
+            );
+            signData.message.requestor = keypair.publicKey.toBase58();
 
-        // let contractAddress = new PublicKey(getOtmoicAddressBySystemChainId(quote.quote_base.bridge.src_chain_id, network))
-        // let signerPubkeys = [keypair.publicKey]
-        // let msgLen = decodeUTF8(signDataStr).length
-        // const signPreamble = _getSignPreambleEIP712(contractAddress, signerPubkeys, msgLen)
+            // let contractAddress = new PublicKey(getOtmoicAddressBySystemChainId(quote.quote_base.bridge.src_chain_id, network))
+            // let signerPubkeys = [keypair.publicKey]
+            // let msgLen = decodeUTF8(signDataStr).length
+            // const signPreamble = _getSignPreambleEIP712(contractAddress, signerPubkeys, msgLen)
 
-        let messageBytes = decodeUTF8(JSON.stringify(signData.message));
-        let signed = nacl.sign.detached(messageBytes, keypair.secretKey);
+            let messageBytes = decodeUTF8(JSON.stringify(signData.message));
+            let signed = nacl.sign.detached(messageBytes, keypair.secretKey);
 
-        resolve({
-            signData: signData,
-            signed: Buffer.from(signed).toString('hex'),
-        });
+            resolve({
+                signData: signData,
+                signed: Buffer.from(signed).toString('hex'),
+            });
+        } catch (error) {
+            reject(error);
+        }
     });

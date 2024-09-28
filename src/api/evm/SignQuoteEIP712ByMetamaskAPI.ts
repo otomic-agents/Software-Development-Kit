@@ -15,30 +15,34 @@ export const _signQuoteEIP712ByMetamaskAPI = (
     rpcDst: string | undefined,
 ) =>
     new Promise<{ signData: SignData; signed: string }>(async (resolve, reject) => {
-        const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
+        try {
+            const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
 
-        const signData: SignData = await _getSignDataEIP712(
-            quote,
-            network,
-            amount,
-            dstAmount,
-            dstNativeAmount,
-            swapToNative,
-            receivingAddress,
-            stepTimeLock,
-            rpcSrc,
-            rpcDst,
-        );
+            const signData: SignData = await _getSignDataEIP712(
+                quote,
+                network,
+                amount,
+                dstAmount,
+                dstNativeAmount,
+                swapToNative,
+                receivingAddress,
+                stepTimeLock,
+                rpcSrc,
+                rpcDst,
+            );
 
-        signData.message.requestor = sender;
+            signData.message.requestor = sender;
 
-        const signed = await metamaskAPI.request({
-            method: 'eth_signTypedData_v4',
-            params: [sender, signData],
-        });
+            const signed = await metamaskAPI.request({
+                method: 'eth_signTypedData_v4',
+                params: [sender, signData],
+            });
 
-        resolve({
-            signData,
-            signed,
-        });
+            resolve({
+                signData,
+                signed,
+            });
+        } catch (error) {
+            reject(error);
+        }
     });

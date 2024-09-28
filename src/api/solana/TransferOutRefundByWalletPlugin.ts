@@ -11,15 +11,15 @@ export const _transferOutRefundByWalletPlugin = (
     uuid?: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
-        const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
-
-        let { tx, uuidBack } = await doTransferOutRefund(preBusiness, provider, network, uuid);
-
-        const latestBlockhash = await provider.getLatestBlockhash('confirmed');
-        tx.recentBlockhash = latestBlockhash.blockhash;
-        tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
-
         try {
+            const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
+
+            let { tx, uuidBack } = await doTransferOutRefund(preBusiness, provider, network, uuid);
+
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
             const { signature } = await phantomAPI.signAndSendTransaction(tx);
             resolve({
                 txHash: signature,

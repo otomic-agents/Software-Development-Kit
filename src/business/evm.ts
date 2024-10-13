@@ -7,7 +7,9 @@ import {
     getChainId,
     getChainType,
     getOtmoicAddressBySystemChainId,
-    getStepTimeLock,
+    getExpectedSingleStepTime,
+    getTolerantSingleStepTime,
+    getDefaultEarliestRefundTime,
     getDefaultGasPrice,
     getMaximumGasPrice,
     getNativeTokenDecimals,
@@ -126,7 +128,9 @@ export const _getSignDataEIP712 = async (
     dstNativeAmount: string,
     swapToNative: number,
     receivingAddress: string,
-    stepTimeLock: number | undefined,
+    expectedSingleStepTime: number | undefined,
+    tolerantSingleStepTime: number | undefined,
+    earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) => {
@@ -166,6 +170,15 @@ export const _getSignDataEIP712 = async (
         );
     }
 
+    let agreementReachedTime = parseInt(((Date.now() + 1000 * 60 * 1) / 1000).toFixed(0));
+    let defaultExpectedSingleStepTime = getExpectedSingleStepTime(
+        quote.quote_base.bridge.src_chain_id,
+        quote.quote_base.bridge.dst_chain_id,
+    );
+    let defaultTolerantSingleStepTime = getTolerantSingleStepTime(
+        quote.quote_base.bridge.src_chain_id,
+        quote.quote_base.bridge.dst_chain_id,
+    );
     const signMessage = {
         src_chain_id: quote.quote_base.bridge.src_chain_id,
         src_address: quote.quote_base.lp_bridge_address,
@@ -180,11 +193,19 @@ export const _getSignDataEIP712 = async (
 
         requestor: '', //user_address.value,
         lp_id: quote.lp_info.name,
-        step_time_lock:
-            stepTimeLock == undefined
-                ? getStepTimeLock(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.dst_chain_id)
-                : stepTimeLock,
-        agreement_reached_time: parseInt(((Date.now() + 1000 * 60 * 1) / 1000).toFixed(0)),
+        expected_single_step_time:
+            expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
+        tolerant_single_step_time:
+            tolerantSingleStepTime == undefined ? defaultTolerantSingleStepTime : tolerantSingleStepTime,
+        earliest_refund_time:
+            earliestRefundTime == undefined
+                ? getDefaultEarliestRefundTime(
+                      agreementReachedTime,
+                      defaultExpectedSingleStepTime,
+                      defaultTolerantSingleStepTime,
+                  )
+                : earliestRefundTime,
+        agreement_reached_time: agreementReachedTime,
     };
 
     const typedData = {
@@ -201,7 +222,9 @@ export const _getSignDataEIP712 = async (
                 { name: 'dst_native_amount', type: 'string' },
                 { name: 'requestor', type: 'string' },
                 { name: 'lp_id', type: 'string' },
-                { name: 'step_time_lock', type: 'uint256' },
+                { name: 'expected_single_step_time', type: 'uint256' },
+                { name: 'tolerant_single_step_time', type: 'uint256' },
+                { name: 'earliest_refund_time', type: 'uint256' },
                 { name: 'agreement_reached_time', type: 'uint256' },
             ],
         },
@@ -312,8 +335,9 @@ export const doTransferOut = (
                         data.token,
                         data.amount,
                         data.hashlock,
-                        data.relayHashlock,
-                        data.stepTimelock,
+                        data.expectedSingleStepTime,
+                        data.tolerantSingleStepTime,
+                        data.earliestRefundTime,
                         data.dstChainId,
                         data.dstAddress,
                         data.bidId,
@@ -339,8 +363,9 @@ export const doTransferOut = (
                         data.token,
                         data.amount,
                         data.hashlock,
-                        data.relayHashlock,
-                        data.stepTimelock,
+                        data.expectedSingleStepTime,
+                        data.tolerantSingleStepTime,
+                        data.earliestRefundTime,
                         data.dstChainId,
                         data.dstAddress,
                         data.bidId,
@@ -389,10 +414,10 @@ export const doTransferOutConfirm = (
                     data.tokenAmount,
                     data.ethAmount,
                     data.hashlock,
-                    data.relayHashlock,
-                    data.stepTimelock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
                     data.preimage,
-                    '0x0000000000000000000000000000000000000000000000000000000000000000',
                     data.agreementReachedTime,
                     {
                         gasPrice: await getGasPrice(provider, systemChainId, network),
@@ -431,7 +456,9 @@ export const doTransferInConfirm = (
                     data.amount,
                     data.nativeAmount,
                     data.hashlock,
-                    data.stepTimeLock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
                     data.preimage,
                     data.agreementReachedTime,
                     {
@@ -470,8 +497,9 @@ export const doTransferOutRefund = (
                     data.tokenAmount,
                     data.ethAmount,
                     data.hashlock,
-                    data.relayHashlock,
-                    data.stepTimelock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
                     data.agreementReachedTime,
                     {
                         gasPrice: await getGasPrice(provider, systemChainId, network),
@@ -516,7 +544,7 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
         verifyingContract:
             network == 'mainnet'
                 ? '0xE924F7f68D1dcd004720e107F62c6303aF271ed3'
-                : '0xe69257d83b2c50b2d7496348d053d76c744753e4',
+                : '0xd9d91A805e074932E3E6FeD399A814207106A69E',
     };
 
     const complaintType = {
@@ -532,7 +560,9 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
             { name: 'dstNativeAmount', type: 'string' },
             { name: 'requestor', type: 'string' },
             { name: 'lpId', type: 'string' },
-            { name: 'stepTimeLock', type: 'uint64' },
+            { name: 'expectedSingleStepTime', type: 'uint64' },
+            { name: 'tolerantSingleStepTime', type: 'uint64' },
+            { name: 'earliestRefundTime', type: 'uint64' },
             { name: 'agreementReachedTime', type: 'uint64' },
             { name: 'userSign', type: 'string' },
             { name: 'lpSign', type: 'string' },
@@ -551,7 +581,9 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
         dstNativeAmount: preBusiness.swap_asset_information.dst_native_amount,
         requestor: preBusiness.swap_asset_information.sender,
         lpId: preBusiness.swap_asset_information.quote.lp_info.name,
-        stepTimeLock: preBusiness.swap_asset_information.step_time_lock,
+        expectedSingleStepTime: preBusiness.swap_asset_information.expected_single_step_time,
+        tolerantSingleStepTime: preBusiness.swap_asset_information.tolerant_single_step_time,
+        earliestRefundTime: preBusiness.swap_asset_information.earliest_refund_time,
         agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
         userSign: preBusiness.swap_asset_information.user_sign,
         lpSign: preBusiness.swap_asset_information.lp_sign,

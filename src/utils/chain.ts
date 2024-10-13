@@ -85,7 +85,7 @@ export const getChainId = (systemChainId: number, network: string) => {
     }
 };
 
-export const getStepTimeLock = (systemChainIdSrc: number, systemChainIdDst: number): number => {
+export const getExpectedSingleStepTime = (systemChainIdSrc: number, systemChainIdDst: number): number => {
     let srcTimeLock = 0;
     switch (systemChainIdSrc) {
         case 9000:
@@ -139,6 +139,70 @@ export const getStepTimeLock = (systemChainIdSrc: number, systemChainIdDst: numb
     } else {
         return srcTimeLock;
     }
+};
+
+export const getTolerantSingleStepTime = (systemChainIdSrc: number, systemChainIdDst: number): number => {
+    let srcTimeLock = 0;
+    switch (systemChainIdSrc) {
+        case 9000:
+            srcTimeLock = 4 * 60;
+            break;
+        case 9006:
+            srcTimeLock = 2 * 60;
+            break;
+        case 614:
+            srcTimeLock = 2 * 60;
+            break;
+        case 60:
+            srcTimeLock = 8 * 60;
+            break;
+        case 966:
+            srcTimeLock = 2 * 60;
+            break;
+        case 501:
+            srcTimeLock = 2 * 60;
+            break;
+        default:
+            throw new Error(`no support this chain for now: ${systemChainIdSrc}`);
+    }
+
+    let dstTimeLock = 0;
+    switch (systemChainIdDst) {
+        case 9000:
+            dstTimeLock = 4 * 60;
+            break;
+        case 9006:
+            dstTimeLock = 4 * 60;
+            break;
+        case 614:
+            dstTimeLock = 2 * 60;
+            break;
+        case 60:
+            dstTimeLock = 8 * 60;
+            break;
+        case 966:
+            dstTimeLock = 2 * 60;
+            break;
+        case 501:
+            srcTimeLock = 2 * 60;
+            break;
+        default:
+            throw new Error(`no support this chain for now: ${systemChainIdDst}`);
+    }
+
+    if (dstTimeLock > srcTimeLock) {
+        return dstTimeLock;
+    } else {
+        return srcTimeLock;
+    }
+};
+
+export const getDefaultEarliestRefundTime = (
+    agreementReachedTime: number,
+    expectedSingleStepTime: number,
+    tolerantSingleStepTime: number,
+): number => {
+    return agreementReachedTime + 3 * expectedSingleStepTime + 3 * tolerantSingleStepTime + 1;
 };
 
 export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: string): string => {

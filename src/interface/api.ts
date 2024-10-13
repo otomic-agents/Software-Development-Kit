@@ -15,5 +15,4 @@ export interface TranslatedBridge extends Bridge {
 
 export interface ResponseSolana {
     txHash: string;
-    uuid: string;
 }

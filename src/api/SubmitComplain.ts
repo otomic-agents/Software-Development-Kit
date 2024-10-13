@@ -12,7 +12,9 @@ export interface ComplaintValue {
     dstNativeAmount: string;
     requestor: string;
     lpId: string;
-    stepTimeLock: string;
+    expectedSingleStepTime: string;
+    tolerantSingleStepTime: string;
+    earliestRefundTime: string;
     agreementReachedTime: string;
     userSign: string;
     lpSign: string;

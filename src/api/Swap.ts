@@ -15,7 +15,9 @@ export const _swap = (quote: Quote, signData: SignData, signed: string, relayUrl
             sender: signData.message.requestor,
 
             amount: signData.message.src_amount,
-            step_time_lock: signData.message.step_time_lock,
+            expected_single_step_time: signData.message.expected_single_step_time,
+            tolerant_single_step_time: signData.message.tolerant_single_step_time,
+            earliest_refund_time: signData.message.earliest_refund_time,
             dst_address: signData.message.dst_address,
             dst_amount: signData.message.dst_amount,
             dst_native_amount: signData.message.dst_native_amount,

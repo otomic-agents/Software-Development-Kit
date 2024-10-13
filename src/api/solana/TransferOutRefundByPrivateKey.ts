@@ -15,14 +15,11 @@ export const _transferOutRefundByPrivateKey = (
         try {
             const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
             const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
-            let { tx, uuidBack } = await doTransferOutRefund(preBusiness, provider, network, uuid);
+            let tx = await doTransferOutRefund(preBusiness, provider, network);
 
             let txHash = await ensureSendingTx(provider, keypair, tx);
 
-            resolve({
-                txHash,
-                uuid: uuidBack,
-            });
+            resolve({ txHash });
         } catch (err) {
             reject(err);
         }

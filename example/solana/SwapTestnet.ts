@@ -38,17 +38,17 @@ const Ask = () =>
     });
 
 const doTxOut = (preBusiness: PreBusiness) =>
-    new Promise<string>(async (resolve, reject) => {
+    new Promise<void>(async (resolve, reject) => {
         console.log('doTxOut');
 
-        const { txHash, uuid } = await solana.transferOutByPrivateKey(
+        const txHash = await solana.transferOutByPrivateKey(
             preBusiness,
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_SOLANA,
         );
         console.log('response tx out', txHash);
-        resolve(uuid);
+        resolve();
     });
 
 const waitTxIn = (preBusiness: PreBusiness) =>
@@ -71,7 +71,7 @@ const waitTxIn = (preBusiness: PreBusiness) =>
         resolve();
     });
 
-const doTxOutCfm = (preBusiness: PreBusiness, uuid: string) =>
+const doTxOutCfm = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutCfm');
 
@@ -80,7 +80,6 @@ const doTxOutCfm = (preBusiness: PreBusiness, uuid: string) =>
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_SOLANA,
-            uuid,
         );
         console.log('response tx out confirm', txHash);
         resolve();
@@ -105,7 +104,7 @@ const waitTxInCfm = (preBusiness: PreBusiness) =>
         resolve();
     });
 
-const doTxRefund = (preBusiness: PreBusiness, uuid: string) =>
+const doTxRefund = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutRefund');
 
@@ -114,7 +113,6 @@ const doTxRefund = (preBusiness: PreBusiness, uuid: string) =>
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_SOLANA,
-            uuid,
         );
         console.log('response tx out refund', txHash);
         resolve();
@@ -130,6 +128,8 @@ const swap = async () => {
         0,
         '0x50724411eb1817822e2590a43a8F0859FCc6fCD5',
         undefined,
+        undefined,
+        undefined,
         RPC_SOLANA,
         RPC_BSC,
     );
@@ -142,10 +142,10 @@ const swap = async () => {
     console.log('business', business);
 
     if (business.locked == true) {
-        let uuid = await doTxOut(business);
+        await doTxOut(business);
         await waitTxIn(business);
 
-        await doTxOutCfm(business, uuid);
+        await doTxOutCfm(business);
         await waitTxInCfm(business);
     }
 };
@@ -160,6 +160,8 @@ const refund = async () => {
         0,
         '0x50724411eb1817822e2590a43a8F0859FCc6fCD5',
         undefined,
+        undefined,
+        undefined,
         RPC_SOLANA,
         RPC_BSC,
     );
@@ -172,10 +174,10 @@ const refund = async () => {
     console.log('business', business);
 
     if (business.locked == true) {
-        let uuid = await doTxOut(business);
+        await doTxOut(business);
         await waitTxIn(business);
 
-        await doTxRefund(business, uuid);
+        await doTxRefund(business);
     }
 };
 

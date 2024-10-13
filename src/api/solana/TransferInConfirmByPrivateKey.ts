@@ -10,7 +10,6 @@ export const _transferInConfirmByPrivateKey = (
     network: string,
     rpc: string | undefined,
     sender: string,
-    uuid?: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
         try {
@@ -20,14 +19,11 @@ export const _transferInConfirmByPrivateKey = (
                 rpc,
                 network,
             );
-            let { tx, uuidBack } = await doTransferInConfirm(preBusiness, provider, network, sender, uuid);
+            let tx = await doTransferInConfirm(preBusiness, provider, network, sender);
 
             let txHash = await ensureSendingTx(provider, keypair, tx);
 
-            resolve({
-                txHash,
-                uuid: uuidBack,
-            });
+            resolve({ txHash });
         } catch (err) {
             reject(err);
         }

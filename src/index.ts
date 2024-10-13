@@ -104,7 +104,9 @@ export namespace evm {
         amount: string,
         swapToNative: number,
         receivingAddress: string,
-        stepTimeLock: number | undefined,
+        expectedSingleStepTime: number | undefined,
+        tolerantSingleStepTime: number | undefined,
+        earliestRefundTime: number | undefined,
         rpcSrc: string | undefined,
         rpcDst: string | undefined,
     ) =>
@@ -115,7 +117,9 @@ export namespace evm {
             amount,
             swapToNative,
             receivingAddress,
-            stepTimeLock,
+            expectedSingleStepTime,
+            tolerantSingleStepTime,
+            earliestRefundTime,
             rpcSrc,
             rpcDst,
         );
@@ -128,7 +132,9 @@ export namespace evm {
         amount: string,
         swapToNative: number,
         receivingAddress: string,
-        stepTimeLock: number | undefined,
+        expectedSingleStepTime: number | undefined,
+        tolerantSingleStepTime: number | undefined,
+        earliestRefundTime: number | undefined,
         rpcSrc: string | undefined,
         rpcDst: string | undefined,
     ) =>
@@ -140,7 +146,9 @@ export namespace evm {
             amount,
             swapToNative,
             receivingAddress,
-            stepTimeLock,
+            expectedSingleStepTime,
+            tolerantSingleStepTime,
+            earliestRefundTime,
             rpcSrc,
             rpcDst,
         );
@@ -214,7 +222,9 @@ export namespace solana {
         amount: string,
         swapToNative: number,
         receivingAddress: string,
-        stepTimeLock: number | undefined,
+        expectedSingleStepTime: number | undefined,
+        tolerantSingleStepTime: number | undefined,
+        earliestRefundTime: number | undefined,
         rpcSrc: string | undefined,
         rpcDst: string | undefined,
     ) =>
@@ -225,7 +235,9 @@ export namespace solana {
             amount,
             swapToNative,
             receivingAddress,
-            stepTimeLock,
+            expectedSingleStepTime,
+            tolerantSingleStepTime,
+            earliestRefundTime,
             rpcSrc,
             rpcDst,
         );
@@ -238,7 +250,9 @@ export namespace solana {
         amount: string,
         swapToNative: number,
         receivingAddress: string,
-        stepTimeLock: number | undefined,
+        expectedSingleStepTime: number | undefined,
+        tolerantSingleStepTime: number | undefined,
+        earliestRefundTime: number | undefined,
         rpcSrc: string | undefined,
         rpcDst: string | undefined,
     ) =>
@@ -250,7 +264,9 @@ export namespace solana {
             amount,
             swapToNative,
             receivingAddress,
-            stepTimeLock,
+            expectedSingleStepTime,
+            tolerantSingleStepTime,
+            earliestRefundTime,
             rpcSrc,
             rpcDst,
         );
@@ -260,48 +276,42 @@ export namespace solana {
         privateKey: string,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
-    ) => _transferOutSolanaByPrivateKey(preBusiness, privateKey, network, rpc, uuid);
+    ) => _transferOutSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
     export const transferOutByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
-    ) => _transferOutByWalletPlugin(preBusiness, phantomAPI, network, rpc, uuid);
+    ) => _transferOutByWalletPlugin(preBusiness, phantomAPI, network, rpc);
 
     export const transferOutConfirmByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
-    ) => _transferOutConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc, uuid);
+    ) => _transferOutConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
     export const transferOutConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
-    ) => _transferOutConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc, uuid);
+    ) => _transferOutConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc);
 
     export const transferOutRefundByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
-    ) => _transferOutRefundSolanaByPrivateKey(preBusiness, privateKey, network, rpc, uuid);
+    ) => _transferOutRefundSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
     export const transferOutRefundByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
-    ) => _transferOutRefundByWalletPlugin(preBusiness, phantomAPI, network, rpc, uuid);
+    ) => _transferOutRefundByWalletPlugin(preBusiness, phantomAPI, network, rpc);
 
     export const transferInConfirmByPrivateKey = (
         preBusiness: PreBusiness,
@@ -309,8 +319,7 @@ export namespace solana {
         network: string,
         rpc: string | undefined,
         sender: string,
-        uuid?: string,
-    ) => _transferInConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc, sender, uuid);
+    ) => _transferInConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc, sender);
 
     export const transferInConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
@@ -318,8 +327,7 @@ export namespace solana {
         network: string,
         rpc: string | undefined,
         sender: string,
-        uuid?: string,
-    ) => _transferInConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc, sender, uuid);
+    ) => _transferInConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc, sender);
 }
 
 export namespace business {
@@ -330,7 +338,9 @@ export namespace business {
         amount: string,
         swapToNative: number,
         receivingAddress: string,
-        stepTimeLock: number | undefined,
+        expectedSingleStepTime: number | undefined,
+        tolerantSingleStepTime: number | undefined,
+        earliestRefundTime: number | undefined,
         rpcSrc: string | undefined,
         rpcDst: string | undefined,
     ) => {
@@ -343,7 +353,9 @@ export namespace business {
                     amount,
                     swapToNative,
                     receivingAddress,
-                    stepTimeLock,
+                    expectedSingleStepTime,
+                    tolerantSingleStepTime,
+                    earliestRefundTime,
                     rpcSrc,
                     rpcDst,
                 );
@@ -356,7 +368,9 @@ export namespace business {
                     amount,
                     swapToNative,
                     receivingAddress,
-                    stepTimeLock,
+                    expectedSingleStepTime,
+                    tolerantSingleStepTime,
+                    earliestRefundTime,
                     rpcSrc,
                     rpcDst,
                 );
@@ -371,14 +385,13 @@ export namespace business {
         privateKey: string,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
                 return evm.transferOutByPrivateKey(preBusiness, privateKey, network, rpc);
 
             case 'solana':
-                return solana.transferOutByPrivateKey(preBusiness, privateKey, network, rpc, uuid);
+                return solana.transferOutByPrivateKey(preBusiness, privateKey, network, rpc);
 
             default:
                 throw new Error(
@@ -392,14 +405,13 @@ export namespace business {
         privateKey: string,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
                 return evm.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc);
 
             case 'solana':
-                return solana.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc, uuid);
+                return solana.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc);
 
             default:
                 throw new Error(
@@ -414,14 +426,13 @@ export namespace business {
         network: string,
         rpc: string | undefined,
         sender: string,
-        uuid?: string,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id)) {
             case 'evm':
                 return evm.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender);
 
             case 'solana':
-                return solana.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender, uuid);
+                return solana.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender);
 
             default:
                 throw new Error(
@@ -435,14 +446,13 @@ export namespace business {
         privateKey: string,
         network: string,
         rpc: string | undefined,
-        uuid?: string,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
                 return evm.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc);
 
             case 'solana':
-                return solana.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc, uuid);
+                return solana.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc);
 
             default:
                 throw new Error(

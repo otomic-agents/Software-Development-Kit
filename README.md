@@ -68,10 +68,10 @@ The `Relay` class is used to interact with the Otmoic relay service. It provides
 constructor(relay: string)
 ```
 
-- **Parameters**:
-  - `relay` (string): The URL of the relay service.
-- **Throws**:
-  - `Error`: If the relay parameter is not provided.
+-   **Parameters**:
+    -   `relay` (string): The URL of the relay service.
+-   **Throws**:
+    -   `Error`: If the relay parameter is not provided.
 
 ##### Methods
 
@@ -83,8 +83,8 @@ Fetches the list of available bridges from the relay service.
 getBridge(): Promise<Bridge[]>
 ```
 
-- **Returns**:
-  - `Promise<Bridge[]>`: A promise that resolves to an array of `Bridge` objects.
+-   **Returns**:
+    -   `Promise<Bridge[]>`: A promise that resolves to an array of `Bridge` objects.
 
 ##### `ask`
 
@@ -94,9 +94,9 @@ Requests a quote for a swap.
 ask(askIF: AskIF, callback: OnQuoteIF): void
 ```
 
-- **Parameters**:
-  - `askIF` (AskIF): The request object containing swap details.
-  - `callback` (OnQuoteIF): The callback object to handle the quote response.
+-   **Parameters**:
+    -   `askIF` (AskIF): The request object containing swap details.
+    -   `callback` (OnQuoteIF): The callback object to handle the quote response.
 
 ##### `stopAsk`
 
@@ -106,8 +106,8 @@ Stops the ongoing quote request.
 stopAsk(): void
 ```
 
-- **Returns**:
-  - `void`
+-   **Returns**:
+    -   `void`
 
 ##### `swap`
 
@@ -117,12 +117,12 @@ Confirms a swap with the provided quote and signed data.
 swap(quote: Quote, signData: SignData, signed: string): Promise<PreBusiness>
 ```
 
-- **Parameters**:
-  - `quote` (Quote): The quote object containing swap details.
-  - `signData` (SignData): The signed data object.
-  - `signed` (string): The signed string.
-- **Returns**:
-  - `Promise<PreBusiness>`: A promise that resolves to a `PreBusiness` object.
+-   **Parameters**:
+    -   `quote` (Quote): The quote object containing swap details.
+    -   `signData` (SignData): The signed data object.
+    -   `signed` (string): The signed string.
+-   **Returns**:
+    -   `Promise<PreBusiness>`: A promise that resolves to a `PreBusiness` object.
 
 ##### `getHistory`
 
@@ -132,10 +132,10 @@ Fetches the swap history for a specific address.
 getHistory(address: string): Promise<BusinessFullData[]>
 ```
 
-- **Parameters**:
-  - `address` (string): The address to fetch the history for.
-- **Returns**:
-  - `Promise<BusinessFullData[]>`: A promise that resolves to an array of `BusinessFullData` objects.
+-   **Parameters**:
+    -   `address` (string): The address to fetch the history for.
+-   **Returns**:
+    -   `Promise<BusinessFullData[]>`: A promise that resolves to an array of `BusinessFullData` objects.
 
 ##### `getBusiness`
 
@@ -145,10 +145,10 @@ Fetches the business details for a specific business id.
 getBusiness(hash: string): Promise<Business>
 ```
 
-- **Parameters**:
-  - `hash` (string): The hash of the business to fetch.
-- **Returns**:
-  - `Promise<Business>`: A promise that resolves to a `Business` object.
+-   **Parameters**:
+    -   `hash` (string): The hash of the business to fetch.
+-   **Returns**:
+    -   `Promise<Business>`: A promise that resolves to a `Business` object.
 
 ##### `getBusinessFull`
 
@@ -158,11 +158,10 @@ Fetches the full business details for a business id.
 getBusinessFull(hash: string): Promise<BusinessFullData>
 ```
 
-- **Parameters**:
-  - `hash` (string): The hash of the business to fetch.
-- **Returns**:
-  - `Promise<BusinessFullData>`: A promise that resolves to a `BusinessFullData` object.
-
+-   **Parameters**:
+    -   `hash` (string): The hash of the business to fetch.
+-   **Returns**:
+    -   `Promise<BusinessFullData>`: A promise that resolves to a `BusinessFullData` object.
 
 ### Namespaces
 
@@ -177,87 +176,94 @@ The `business` namespace provides methods to interact with the Otmoic business s
 Signs a quote using a private key.
 
 **Parameters:**
-- `quote: Quote` - The quote data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `amount: string` - The amount to sign.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
-- `receivingAddress: string` - The receiving address.
-- `stepTimeLock: number | undefined` - The step time lock.
-- `rpcSrc: string | undefined` - The source RPC endpoint.
-- `rpcDst: string | undefined` - The destination RPC endpoint.
+
+-   `quote: Quote` - The quote data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `amount: string` - The amount to sign.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
+-   `receivingAddress: string` - The receiving address.
+-   `stepTimeLock: number | undefined` - The step time lock.
+-   `rpcSrc: string | undefined` - The source RPC endpoint.
+-   `rpcDst: string | undefined` - The destination RPC endpoint.
 
 **Returns:**
-- `Promise<{ signData: SignData; signed: string }>` - signed data and signature.
+
+-   `Promise<{ signData: SignData; signed: string }>` - signed data and signature.
 
 ##### `transferOutByPrivateKey`
 
 Transfers out using a private key.
 
-- **Parameters**:
-  - `preBusiness: PreBusiness` - The pre-business data.
-  - `privateKey: string` - The private key to sign with.
-  - `network: string` - The network to use.
-  - `rpc: string | undefined` - The RPC endpoint.
-  - `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
+-   **Parameters**:
 
-- **Returns**:
-  - `Promise<ResponseTransferOut> | Promise<ResponseSolana>` - The response of the transfer out, including confirmed transaction hash and uuid if in solana network.
+    -   `preBusiness: PreBusiness` - The pre-business data.
+    -   `privateKey: string` - The private key to sign with.
+    -   `network: string` - The network to use.
+    -   `rpc: string | undefined` - The RPC endpoint.
+    -   `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
+
+-   **Returns**:
+    -   `Promise<ResponseTransferOut> | Promise<ResponseSolana>` - The response of the transfer out, including confirmed transaction hash and uuid if in solana network.
 
 ##### `transferOutConfirmByPrivateKey`
 
 Confirms a transfer out using a private key.
 
-- **Parameters**:
-  - `preBusiness: PreBusiness` - The pre-business data.
-  - `privateKey: string` - The private key to sign with.
-  - `network: string` - The network to use.
-  - `rpc: string | undefined` - The RPC endpoint.
-  - `uuid?: string` - (optional) The UUID for confirm transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
+-   **Parameters**:
 
-- **Returns**:
-  - `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer out confirmation, including confirmed transaction hash.
+    -   `preBusiness: PreBusiness` - The pre-business data.
+    -   `privateKey: string` - The private key to sign with.
+    -   `network: string` - The network to use.
+    -   `rpc: string | undefined` - The RPC endpoint.
+    -   `uuid?: string` - (optional) The UUID for confirm transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
+
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer out confirmation, including confirmed transaction hash.
 
 ##### `transferInConfirmByPrivateKey`
 
 Confirms a transfer in using a private key.
 
-- **Parameters**:
-  - `preBusiness: PreBusiness` - The pre-business data.
-  - `privateKey: string` - The private key to sign with.
-  - `network: string` - The network to use.
-  - `rpc: string | undefined` - The RPC endpoint.
-  - `sender: string` - The sender address.
-  - `uuid?: string` - (optional) The UUID for confirm transfer in in solana network, should be the same with the one used in `transfer in` in one swap set.
+-   **Parameters**:
 
-- **Returns**:
-  - `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer in confirmation, including confirmed transaction hash.
+    -   `preBusiness: PreBusiness` - The pre-business data.
+    -   `privateKey: string` - The private key to sign with.
+    -   `network: string` - The network to use.
+    -   `rpc: string | undefined` - The RPC endpoint.
+    -   `sender: string` - The sender address.
+    -   `uuid?: string` - (optional) The UUID for confirm transfer in in solana network, should be the same with the one used in `transfer in` in one swap set.
+
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer in confirmation, including confirmed transaction hash.
 
 ##### `transferOutRefundByPrivateKey`
 
 Refunds a transfer out using a private key.
 
-- **Parameters**:
-  - `preBusiness: PreBusiness` - The pre-business data.
-  - `privateKey: string` - The private key to sign with.
-  - `network: string` - The network to use.
-  - `rpc: string | undefined` - The RPC endpoint.
-  - `uuid?: string` - (optional) The UUID for refund transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
+-   **Parameters**:
 
-- **Returns**:
-  - `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer in confirmation, including confirmed transaction hash.
+    -   `preBusiness: PreBusiness` - The pre-business data.
+    -   `privateKey: string` - The private key to sign with.
+    -   `network: string` - The network to use.
+    -   `rpc: string | undefined` - The RPC endpoint.
+    -   `uuid?: string` - (optional) The UUID for refund transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
+
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer in confirmation, including confirmed transaction hash.
 
 ##### `complainByPrivateKey`
 
 Submits a complaint using a private key.
 
-- **Parameters**:
-  - `preBusiness: PreBusiness` - The pre-business data.
-  - `privateKey: string` - The private key to sign with.
-  - `network: string` - The network to use.
+-   **Parameters**:
 
-- **Returns**:
-  - `Promise<string | boolean>` - The true if submit successfully or error message if failed.
+    -   `preBusiness: PreBusiness` - The pre-business data.
+    -   `privateKey: string` - The private key to sign with.
+    -   `network: string` - The network to use.
+
+-   **Returns**:
+    -   `Promise<string | boolean>` - The true if submit successfully or error message if failed.
 
 #### `evm`
 
@@ -270,197 +276,225 @@ The `evm` namespace provides methods to interact with the Ethereum Virtual Machi
 Retrieves the sign data for a complaint.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `network: string` - The network to use.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `network: string` - The network to use.
 
 **Returns:**
-- `Promise<EIP712TypedData>` - The EIP-712 typed data for the complaint.
+
+-   `Promise<EIP712TypedData>` - The EIP-712 typed data for the complaint.
 
 ##### `signComplainEIP712ByTermiPass`
 
 Signs a complaint EIP-712 data using TermiPass.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `termiPassAPI: any` - The termiPassAPI instance.
-- `network: string` - The network to use.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `termiPassAPI: any` - The termiPassAPI instance.
+-   `network: string` - The network to use.
 
 **Returns:**
-- `Promise<{ signData: SignData; signed: string }>` - signed data and signature.
+
+-   `Promise<{ signData: SignData; signed: string }>` - signed data and signature.
 
 ##### `signComplainEIP712ByPrivateKey`
 
 Signs a complaint EIP-712 data using private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
 
 **Returns:**
-- `Promise<{ signData: SignData; signed: string }>` - signed data and signature.
+
+-   `Promise<{ signData: SignData; signed: string }>` - signed data and signature.
 
 ##### `getSignDataEIP712`
 
 Retrieves the EIP-712 quote sign data.
 
 **Parameters:**
-- `quote: Quote` - The quote data.
-- `network: string` - The network to use.
-- `amount: string` - The amount to sign.
-- `dstAmount: string` - The destination amount.
-- `dstNativeAmount: string` - The destination native amount.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
-- `receivingAddress: string` - The receiving address.
-- `stepTimeLock: number | undefined` - The step time lock.
-- `rpcSrc: string | undefined` - The source RPC endpoint.
-- `rpcDst: string | undefined` - The destination RPC endpoint.
+
+-   `quote: Quote` - The quote data.
+-   `network: string` - The network to use.
+-   `amount: string` - The amount to sign.
+-   `dstAmount: string` - The destination amount.
+-   `dstNativeAmount: string` - The destination native amount.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
+-   `receivingAddress: string` - The receiving address.
+-   `stepTimeLock: number | undefined` - The step time lock.
+-   `rpcSrc: string | undefined` - The source RPC endpoint.
+-   `rpcDst: string | undefined` - The destination RPC endpoint.
 
 **Returns:**
-- `Promise<EIP712TypedData>` - The EIP-712 typed data for the quote.
+
+-   `Promise<EIP712TypedData>` - The EIP-712 typed data for the quote.
 
 ##### `signQuoteEIP712ByPrivateKey`
 
 Signs a EIP-712 quote using private key.
 
 **Parameters:**
-- `network: string` - The network to use.
-- `quote: Quote` - The quote data.
-- `privateKey: string` - The private key to sign with.
-- `amount: string` - The amount to sign.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
-- `receivingAddress: string` - The receiving address.
-- `stepTimeLock: number | undefined` - The step time lock.
-- `rpcSrc: string | undefined` - The source RPC endpoint.
-- `rpcDst: string | undefined` - The destination RPC endpoint.
+
+-   `network: string` - The network to use.
+-   `quote: Quote` - The quote data.
+-   `privateKey: string` - The private key to sign with.
+-   `amount: string` - The amount to sign.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
+-   `receivingAddress: string` - The receiving address.
+-   `stepTimeLock: number | undefined` - The step time lock.
+-   `rpcSrc: string | undefined` - The source RPC endpoint.
+-   `rpcDst: string | undefined` - The destination RPC endpoint.
 
 **Returns:**
-- `Promise<{ signData: SignData; signed: string }>` - The signed data and signature.
+
+-   `Promise<{ signData: SignData; signed: string }>` - The signed data and signature.
 
 ##### `signQuoteEIP712ByMetamaskAPI`
 
 Signs a EIP-712 quote using Metamask API.
 
 **Parameters:**
-- `network: string` - The network to use.
-- `quote: Quote` - The quote data.
-- `metamaskAPI: any` - The Metamask API instance.
-- `sender: string` - The sender address.
-- `amount: string` - The amount to sign.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
-- `receivingAddress: string` - The receiving address.
-- `stepTimeLock: number | undefined` - The step time lock.
-- `rpcSrc: string | undefined` - The source RPC endpoint.
-- `rpcDst: string | undefined` - The destination RPC endpoint.
+
+-   `network: string` - The network to use.
+-   `quote: Quote` - The quote data.
+-   `metamaskAPI: any` - The Metamask API instance.
+-   `sender: string` - The sender address.
+-   `amount: string` - The amount to sign.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
+-   `receivingAddress: string` - The receiving address.
+-   `stepTimeLock: number | undefined` - The step time lock.
+-   `rpcSrc: string | undefined` - The source RPC endpoint.
+-   `rpcDst: string | undefined` - The destination RPC endpoint.
 
 **Returns:**
-- `Promise<{ signData: SignData; signed: string }>` - The signed data and signature.
+
+-   `Promise<{ signData: SignData; signed: string }>` - The signed data and signature.
 
 ##### `transferOutByPrivateKey`
 
 Transfers out using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ResponseTransferOut>` - The response of the transfer out.
+
+-   `Promise<ResponseTransferOut>` - The response of the transfer out.
 
 ##### `transferOutByMetamaskAPI`
 
 Transfers out using Metamask API.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `metamaskAPI: any` - The Metamask API instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `metamaskAPI: any` - The Metamask API instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ResponseTransferOut>` - The response of the transfer out.
+
+-   `Promise<ResponseTransferOut>` - The response of the transfer out.
 
 ##### `transferOutConfirmByPrivateKey`
 
 Confirms a transfer out using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ContractTransactionResponse>` - The response of the transfer out confirmation.
+
+-   `Promise<ContractTransactionResponse>` - The response of the transfer out confirmation.
 
 ##### `transferOutConfirmByMetamaskAPI`
 
 Confirms a transfer out using Metamask API.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `metamaskAPI: any` - The Metamask API instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `metamaskAPI: any` - The Metamask API instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ContractTransactionResponse>` - The response of the transfer out confirmation.
+
+-   `Promise<ContractTransactionResponse>` - The response of the transfer out confirmation.
 
 ##### `transferOutRefundByPrivateKey`
 
 Refunds a transfer out using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ContractTransactionResponse>` - The response of the transfer out refund.
+
+-   `Promise<ContractTransactionResponse>` - The response of the transfer out refund.
 
 ##### `transferOutRefundByMetamaskAPI`
 
 Refunds a transfer out using Metamask API.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `metamaskAPI: any` - The Metamask API instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `metamaskAPI: any` - The Metamask API instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ContractTransactionResponse>` - The response of the transfer out refund.
+
+-   `Promise<ContractTransactionResponse>` - The response of the transfer out refund.
 
 ##### `transferInConfirmByPrivateKey`
 
 Confirms a transfer in using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `sender: string` - The sender address.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `sender: string` - The sender address.
 
 **Returns:**
-- `Promise<ContractTransactionResponse>` - The response of the transfer in confirmation.
+
+-   `Promise<ContractTransactionResponse>` - The response of the transfer in confirmation.
 
 ##### `transferInConfirmByMetamaskAPI`
 
 Confirms a transfer in using Metamask API.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `metamaskAPI: any` - The Metamask API instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `sender: string` - The sender address.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `metamaskAPI: any` - The Metamask API instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `sender: string` - The sender address.
 
 **Returns:**
-- `Promise<ContractTransactionResponse>` - The response of the transfer in confirmation.
+
+-   `Promise<ContractTransactionResponse>` - The response of the transfer in confirmation.
 
 #### `solana`
 
@@ -473,167 +507,189 @@ The `solana` namespace provides methods to interact with the solana blockchain. 
 Retrieves the sign data for a given quote.
 
 **Parameters:**
-- `quote: Quote` - The quote data.
-- `network: string` - The network to use.
-- `amount: string` - The amount to sign.
-- `dstAmount: string` - The destination amount.
-- `dstNativeAmount: string` - The destination native amount.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
-- `receivingAddress: string` - The receiving address.
-- `stepTimeLock: number | undefined` - The step time lock.
-- `rpcSrc: string | undefined` - The source RPC endpoint.
-- `rpcDst: string | undefined` - The destination RPC endpoint.
+
+-   `quote: Quote` - The quote data.
+-   `network: string` - The network to use.
+-   `amount: string` - The amount to sign.
+-   `dstAmount: string` - The destination amount.
+-   `dstNativeAmount: string` - The destination native amount.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
+-   `receivingAddress: string` - The receiving address.
+-   `stepTimeLock: number | undefined` - The step time lock.
+-   `rpcSrc: string | undefined` - The source RPC endpoint.
+-   `rpcDst: string | undefined` - The destination RPC endpoint.
 
 **Returns:**
-- `Promise<{ message: SignData }>` - The sign data for the quote.
+
+-   `Promise<{ message: SignData }>` - The sign data for the quote.
 
 ##### `signQuoteByPrivateKey`
 
 Signs a quote using a private key.
 
 **Parameters:**
-- `quote: Quote` - The quote data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `amount: string` - The amount to sign.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
-- `receivingAddress: string` - The receiving address.
-- `stepTimeLock: number | undefined` - The step time lock.
-- `rpcSrc: string | undefined` - The source RPC endpoint.
-- `rpcDst: string | undefined` - The destination RPC endpoint.
+
+-   `quote: Quote` - The quote data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `amount: string` - The amount to sign.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
+-   `receivingAddress: string` - The receiving address.
+-   `stepTimeLock: number | undefined` - The step time lock.
+-   `rpcSrc: string | undefined` - The source RPC endpoint.
+-   `rpcDst: string | undefined` - The destination RPC endpoint.
 
 **Returns:**
-- `Promise<{ signData: SignData; signed: string }>` - The signed data and signature.
+
+-   `Promise<{ signData: SignData; signed: string }>` - The signed data and signature.
 
 ##### `signQuoteByWalletPlugin`
 
 Signs a quote using a wallet plugin.
 
 **Parameters:**
-- `quote: Quote` - The quote data.
-- `phantomAPI: any` - The phantom wallet plugin instance.
-- `sender: string` - The sender address.
-- `network: string` - The network to use.
-- `amount: string` - The amount to sign.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
-- `receivingAddress: string` - The receiving address.
-- `stepTimeLock: number | undefined` - The step time lock.
-- `rpcSrc: string | undefined` - The source RPC endpoint.
-- `rpcDst: string | undefined` - The destination RPC endpoint.
+
+-   `quote: Quote` - The quote data.
+-   `phantomAPI: any` - The phantom wallet plugin instance.
+-   `sender: string` - The sender address.
+-   `network: string` - The network to use.
+-   `amount: string` - The amount to sign.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
+-   `receivingAddress: string` - The receiving address.
+-   `stepTimeLock: number | undefined` - The step time lock.
+-   `rpcSrc: string | undefined` - The source RPC endpoint.
+-   `rpcDst: string | undefined` - The destination RPC endpoint.
 
 **Returns:**
-- `Promise<{ signData: any; signed: string }>` - The signed data and signature.
+
+-   `Promise<{ signData: any; signed: string }>` - The signed data and signature.
 
 ##### `transferOutByPrivateKey`
 
 Transfers out using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer out.
+
+-   `Promise<ResponseSolana>` - The response of the transfer out.
 
 ##### `transferOutByWalletPlugin`
 
 Transfers out using a wallet plugin.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `phantomAPI: any` - The phantom wallet plugin instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `phantomAPI: any` - The phantom wallet plugin instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer out.
+
+-   `Promise<ResponseSolana>` - The response of the transfer out.
 
 ##### `transferOutConfirmByPrivateKey`
 
 Confirms a transfer out using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `uuid?: string` - (optional) The UUID for confirm transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `uuid?: string` - (optional) The UUID for confirm transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer out confirmation.
+
+-   `Promise<ResponseSolana>` - The response of the transfer out confirmation.
 
 ##### `transferOutConfirmByWalletPlugin`
 
 Confirms a transfer out using a wallet plugin.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `phantomAPI: any` - The phantom wallet plugin instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `phantomAPI: any` - The phantom wallet plugin instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer out confirmation.
+
+-   `Promise<ResponseSolana>` - The response of the transfer out confirmation.
 
 ##### `transferOutRefundByPrivateKey`
 
 Refunds a transfer out using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `uuid?: string` - (optional) The UUID for refund transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `uuid?: string` - (optional) The UUID for refund transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer out refund.
+
+-   `Promise<ResponseSolana>` - The response of the transfer out refund.
 
 ##### `transferOutRefundByWalletPlugin`
 
 Refunds a transfer out using a wallet plugin.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `phantomAPI: any` - The phantom wallet plugin instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `phantomAPI: any` - The phantom wallet plugin instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer out refund.
+
+-   `Promise<ResponseSolana>` - The response of the transfer out refund.
 
 ##### `transferInConfirmByPrivateKey`
 
 Confirms a transfer in using a private key.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `privateKey: string` - The private key to sign with.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `sender: string` - The sender address.
-- `uuid?: string` - (optional) The UUID for confirm transfer in in solana network, should be the same with the one used in `transfer in` in one swap set.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `privateKey: string` - The private key to sign with.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `sender: string` - The sender address.
+-   `uuid?: string` - (optional) The UUID for confirm transfer in in solana network, should be the same with the one used in `transfer in` in one swap set.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer in confirmation.
+
+-   `Promise<ResponseSolana>` - The response of the transfer in confirmation.
 
 ##### `transferInConfirmByWalletPlugin`
 
 Confirms a transfer in using a wallet plugin.
 
 **Parameters:**
-- `preBusiness: PreBusiness` - The pre-business data.
-- `phantomAPI: any` - The phantom wallet plugin instance.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
-- `sender: string` - The sender address.
+
+-   `preBusiness: PreBusiness` - The pre-business data.
+-   `phantomAPI: any` - The phantom wallet plugin instance.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
+-   `sender: string` - The sender address.
 
 **Returns:**
-- `Promise<ResponseSolana>` - The response of the transfer in confirmation.
+
+-   `Promise<ResponseSolana>` - The response of the transfer in confirmation.
 
 #### `utils`
 
@@ -646,99 +702,117 @@ The `utils` namespace provides utility functions for interacting with the Otmoic
 Retrieves the name of a blockchain chain.
 
 **Parameters:**
-- `systemChainId: number` - The ID of the chain.
+
+-   `systemChainId: number` - The ID of the chain.
 
 **Returns:**
-- `string` - The name of the chain.
+
+-   `string` - The name of the chain.
 
 ##### `GetNativeTokenName`
 
 Retrieves the name of the native token for a blockchain chain.
 
 **Parameters:**
-- `systemChainId: number` - The ID of the chain.
+
+-   `systemChainId: number` - The ID of the chain.
 
 **Returns:**
-- `string` - The name of the native token.
+
+-   `string` - The name of the native token.
 
 ##### `GetChainId`
 
 Retrieves the chain ID for a given system chain id and network type.
 
 **Parameters:**
-- `systemChainId: string` - The system chain id.   
-- `network: string` - The network to use.
+
+-   `systemChainId: string` - The system chain id.
+-   `network: string` - The network to use.
 
 **Returns:**
-- `number` - The chain ID.
+
+-   `number` - The chain ID.
 
 ##### `Sleep`
 
 Pauses execution for a specified duration.
 
 **Parameters:**
-- `ms: number` - The duration to pause in milliseconds.
+
+-   `ms: number` - The duration to pause in milliseconds.
 
 **Returns:**
-- `Promise<void>` - A promise that resolves after the specified duration.
+
+-   `Promise<void>` - A promise that resolves after the specified duration.
 
 ##### `MathReceived`
 
 Calculates the received amount after applying fees.
 
 **Parameters:**
-- `quote: Quote` - The quote data.
-- `amount: string` - The initial amount.
-- `swapToNative: number` - The percentage of amount that be swapped to native token.
+
+-   `quote: Quote` - The quote data.
+-   `amount: string` - The initial amount.
+-   `swapToNative: number` - The percentage of amount that be swapped to native token.
 
 **Returns:**
-- `Promise<{ dstAmount: string; dstNativeAmount: string }>` - The received amount and native amount.
+
+-   `Promise<{ dstAmount: string; dstNativeAmount: string }>` - The received amount and native amount.
 
 ##### `GetChainType`
 
 Retrieves the name of a blockchain chain.
 
 **Parameters:**
-- `systemChainId: number` - The ID of the chain.
+
+-   `systemChainId: number` - The ID of the chain.
 
 **Returns:**
-- `string` - The name of the chain.
+
+-   `string` - The name of the chain.
 
 ##### `EvmDecimals`
 
 Retrieves the decimals for an EVM token.
 
 **Parameters:**
-- `system_chain_id: number` - The system chain ID.
-- `token_address: string` - The token address.
-- `rpc: string` - The RPC endpoint.
+
+-   `system_chain_id: number` - The system chain ID.
+-   `token_address: string` - The token address.
+-   `rpc: string` - The RPC endpoint.
 
 **Returns:**
-- `Promise<number>` - The decimals of the token.
+
+-   `Promise<number>` - The decimals of the token.
 
 ##### `SolanaDecimals`
 
 Retrieves the decimals for a Solana token.
 
 **Parameters:**
-- `system_chain_id: number` - The system chain ID.
-- `token_address: string` - The token address.
-- `rpc: string` - The RPC endpoint.
+
+-   `system_chain_id: number` - The system chain ID.
+-   `token_address: string` - The token address.
+-   `rpc: string` - The RPC endpoint.
 
 **Returns:**
-- `Promise<number>` - The decimals of the token.
+
+-   `Promise<number>` - The decimals of the token.
 
 ##### `Decimals`
 
 Retrieves the decimals for a token based on the system chain ID.
 
 **Parameters:**
-- `system_chain_id: number` - The system chain ID.
-- `token_address: string` - The token address.
-- `rpc: string` - The RPC endpoint.
+
+-   `system_chain_id: number` - The system chain ID.
+-   `token_address: string` - The token address.
+-   `rpc: string` - The RPC endpoint.
 
 **Returns:**
-- `Promise<number>` - The decimals of the token.
+
+-   `Promise<number>` - The decimals of the token.
 
 #### `assistive`
 
@@ -749,25 +823,29 @@ Retrieves the decimals for a token based on the system chain ID.
 Translates bridge data.
 
 **Parameters:**
-- `bridges: Bridge[]` - The array of bridge data.
-- `network: string` - The network to use.
-- `rpcs: Record<string, string>` - The RPC endpoints.
+
+-   `bridges: Bridge[]` - The array of bridge data.
+-   `network: string` - The network to use.
+-   `rpcs: Record<string, string>` - The RPC endpoints.
 
 **Returns:**
-- `Promise<TranslatedBridge[]>` - The translated bridge data.
+
+-   `Promise<TranslatedBridge[]>` - The translated bridge data.
 
 ##### `GetBalance`
 
 Retrieves the balance of a given address.
 
 **Parameters:**
-- `bridge: Bridge` - The bridge data.
-- `address: string` - The address to retrieve the balance for.
-- `network: string` - The network to use.
-- `rpc: string | undefined` - The RPC endpoint.
+
+-   `bridge: Bridge` - The bridge data.
+-   `address: string` - The address to retrieve the balance for.
+-   `network: string` - The network to use.
+-   `rpc: string | undefined` - The RPC endpoint.
 
 **Returns:**
-- `Promise<string>` - The balance of the address.
+
+-   `Promise<string>` - The balance of the address.
 
 ## Contributing
 
@@ -802,6 +880,7 @@ We welcome contributions to the Otmoic Software Development Kit (SDK)! To contri
 ### Code Style
 
 Please follow the existing code style and conventions. Use Prettier for code formatting:
+
 ```sh
 npm run format
 ```

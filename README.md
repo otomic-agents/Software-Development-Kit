@@ -183,7 +183,9 @@ Signs a quote using a private key.
 -   `amount: string` - The amount to sign.
 -   `swapToNative: number` - The percentage of amount that be swapped to native token.
 -   `receivingAddress: string` - The receiving address.
--   `stepTimeLock: number | undefined` - The step time lock.
+-   `expectedSingleStepTime: number | undefined` - The expected single step time.
+-   `tolerantSingleStepTime: number | undefined` - The tolerant single step time.
+-   `earliestRefundTime: number | undefined` - The earliest refund time.
 -   `rpcSrc: string | undefined` - The source RPC endpoint.
 -   `rpcDst: string | undefined` - The destination RPC endpoint.
 
@@ -201,10 +203,9 @@ Transfers out using a private key.
     -   `privateKey: string` - The private key to sign with.
     -   `network: string` - The network to use.
     -   `rpc: string | undefined` - The RPC endpoint.
-    -   `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
 
 -   **Returns**:
-    -   `Promise<ResponseTransferOut> | Promise<ResponseSolana>` - The response of the transfer out, including confirmed transaction hash and uuid if in solana network.
+    -   `Promise<ResponseTransferOut> | Promise<ResponseSolana>` - The response of the transfer out, including confirmed transaction hash.
 
 ##### `transferOutConfirmByPrivateKey`
 
@@ -216,7 +217,6 @@ Confirms a transfer out using a private key.
     -   `privateKey: string` - The private key to sign with.
     -   `network: string` - The network to use.
     -   `rpc: string | undefined` - The RPC endpoint.
-    -   `uuid?: string` - (optional) The UUID for confirm transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
 
 -   **Returns**:
     -   `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer out confirmation, including confirmed transaction hash.
@@ -232,7 +232,6 @@ Confirms a transfer in using a private key.
     -   `network: string` - The network to use.
     -   `rpc: string | undefined` - The RPC endpoint.
     -   `sender: string` - The sender address.
-    -   `uuid?: string` - (optional) The UUID for confirm transfer in in solana network, should be the same with the one used in `transfer in` in one swap set.
 
 -   **Returns**:
     -   `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer in confirmation, including confirmed transaction hash.
@@ -247,7 +246,6 @@ Refunds a transfer out using a private key.
     -   `privateKey: string` - The private key to sign with.
     -   `network: string` - The network to use.
     -   `rpc: string | undefined` - The RPC endpoint.
-    -   `uuid?: string` - (optional) The UUID for refund transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
 
 -   **Returns**:
     -   `Promise<ContractTransactionResponse | Promise<ResponseSolana>` - The response of the transfer in confirmation, including confirmed transaction hash.
@@ -325,7 +323,9 @@ Retrieves the EIP-712 quote sign data.
 -   `dstNativeAmount: string` - The destination native amount.
 -   `swapToNative: number` - The percentage of amount that be swapped to native token.
 -   `receivingAddress: string` - The receiving address.
--   `stepTimeLock: number | undefined` - The step time lock.
+-   `expectedSingleStepTime: number | undefined` - The expected single step time.
+-   `tolerantSingleStepTime: number | undefined` - The tolerant single step time.
+-   `earliestRefundTime: number | undefined` - The earliest refund time.
 -   `rpcSrc: string | undefined` - The source RPC endpoint.
 -   `rpcDst: string | undefined` - The destination RPC endpoint.
 
@@ -345,7 +345,9 @@ Signs a EIP-712 quote using private key.
 -   `amount: string` - The amount to sign.
 -   `swapToNative: number` - The percentage of amount that be swapped to native token.
 -   `receivingAddress: string` - The receiving address.
--   `stepTimeLock: number | undefined` - The step time lock.
+-   `expectedSingleStepTime: number | undefined` - The expected single step time.
+-   `tolerantSingleStepTime: number | undefined` - The tolerant single step time.
+-   `earliestRefundTime: number | undefined` - The earliest refund time.
 -   `rpcSrc: string | undefined` - The source RPC endpoint.
 -   `rpcDst: string | undefined` - The destination RPC endpoint.
 
@@ -366,7 +368,9 @@ Signs a EIP-712 quote using Metamask API.
 -   `amount: string` - The amount to sign.
 -   `swapToNative: number` - The percentage of amount that be swapped to native token.
 -   `receivingAddress: string` - The receiving address.
--   `stepTimeLock: number | undefined` - The step time lock.
+-   `expectedSingleStepTime: number | undefined` - The expected single step time.
+-   `tolerantSingleStepTime: number | undefined` - The tolerant single step time.
+-   `earliestRefundTime: number | undefined` - The earliest refund time.
 -   `rpcSrc: string | undefined` - The source RPC endpoint.
 -   `rpcDst: string | undefined` - The destination RPC endpoint.
 
@@ -515,7 +519,9 @@ Retrieves the sign data for a given quote.
 -   `dstNativeAmount: string` - The destination native amount.
 -   `swapToNative: number` - The percentage of amount that be swapped to native token.
 -   `receivingAddress: string` - The receiving address.
--   `stepTimeLock: number | undefined` - The step time lock.
+-   `expectedSingleStepTime: number | undefined` - The expected single step time.
+-   `tolerantSingleStepTime: number | undefined` - The tolerant single step time.
+-   `earliestRefundTime: number | undefined` - The earliest refund time.
 -   `rpcSrc: string | undefined` - The source RPC endpoint.
 -   `rpcDst: string | undefined` - The destination RPC endpoint.
 
@@ -535,7 +541,9 @@ Signs a quote using a private key.
 -   `amount: string` - The amount to sign.
 -   `swapToNative: number` - The percentage of amount that be swapped to native token.
 -   `receivingAddress: string` - The receiving address.
--   `stepTimeLock: number | undefined` - The step time lock.
+-   `expectedSingleStepTime: number | undefined` - The expected single step time.
+-   `tolerantSingleStepTime: number | undefined` - The tolerant single step time.
+-   `earliestRefundTime: number | undefined` - The earliest refund time.
 -   `rpcSrc: string | undefined` - The source RPC endpoint.
 -   `rpcDst: string | undefined` - The destination RPC endpoint.
 
@@ -556,7 +564,9 @@ Signs a quote using a wallet plugin.
 -   `amount: string` - The amount to sign.
 -   `swapToNative: number` - The percentage of amount that be swapped to native token.
 -   `receivingAddress: string` - The receiving address.
--   `stepTimeLock: number | undefined` - The step time lock.
+-   `expectedSingleStepTime: number | undefined` - The expected single step time.
+-   `tolerantSingleStepTime: number | undefined` - The tolerant single step time.
+-   `earliestRefundTime: number | undefined` - The earliest refund time.
 -   `rpcSrc: string | undefined` - The source RPC endpoint.
 -   `rpcDst: string | undefined` - The destination RPC endpoint.
 
@@ -574,7 +584,6 @@ Transfers out using a private key.
 -   `privateKey: string` - The private key to sign with.
 -   `network: string` - The network to use.
 -   `rpc: string | undefined` - The RPC endpoint.
--   `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
 
 **Returns:**
 
@@ -590,7 +599,6 @@ Transfers out using a wallet plugin.
 -   `phantomAPI: any` - The phantom wallet plugin instance.
 -   `network: string` - The network to use.
 -   `rpc: string | undefined` - The RPC endpoint.
--   `uuid?: string` - (optional) The UUID for sending transfer out in solana network, will automatically generate if not provided.
 
 **Returns:**
 
@@ -606,7 +614,6 @@ Confirms a transfer out using a private key.
 -   `privateKey: string` - The private key to sign with.
 -   `network: string` - The network to use.
 -   `rpc: string | undefined` - The RPC endpoint.
--   `uuid?: string` - (optional) The UUID for confirm transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
 
 **Returns:**
 
@@ -637,7 +644,6 @@ Refunds a transfer out using a private key.
 -   `privateKey: string` - The private key to sign with.
 -   `network: string` - The network to use.
 -   `rpc: string | undefined` - The RPC endpoint.
--   `uuid?: string` - (optional) The UUID for refund transfer out in solana network, should be the same with the one used in `transferOutByPrivateKey` in one swap set.
 
 **Returns:**
 
@@ -669,7 +675,6 @@ Confirms a transfer in using a private key.
 -   `network: string` - The network to use.
 -   `rpc: string | undefined` - The RPC endpoint.
 -   `sender: string` - The sender address.
--   `uuid?: string` - (optional) The UUID for confirm transfer in in solana network, should be the same with the one used in `transfer in` in one swap set.
 
 **Returns:**
 

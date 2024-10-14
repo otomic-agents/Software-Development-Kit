@@ -1,4 +1,4 @@
-import needle from 'needle';
+import superagent from 'superagent'
 
 export interface ComplaintValue {
     srcChainId: string;
@@ -22,18 +22,12 @@ export interface ComplaintValue {
 
 export const submitComplain = (network: string, value: ComplaintValue, signed: string, name: string) =>
     new Promise<boolean | string>(async (resolve, reject) => {
-        needle(
-            'post',
-            `https://${network == 'mainnet' ? 'reputation-agent-mainnet' : 'reputation-agent'}.otmoic.cloud/submit-complaint`,
-            {
+        superagent
+            .post(`https://${network == 'mainnet' ? 'reputation-agent-mainnet' : 'reputation-agent'}.otmoic.cloud/submit-complaint`)
+            .send({
                 params: [value, signed, name.replace('@', '.')],
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            },
-        )
+            })
+            .set('Content-Type', 'application/json')
             .then((resp) => {
                 if (resp.body.code != 0) {
                     resolve(`submit failed: ${resp.body.message}`);

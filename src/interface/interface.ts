@@ -78,10 +78,10 @@ export interface SignData {
 
         requestor: string;
         lp_id: string;
+        agreement_reached_time: number;
         expected_single_step_time: number;
         tolerant_single_step_time: number;
         earliest_refund_time: number;
-        agreement_reached_time: number;
     };
 }
 
@@ -97,10 +97,10 @@ export interface SwapAssetInformation {
     system_fee_dst: number;
     dst_amount_need: string;
     dst_native_amount_need: string;
+    agreement_reached_time: number;
     expected_single_step_time: number;
     tolerant_single_step_time: number;
     earliest_refund_time: number;
-    agreement_reached_time: number;
     quote: Quote;
     append_information: string;
     did: string;

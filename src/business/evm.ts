@@ -210,6 +210,11 @@ export const _getSignDataEIP712 = async (
 
     const typedData = {
         types: {
+            EIP712Domain: [
+                { name: 'name', type: 'string' },
+                { name: 'version', type: 'string' },
+                { name: 'chainId', type: 'uint256' },
+            ],
             Message: [
                 { name: 'src_chain_id', type: 'uint256' },
                 { name: 'src_address', type: 'string' },

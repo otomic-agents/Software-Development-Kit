@@ -196,6 +196,7 @@ export const _getSignDataEIP712 = async (
 
         requestor: '', //user_address.value,
         lp_id: quote.lp_info.name,
+        agreement_reached_time: agreementReachedTime,
         expected_single_step_time:
             expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
         tolerant_single_step_time:
@@ -208,7 +209,6 @@ export const _getSignDataEIP712 = async (
                       defaultTolerantSingleStepTime,
                   )
                 : earliestRefundTime,
-        agreement_reached_time: agreementReachedTime,
     };
 
     return {

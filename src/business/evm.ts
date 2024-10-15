@@ -193,6 +193,7 @@ export const _getSignDataEIP712 = async (
 
         requestor: '', //user_address.value,
         lp_id: quote.lp_info.name,
+        agreement_reached_time: agreementReachedTime,
         expected_single_step_time:
             expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
         tolerant_single_step_time:
@@ -205,7 +206,6 @@ export const _getSignDataEIP712 = async (
                       defaultTolerantSingleStepTime,
                   )
                 : earliestRefundTime,
-        agreement_reached_time: agreementReachedTime,
     };
 
     const typedData = {
@@ -222,10 +222,10 @@ export const _getSignDataEIP712 = async (
                 { name: 'dst_native_amount', type: 'string' },
                 { name: 'requestor', type: 'string' },
                 { name: 'lp_id', type: 'string' },
+                { name: 'agreement_reached_time', type: 'uint256' },
                 { name: 'expected_single_step_time', type: 'uint256' },
                 { name: 'tolerant_single_step_time', type: 'uint256' },
                 { name: 'earliest_refund_time', type: 'uint256' },
-                { name: 'agreement_reached_time', type: 'uint256' },
             ],
         },
         primaryType: 'Message',
@@ -324,6 +324,7 @@ export const doTransferOut = (
                 provider,
             ).connect(wallet == undefined ? await provider.getSigner() : wallet);
             const data = getTransferOutData(preBusiness);
+            console.log(`transfer out data`, data);
 
             let transferOutTx: ContractTransactionResponse;
             if (isZeroAddress(data.token)) {
@@ -581,10 +582,10 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
         dstNativeAmount: preBusiness.swap_asset_information.dst_native_amount,
         requestor: preBusiness.swap_asset_information.sender,
         lpId: preBusiness.swap_asset_information.quote.lp_info.name,
+        agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
         expectedSingleStepTime: preBusiness.swap_asset_information.expected_single_step_time,
         tolerantSingleStepTime: preBusiness.swap_asset_information.tolerant_single_step_time,
         earliestRefundTime: preBusiness.swap_asset_information.earliest_refund_time,
-        agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
         userSign: preBusiness.swap_asset_information.user_sign,
         lpSign: preBusiness.swap_asset_information.lp_sign,
     };

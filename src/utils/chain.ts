@@ -210,17 +210,17 @@ export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: 
 
     switch (systemChainId) {
         case 9000:
-            return isMainnet ? '' : '0x1016A0886b4AeD69043367d501a99cfBAaB052B5';
+            return isMainnet ? '' : '';
         case 9006:
             return isMainnet
-                ? '0xcb24e8aEDB15981F4C088214722D8E3809e817eB'
-                : '0xE09795702F95ff8Df93f41043f31C8A3b1789b8B';
+                ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84'
+                : '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84';
         case 60:
-            return isMainnet ? '' : '0xD6b2815Dc445e69aFbA7924f9744875FF2509Db2';
+            return isMainnet ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84' : '';
         case 966:
-            return isMainnet ? '' : '0xd116c529E3188be0C1E6B53Ee499229e29B1E6fA';
+            return isMainnet ? '' : '';
         case 614:
-            return isMainnet ? '0x7610e5C39f0Bc4EEF57DEdAAb19a714672B21c9b' : '';
+            return isMainnet ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84' : '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84';
         case 397:
             return isMainnet ? 'obridge.near' : 'otv1.saidev.testnet';
         case 144:

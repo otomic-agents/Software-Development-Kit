@@ -1,4 +1,4 @@
-import superagent from 'superagent'
+import superagent from 'superagent';
 import { PreBusiness, Quote, SignData } from '../interface/interface';
 
 export const _swap = (quote: Quote, signData: SignData, signed: string, relayUrl: string) =>

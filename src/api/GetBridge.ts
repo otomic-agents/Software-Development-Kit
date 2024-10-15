@@ -1,9 +1,8 @@
-import superagent from 'superagent'
+import superagent from 'superagent';
 import { Bridge } from '../interface/interface';
 
 export const _getBridge = (relayUrl: string) =>
     new Promise<Bridge[]>((resolve, reject) => {
-
         superagent
             .post(`${relayUrl}/relay/web/fetch_bridge`)
             .then((resp) => {

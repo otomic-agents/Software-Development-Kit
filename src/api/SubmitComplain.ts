@@ -1,4 +1,4 @@
-import superagent from 'superagent'
+import superagent from 'superagent';
 
 export interface ComplaintValue {
     srcChainId: string;
@@ -23,7 +23,9 @@ export interface ComplaintValue {
 export const submitComplain = (network: string, value: ComplaintValue, signed: string, name: string) =>
     new Promise<boolean | string>(async (resolve, reject) => {
         superagent
-            .post(`https://${network == 'mainnet' ? 'reputation-agent-mainnet' : 'reputation-agent'}.otmoic.cloud/submit-complaint`)
+            .post(
+                `https://${network == 'mainnet' ? 'reputation-agent-mainnet' : 'reputation-agent'}.otmoic.cloud/submit-complaint`,
+            )
             .send({
                 params: [value, signed, name.replace('@', '.')],
             })

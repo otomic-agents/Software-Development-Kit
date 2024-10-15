@@ -92,44 +92,46 @@ const waitTxInCfm = (preBusiness: PreBusiness) =>
         resolve();
     });
 
-    const doTxOutRefund = (preBusiness: PreBusiness) =>
-        new Promise<void>(async (resolve, reject) => {
-            console.log('doTxOutRefund');
-    
-            let canDo = false
-            while (canDo == false) {
-                await utils.Sleep(1000)
-    
-                canDo = Date.now() > (preBusiness.swap_asset_information.earliest_refund_time * 1000 + 10 * 1000)
-    
-                console.log(`can refund: ${canDo}, now: ${Date.now()}, time lock: ${preBusiness.swap_asset_information.earliest_refund_time * 1000 + 10 * 1000}`);
-            }
-            
-            const resp = await evm.transferOutRefundByPrivateKey(
-                preBusiness,
-                process.env.WALLET_KEY as string,
-                NETWORK,
-                RPC_BSC,
+const doTxOutRefund = (preBusiness: PreBusiness) =>
+    new Promise<void>(async (resolve, reject) => {
+        console.log('doTxOutRefund');
+
+        let canDo = false;
+        while (canDo == false) {
+            await utils.Sleep(1000);
+
+            canDo = Date.now() > preBusiness.swap_asset_information.earliest_refund_time * 1000 + 10 * 1000;
+
+            console.log(
+                `can refund: ${canDo}, now: ${Date.now()}, time lock: ${preBusiness.swap_asset_information.earliest_refund_time * 1000 + 10 * 1000}`,
             );
-            console.log('response tx out refund', resp);
-            resolve();
-        });
-    
-    const waitTxInRefund = (preBusiness: PreBusiness) =>
-        new Promise<void>(async (resolve, reject) => {
-            console.log('waitTxInRefund');
-    
-            let succeed = false;
-    
-            while (succeed == false) {
-                const resp = await relay.getBusiness(preBusiness.hash);
-                succeed = resp.step >= 7;
-                console.log('waitCfmRefund', resp.step);
-                await utils.Sleep(1000);
-            }
-    
-            resolve();
-        });
+        }
+
+        const resp = await evm.transferOutRefundByPrivateKey(
+            preBusiness,
+            process.env.WALLET_KEY as string,
+            NETWORK,
+            RPC_BSC,
+        );
+        console.log('response tx out refund', resp);
+        resolve();
+    });
+
+const waitTxInRefund = (preBusiness: PreBusiness) =>
+    new Promise<void>(async (resolve, reject) => {
+        console.log('waitTxInRefund');
+
+        let succeed = false;
+
+        while (succeed == false) {
+            const resp = await relay.getBusiness(preBusiness.hash);
+            succeed = resp.step >= 7;
+            console.log('waitCfmRefund', resp.step);
+            await utils.Sleep(1000);
+        }
+
+        resolve();
+    });
 
 const swap = async () => {
     const quote = await Ask();

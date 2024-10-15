@@ -1,13 +1,14 @@
-import superagent from 'superagent'
+import superagent from 'superagent';
 import { BusinessFullData } from '../interface/interface';
 
 export const _getHistory = (relayUrl: string, address: string) =>
     new Promise<BusinessFullData[]>((resolve, reject) => {
         superagent
             .post(`${relayUrl}/relay/web/fetch_history`)
-            .send({
+            .query({
                 address: address.toLowerCase(),
-            }).then((resp) => {
+            })
+            .then((resp) => {
                 if (resp.statusCode == 200) {
                     resolve(resp.body.history);
                 } else {

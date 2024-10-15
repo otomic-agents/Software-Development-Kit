@@ -220,7 +220,9 @@ export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: 
         case 966:
             return isMainnet ? '' : '';
         case 614:
-            return isMainnet ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84' : '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84';
+            return isMainnet
+                ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84'
+                : '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84';
         case 397:
             return isMainnet ? 'obridge.near' : 'otv1.saidev.testnet';
         case 144:

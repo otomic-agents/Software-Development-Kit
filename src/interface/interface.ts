@@ -57,6 +57,10 @@ export interface SignData {
             name: string;
             type: string;
         }[];
+        EIP712Domain: {
+            name: string;
+            type: string;
+        }[];
     };
     primaryType: string;
     domain: {

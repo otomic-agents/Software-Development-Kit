@@ -1,4 +1,4 @@
-import { Contract, ContractTransactionResponse, JsonRpcProvider, Wallet, ethers } from 'ethers';
+import { Contract, ContractTransaction, ContractTransactionResponse, JsonRpcProvider, Wallet, ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
 
 import ABI from './evmABI';
@@ -256,7 +256,7 @@ export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undef
     );
 };
 
-export const isNeedApprove = (
+export const _isNeedApprove = (
     preBusiness: PreBusiness,
     user_wallet: string,
     rpc: string | undefined,
@@ -312,6 +312,25 @@ export const doApprove = (
             reject(err);
         }
     });
+
+export const _getApproveTransfer = (
+    preBusiness: PreBusiness,
+    wallet: Wallet | undefined,
+    network: string,
+) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+            const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token;
+            const amount = preBusiness.swap_asset_information.amount;
+
+            const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, undefined)
+            resolve(await erc20.getFunction('approve').populateTransaction(getOtmoicAddressBySystemChainId(systemChainId, network), amount))
+
+        } catch (error) {
+            reject(error);
+        }
+    })
 
 export const doTransferOut = (
     preBusiness: PreBusiness,

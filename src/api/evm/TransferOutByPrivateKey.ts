@@ -1,5 +1,5 @@
 import { PreBusiness } from '../../interface/interface';
-import { doApprove, doTransferOut, getJsonRpcProvider, isNeedApprove } from '../../business/evm';
+import { doApprove, doTransferOut, getJsonRpcProvider, _isNeedApprove } from '../../business/evm';
 import { ContractTransactionResponse, JsonRpcProvider, ethers } from 'ethers';
 import { ResponseTransferOut } from '../../interface/api';
 import { sleep } from '../../utils/sleep';
@@ -17,11 +17,11 @@ export const _transferOutByPrivateKey = (
             const provider: JsonRpcProvider = getJsonRpcProvider(preBusiness, rpc, network);
             let approveTx: ContractTransactionResponse | undefined = undefined;
             //approve
-            if (await isNeedApprove(preBusiness, web3Wallet.address, rpc, network)) {
+            if (await _isNeedApprove(preBusiness, web3Wallet.address, rpc, network)) {
                 approveTx = await doApprove(preBusiness, provider, web3Wallet.connect(provider), network);
                 // console.log(approveTx)
 
-                while (await isNeedApprove(preBusiness, web3Wallet.address, rpc, network)) {
+                while (await _isNeedApprove(preBusiness, web3Wallet.address, rpc, network)) {
                     await sleep(1000);
                 }
             }

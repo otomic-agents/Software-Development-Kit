@@ -31,7 +31,7 @@ import { getChainName, getChainType, getNativeTokenName } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
-import { _getComplainSignData, _getSignDataEIP712, decimals as _evmDecimals } from './business/evm';
+import { _getComplainSignData, _getSignDataEIP712, decimals as _evmDecimals, _isNeedApprove, _getApproveTransfer } from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from './api/evm/SignQuoteEIP712ByPrivateKey';
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
 import { _signComplainEIP712ByPrivateKey } from './api/evm/SignComplainEIP712ByPrivateKey';
@@ -96,6 +96,10 @@ export namespace evm {
     export const signComplainEIP712ByPrivateKey = _signComplainEIP712ByPrivateKey;
 
     export const getSignDataEIP712 = _getSignDataEIP712;
+
+    export const isNeedApprove = _isNeedApprove
+
+    export const getApproveTransfer = _getApproveTransfer
 
     export const signQuoteEIP712ByPrivateKey = (
         network: string,

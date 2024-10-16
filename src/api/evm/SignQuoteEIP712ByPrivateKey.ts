@@ -39,7 +39,11 @@ export const _signQuoteEIP712ByPrivateKey = (
 
             signData.message.requestor = web3Wallet.address;
 
-            const signed = await web3Wallet.signTypedData(signData.domain, signData.types, signData.message);
+            const signed = await web3Wallet.signTypedData(
+                signData.domain,
+                { Message: signData.types.Message },
+                signData.message,
+            );
 
             resolve({
                 signData,

@@ -315,7 +315,6 @@ export const doApprove = (
 
 export const _getApproveTransfer = (
     preBusiness: PreBusiness,
-    wallet: Wallet | undefined,
     network: string,
 ) =>
     new Promise<ContractTransaction>(async (resolve, reject) => {
@@ -414,6 +413,79 @@ export const doTransferOut = (
         }
     });
 
+export const _getTransferOutTransfer = (
+    preBusiness: PreBusiness,
+    network: string,
+) => new Promise<ContractTransaction>(async (resolve, reject) => {
+    try {
+        const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+        const otmoic = new ethers.Contract(
+            getOtmoicAddressBySystemChainId(systemChainId, network),
+            ABI.otmoic,
+        )
+        const data = getTransferOutData(preBusiness);
+        console.log('tx datda', data)
+
+        let tx: ContractTransaction
+        if (isZeroAddress(data.token)) {
+            tx = await otmoic.getFunction('transferOut')
+            .populateTransaction(
+                data.sender,
+                data.bridge,
+                data.token,
+                data.amount,
+                data.hashlock,
+                data.expectedSingleStepTime,
+                data.tolerantSingleStepTime,
+                data.earliestRefundTime,
+                data.dstChainId,
+                data.dstAddress,
+                data.bidId,
+                data.tokenDst,
+                data.amountDst,
+                data.nativeAmountDst,
+                data.agreementReachedTime,
+                data.requestor,
+                data.lpId,
+                data.userSign,
+                data.lpSign,
+                {
+                    value: data.amount,
+                },
+            )
+        } else {
+            tx = await otmoic
+                .getFunction('transferOut')
+                .populateTransaction(
+                    data.sender,
+                    data.bridge,
+                    data.token,
+                    data.amount,
+                    data.hashlock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
+                    data.dstChainId,
+                    data.dstAddress,
+                    data.bidId,
+                    data.tokenDst,
+                    data.amountDst,
+                    data.nativeAmountDst,
+                    data.agreementReachedTime,
+                    data.requestor,
+                    data.lpId,
+                    data.userSign,
+                    data.lpSign,
+                );
+        }
+
+        resolve(tx)
+    } catch (error) {
+        reject(error)
+    }
+})
+
 export const doTransferOutConfirm = (
     preBusiness: PreBusiness,
     provider: JsonRpcProvider,
@@ -454,6 +526,39 @@ export const doTransferOutConfirm = (
             reject(err);
         }
     });
+
+export const _getTransferOutConfirmTransfer = (
+    preBusiness: PreBusiness,
+    network: string,
+) => new Promise<ContractTransaction>(async (resolve, reject) => {
+    try {
+        const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+        const otmoic = new ethers.Contract(
+            getOtmoicAddressBySystemChainId(systemChainId, network),
+            ABI.otmoic
+        )
+        const data = getTransferOutConfirmData(preBusiness);
+        const transferOutCfmTx = await otmoic
+            .getFunction('confirmTransferOut')
+            .populateTransaction(
+                data.sender,
+                data.receiver,
+                data.token,
+                data.tokenAmount,
+                data.ethAmount,
+                data.hashlock,
+                data.expectedSingleStepTime,
+                data.tolerantSingleStepTime,
+                data.earliestRefundTime,
+                data.preimage,
+                data.agreementReachedTime
+            );
+        resolve(transferOutCfmTx);
+    } catch (err) {
+        reject(err);
+    }
+})
 
 export const doTransferInConfirm = (
     preBusiness: PreBusiness,
@@ -497,6 +602,40 @@ export const doTransferInConfirm = (
         }
     });
 
+export const _getTransferInConfirmTransfer = (
+    preBusiness: PreBusiness,
+    network: string,
+    sender: string,
+) => new Promise<ContractTransaction>(async (resolve, reject) => {
+    try {
+        const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
+
+        const otmoic = new ethers.Contract(
+            getOtmoicAddressBySystemChainId(systemChainId, network),
+            ABI.otmoic
+        )
+        const data = getTransferInConfirmData(preBusiness, sender);
+        const transferInCfmTx = await otmoic
+            .getFunction('confirmTransferIn')
+            .populateTransaction(
+                data.sender,
+                data.receiver,
+                data.token,
+                data.amount,
+                data.nativeAmount,
+                data.hashlock,
+                data.expectedSingleStepTime,
+                data.tolerantSingleStepTime,
+                data.earliestRefundTime,
+                data.preimage,
+                data.agreementReachedTime
+            );
+        resolve(transferInCfmTx);
+    } catch (err) {
+        reject(err);
+    }
+})
+
 export const doTransferOutRefund = (
     preBusiness: PreBusiness,
     provider: JsonRpcProvider,
@@ -536,6 +675,38 @@ export const doTransferOutRefund = (
             reject(err);
         }
     });
+
+export const _getTransferOutRefundTransfer = (
+    preBusiness: PreBusiness,
+    network: string,
+) => new Promise<ContractTransaction>(async (resolve, reject) => {
+    try {
+        const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+        const otmoic = new ethers.Contract(
+            getOtmoicAddressBySystemChainId(systemChainId, network),
+            ABI.otmoic
+        )
+        const data = getTransferOutConfirmData(preBusiness);
+        const transferOutRfdTx = await otmoic
+            .getFunction('refundTransferOut')
+            .populateTransaction(
+                data.sender,
+                data.receiver,
+                data.token,
+                data.tokenAmount,
+                data.ethAmount,
+                data.hashlock,
+                data.expectedSingleStepTime,
+                data.tolerantSingleStepTime,
+                data.earliestRefundTime,
+                data.agreementReachedTime
+            );
+        resolve(transferOutRfdTx);
+    } catch (err) {
+        reject(err);
+    }
+})
 
 export const getBalance = async (
     network: string,

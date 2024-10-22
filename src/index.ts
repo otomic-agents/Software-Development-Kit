@@ -55,6 +55,8 @@ import { getBalance } from './api/GetBalance';
 import {
     _getSignDataEIP712 as _getSignDataSolana,
     _getSignPreambleEIP712,
+    _getTransferOutConfirmTransaction,
+    _getTransferOutTransaction,
     decimals as _solanaDecimals,
 } from './business/solana';
 import { _signQuoteByPrivateKey } from './api/solana/SignQuoteByPrivateKey';
@@ -69,6 +71,8 @@ import { _transferInConfirmByPrivateKey as _transferInConfirmSolanaByPrivateKey 
 import { _transferInConfirmByWalletPlugin } from './api/solana/TransferInConfirmByWalletPlugin';
 import { submitComplain } from './api/SubmitComplain';
 import { getDidName } from './utils/did';
+import { Connection } from '@solana/web3.js';
+import { Provider } from '@coral-xyz/anchor';
 
 export namespace utils {
     export const GetChainName = getChainName;
@@ -304,12 +308,25 @@ export namespace solana {
         rpc: string | undefined,
     ) => _transferOutConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
+    export const getTransferOutTransaction = (
+        preBusiness: PreBusiness, 
+        provider: Connection | undefined, 
+        network: string,
+        pluginProvider?: Provider) => _getTransferOutTransaction(preBusiness, provider, network, pluginProvider)
+
     export const transferOutConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
         network: string,
         rpc: string | undefined,
     ) => _transferOutConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc);
+
+    export const getTransferOutConfirmTransaction = (
+        preBusiness: PreBusiness, 
+        provider: Connection | undefined, 
+        network: string,
+        pluginProvider?: Provider
+    ) => _getTransferOutConfirmTransaction(preBusiness, provider, network, pluginProvider)
 
     export const transferOutRefundByPrivateKey = (
         preBusiness: PreBusiness,

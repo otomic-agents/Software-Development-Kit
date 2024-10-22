@@ -12,7 +12,7 @@ import { getMint, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, Ac
 import { fetchDigitalAsset } from '@metaplex-foundation/mpl-token-metadata';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { publicKey } from '@metaplex-foundation/umi';
-import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet } from '@coral-xyz/anchor';
+import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet, Provider } from '@coral-xyz/anchor';
 import msgpack5 from 'msgpack5';
 import pako from 'pako';
 import crypto from 'crypto';
@@ -247,27 +247,36 @@ export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undef
     return new Connection(rpc === undefined ? getDefaultRPC(chainId, network) : rpc, 'confirmed');
 };
 
-export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, network: string) =>
+export const _getTransferOutTransaction = (preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider) =>
     new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            // setup a dummy provider
-            setProvider(
-                new AnchorProvider(
-                    new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
+            let otmoic: Program
+            if (pluginProvider == undefined) {
+                // setup a dummy provider
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1,
+                                ]),
+                            ),
                         ),
+                        {},
                     ),
-                    {},
-                ),
-            );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+                );
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+            } else {
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network), pluginProvider);
+            }
+
 
             // user
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
@@ -383,33 +392,48 @@ export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, ne
                 })
                 .transaction();
 
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
             resolve(tx);
         } catch (err) {
             reject(err);
         }
     });
 
-export const doTransferOutConfirm = (preBusiness: PreBusiness, provider: Connection, network: string) =>
+export const _getTransferOutConfirmTransaction = (preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider) =>
     new Promise<Transaction>(async (resolve, reject) => {
+
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
+
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            // setup a dummy provider
-            setProvider(
-                new AnchorProvider(
-                    new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
+            let otmoic: Program
+            if (pluginProvider == undefined) {
+                // setup a dummy provider
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1,
+                                ]),
+                            ),
                         ),
+                        {},
                     ),
-                    {},
-                ),
-            );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+                );
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+            } else {
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network), pluginProvider);
+            }
+
 
             // user
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
@@ -490,6 +514,10 @@ export const doTransferOutConfirm = (preBusiness: PreBusiness, provider: Connect
                     tokenProgram: tokenProgramId,
                 })
                 .transaction();
+
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
 
             resolve(tx);
         } catch (err) {
@@ -953,9 +981,10 @@ export const getBalance = async (
 };
 
 export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
+    // In case you don't do it
     const latestBlockhash = await provider.getLatestBlockhash('confirmed');
     tx.recentBlockhash = latestBlockhash.blockhash;
-
+    
     const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
         microLamports: 0.0015 * LAMPORTS_PER_SOL,
     });

@@ -11,22 +11,23 @@ export const _transferInConfirmByWalletPlugin = (
     sender: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
-        try {
-            const provider: Connection = getJsonRpcProviderByChainId(
-                preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
-                rpc,
-                network,
-            );
+        reject("REMOVED: This function is not used anymore");
+        // try {
+        //     const provider: Connection = getJsonRpcProviderByChainId(
+        //         preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
+        //         rpc,
+        //         network,
+        //     );
 
-            let tx = await doTransferInConfirm(preBusiness, provider, network, sender);
+        //     let tx = await doTransferInConfirm(preBusiness, provider, network, sender);
 
-            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
-            tx.recentBlockhash = latestBlockhash.blockhash;
-            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+        //     const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+        //     tx.recentBlockhash = latestBlockhash.blockhash;
+        //     tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
 
-            const { signature } = await phantomAPI.signAndSendTransaction(tx);
-            resolve({ txHash: signature });
-        } catch (err) {
-            reject(err);
-        }
+        //     const { signature } = await phantomAPI.signAndSendTransaction(tx);
+        //     resolve({ txHash: signature });
+        // } catch (err) {
+        //     reject(err);
+        // }
     });

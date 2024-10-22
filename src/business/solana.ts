@@ -723,7 +723,7 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
         }
     });
 
-export const doTransferInConfirm = (preBusiness: PreBusiness, provider: Connection, network: string, sender: string) =>
+export const doTransferInConfirm = (preBusiness: PreBusiness, provider: Connection, network: string, sender: string, signer: string) =>
     new Promise<Transaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
@@ -744,6 +744,9 @@ export const doTransferInConfirm = (preBusiness: PreBusiness, provider: Connecti
                 ),
             );
             const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+
+            // signer
+            let signerAccount = new PublicKey(toBs58Address(signer));
 
             // sender
             let lp = new PublicKey(toBs58Address(sender));
@@ -809,7 +812,7 @@ export const doTransferInConfirm = (preBusiness: PreBusiness, provider: Connecti
             let tx = await otmoic.methods
                 .confirm(uuid, preimage, isIn)
                 .accounts({
-                    payer: lp,
+                    payer: signerAccount,
                     from: lp,
                     to: user,
                     destination: destination,

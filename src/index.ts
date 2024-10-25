@@ -31,7 +31,17 @@ import { getChainName, getChainType, getNativeTokenName } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
-import { _getComplainSignData, _getSignDataEIP712, decimals as _evmDecimals, _isNeedApprove, _getApproveTransfer, _getTransferOutTransfer, _getTransferOutConfirmTransfer, _getTransferOutRefundTransfer, _getTransferInConfirmTransfer } from './business/evm';
+import {
+    _getComplainSignData,
+    _getSignDataEIP712,
+    decimals as _evmDecimals,
+    _isNeedApprove,
+    _getApproveTransfer,
+    _getTransferOutTransfer,
+    _getTransferOutConfirmTransfer,
+    _getTransferOutRefundTransfer,
+    _getTransferInConfirmTransfer,
+} from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from './api/evm/SignQuoteEIP712ByPrivateKey';
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
 import { _signComplainEIP712ByPrivateKey } from './api/evm/SignComplainEIP712ByPrivateKey';
@@ -101,17 +111,17 @@ export namespace evm {
 
     export const getSignDataEIP712 = _getSignDataEIP712;
 
-    export const isNeedApprove = _isNeedApprove
+    export const isNeedApprove = _isNeedApprove;
 
-    export const getApproveTransfer = _getApproveTransfer
+    export const getApproveTransfer = _getApproveTransfer;
 
-    export const getTransferOutTransfer = _getTransferOutTransfer
+    export const getTransferOutTransfer = _getTransferOutTransfer;
 
-    export const getTransferOutConfirmTransfer = _getTransferOutConfirmTransfer
+    export const getTransferOutConfirmTransfer = _getTransferOutConfirmTransfer;
 
-    export const getTransferOutRefundTransfer = _getTransferOutRefundTransfer
+    export const getTransferOutRefundTransfer = _getTransferOutRefundTransfer;
 
-    export const getTransferInConfirmTransfer = _getTransferInConfirmTransfer
+    export const getTransferInConfirmTransfer = _getTransferInConfirmTransfer;
 
     export const signQuoteEIP712ByPrivateKey = (
         network: string,
@@ -309,10 +319,11 @@ export namespace solana {
     ) => _transferOutConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
     export const getTransferOutTransaction = (
-        preBusiness: PreBusiness, 
-        provider: Connection | undefined, 
+        preBusiness: PreBusiness,
+        provider: Connection | undefined,
         network: string,
-        pluginProvider?: Provider) => _getTransferOutTransaction(preBusiness, provider, network, pluginProvider)
+        pluginProvider?: Provider,
+    ) => _getTransferOutTransaction(preBusiness, provider, network, pluginProvider);
 
     export const transferOutConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
@@ -322,11 +333,11 @@ export namespace solana {
     ) => _transferOutConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc);
 
     export const getTransferOutConfirmTransaction = (
-        preBusiness: PreBusiness, 
-        provider: Connection | undefined, 
+        preBusiness: PreBusiness,
+        provider: Connection | undefined,
         network: string,
-        pluginProvider?: Provider
-    ) => _getTransferOutConfirmTransaction(preBusiness, provider, network, pluginProvider)
+        pluginProvider?: Provider,
+    ) => _getTransferOutConfirmTransaction(preBusiness, provider, network, pluginProvider);
 
     export const transferOutRefundByPrivateKey = (
         preBusiness: PreBusiness,

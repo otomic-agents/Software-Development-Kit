@@ -25,8 +25,7 @@ const Ask = async () => {
             },
         },
     );
-    
-    
+
     setTimeout(() => {
         console.log('socket id', relay.quoteManager.getSocketId());
     }, 10 * 1000);

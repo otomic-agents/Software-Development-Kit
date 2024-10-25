@@ -7,11 +7,11 @@ const RPC_BSC = 'https://bsc-testnet-rpc.publicnode.com';
 const RPC_SOLANA = 'https://api.devnet.solana.com';
 
 const bridge: Bridge = {
-    bridge_id: 2,
-    src_chain_id: 9006,
-    dst_chain_id: 501,
-    src_token: '0xacda8bf66c2cadac9e99aa1aa75743f536e71094',
-    dst_token: '0xd691ced994b9c641cf8f80b5f4dbdd80f0fd86af1b8604a702151fa7e46b7232',
+    bridge_id: 1,
+    src_chain_id: 501,
+    dst_chain_id: 9006,
+    src_token: '0xd691ced994b9c641cf8f80b5f4dbdd80f0fd86af1b8604a702151fa7e46b7232',
+    dst_token: '0xacda8bf66c2cadac9e99aa1aa75743f536e71094',
     bridge_name: undefined,
 };
 const amount = '15';

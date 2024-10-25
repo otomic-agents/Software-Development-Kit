@@ -11,7 +11,7 @@ export const _transferInConfirmByWalletPlugin = (
     sender: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
-        reject("REMOVED: This function is not used anymore");
+        reject('REMOVED: This function is not used anymore');
         // try {
         //     const provider: Connection = getJsonRpcProviderByChainId(
         //         preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,

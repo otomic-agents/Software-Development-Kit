@@ -247,7 +247,12 @@ export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undef
     return new Connection(rpc === undefined ? getDefaultRPC(chainId, network) : rpc, 'confirmed');
 };
 
-export const _getTransferOutTransaction = (preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider) =>
+export const _getTransferOutTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: string,
+    pluginProvider?: Provider,
+) =>
     new Promise<Transaction>(async (resolve, reject) => {
         if (provider == undefined) {
             provider = getJsonRpcProvider(preBusiness, undefined, network);
@@ -255,7 +260,7 @@ export const _getTransferOutTransaction = (preBusiness: PreBusiness, provider: C
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            let otmoic: Program
+            let otmoic: Program;
             if (pluginProvider == undefined) {
                 // setup a dummy provider
                 setProvider(
@@ -264,8 +269,8 @@ export const _getTransferOutTransaction = (preBusiness: PreBusiness, provider: C
                         new AnchorWallet(
                             Keypair.fromSeed(
                                 Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1,
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
                                 ]),
                             ),
                         ),
@@ -274,9 +279,12 @@ export const _getTransferOutTransaction = (preBusiness: PreBusiness, provider: C
                 );
                 otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
             } else {
-                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network), pluginProvider);
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
             }
-
 
             // user
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
@@ -402,9 +410,13 @@ export const _getTransferOutTransaction = (preBusiness: PreBusiness, provider: C
         }
     });
 
-export const _getTransferOutConfirmTransaction = (preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider) =>
+export const _getTransferOutConfirmTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: string,
+    pluginProvider?: Provider,
+) =>
     new Promise<Transaction>(async (resolve, reject) => {
-
         if (provider == undefined) {
             provider = getJsonRpcProvider(preBusiness, undefined, network);
         }
@@ -412,7 +424,7 @@ export const _getTransferOutConfirmTransaction = (preBusiness: PreBusiness, prov
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            let otmoic: Program
+            let otmoic: Program;
             if (pluginProvider == undefined) {
                 // setup a dummy provider
                 setProvider(
@@ -421,8 +433,8 @@ export const _getTransferOutConfirmTransaction = (preBusiness: PreBusiness, prov
                         new AnchorWallet(
                             Keypair.fromSeed(
                                 Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1,
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
                                 ]),
                             ),
                         ),
@@ -431,9 +443,12 @@ export const _getTransferOutConfirmTransaction = (preBusiness: PreBusiness, prov
                 );
                 otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
             } else {
-                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network), pluginProvider);
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
             }
-
 
             // user
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
@@ -751,7 +766,13 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
         }
     });
 
-export const doTransferInConfirm = (preBusiness: PreBusiness, provider: Connection, network: string, sender: string, signer: string) =>
+export const doTransferInConfirm = (
+    preBusiness: PreBusiness,
+    provider: Connection,
+    network: string,
+    sender: string,
+    signer: string,
+) =>
     new Promise<Transaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
@@ -983,13 +1004,27 @@ export const getBalance = async (
     }
 };
 
-export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
+const TIMEOUT_MS = 60 * 1000; // 1 minutes
+const MAX_RETRIES = 5;
+const INITIAL_MICRO_LAMPORTS = 0.0015 * LAMPORTS_PER_SOL;
+
+export const ensureSendingTx = async (
+    provider: Connection,
+    keypair: Keypair,
+    tx: Transaction,
+    retryCount = 0,
+    microLamports = INITIAL_MICRO_LAMPORTS,
+): Promise<string> => {
+    if (retryCount >= MAX_RETRIES) {
+        throw new Error('Transaction failed after maximum retries');
+    }
+
     // In case you don't do it
     const latestBlockhash = await provider.getLatestBlockhash('confirmed');
     tx.recentBlockhash = latestBlockhash.blockhash;
-    
+
     const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: 0.0015 * LAMPORTS_PER_SOL,
+        microLamports,
     });
     tx.instructions.unshift(addPriorityFee);
 
@@ -1001,5 +1036,23 @@ export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx
         maxRetries: 10,
     });
 
-    return txHash;
+    const confirmationPromise = provider.confirmTransaction(txHash, 'confirmed');
+
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Transaction confirmation timed out')), TIMEOUT_MS),
+    );
+
+    try {
+        const confirmation = await Promise.race([confirmationPromise, timeoutPromise]);
+
+        if ((confirmation as any).value.err) {
+            throw new Error('Transaction failed: ' + (confirmation as any).value.err);
+        }
+
+        console.log('Transaction confirmed:', txHash);
+        return txHash;
+    } catch (error) {
+        console.error(`Attempt ${retryCount + 1} failed:`, (error as any).message);
+        return ensureSendingTx(provider, keypair, tx, retryCount + 1, microLamports * 2);
+    }
 };

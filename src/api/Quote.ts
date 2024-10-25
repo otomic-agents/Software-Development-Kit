@@ -86,5 +86,5 @@ export class QuoteManager {
             return undefined;
         }
         return this.socket.id;
-    }
+    };
 }

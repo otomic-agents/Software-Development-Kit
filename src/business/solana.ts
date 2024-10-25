@@ -1004,7 +1004,7 @@ export const getBalance = async (
     }
 };
 
-const TIMEOUT_MS = 60 * 1000; // 1 minutes
+const BASE_TIMEOUT_MS = 60 * 1000; // 1 minutes
 const MAX_RETRIES = 5;
 const INITIAL_MICRO_LAMPORTS = 0.0015 * LAMPORTS_PER_SOL;
 
@@ -1037,9 +1037,10 @@ export const ensureSendingTx = async (
     });
 
     const confirmationPromise = provider.confirmTransaction(txHash, 'confirmed');
-
+    
+    const timeoutDuration = BASE_TIMEOUT_MS * Math.pow(2, retryCount);
     const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Transaction confirmation timed out')), TIMEOUT_MS),
+        setTimeout(() => reject(new Error('Transaction confirmation timed out')), timeoutDuration),
     );
 
     try {

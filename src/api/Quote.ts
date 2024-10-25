@@ -80,4 +80,11 @@ export class QuoteManager {
     stopAsk = () => {
         this.socket?.close();
     };
+
+    getSocketId = () => {
+        if (!this.socket) {
+            return undefined;
+        }
+        return this.socket.id;
+    }
 }

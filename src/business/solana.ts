@@ -33,7 +33,7 @@ import {
 import { decimals as evmDecimals, getDefaultRPC as getEvmDefaultRPC } from '../business/evm';
 import { removePrefix0x, isZeroAddress } from '../utils/format';
 import { generateUuid } from '../utils/data';
-
+import { sleep } from '../utils/sleep';
 export type Lock = {
     hash: Array<number>;
     agreementReachedTime: BN;
@@ -1004,7 +1004,10 @@ export const getBalance = async (
     }
 };
 
-const BASE_TIMEOUT_MS = 60 * 1000; // 1 minutes
+const isComputeBudgetInstruction = (instruction: TransactionInstruction): boolean => {
+    return ComputeBudgetProgram.programId.equals(instruction.programId);
+};
+
 const MAX_RETRIES = 5;
 const INITIAL_MICRO_LAMPORTS = 0.0015 * LAMPORTS_PER_SOL;
 
@@ -1023,6 +1026,9 @@ export const ensureSendingTx = async (
     const latestBlockhash = await provider.getLatestBlockhash('confirmed');
     tx.recentBlockhash = latestBlockhash.blockhash;
 
+    // Remove any existing priority fee instruction
+    tx.instructions = tx.instructions.filter((instr) => !isComputeBudgetInstruction(instr));
+
     const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
         microLamports,
     });
@@ -1031,29 +1037,49 @@ export const ensureSendingTx = async (
     tx.feePayer = keypair.publicKey;
     tx.sign(keypair);
 
-    let txHash = await provider.sendRawTransaction(tx.serialize(), {
-        skipPreflight: true,
-        maxRetries: 10,
-    });
-
-    const confirmationPromise = provider.confirmTransaction(txHash, 'confirmed');
-    
-    const timeoutDuration = BASE_TIMEOUT_MS * Math.pow(2, retryCount);
-    const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Transaction confirmation timed out')), timeoutDuration),
-    );
+    let txHash: string;
+    try {
+        txHash = await provider.sendRawTransaction(tx.serialize(), {
+            skipPreflight: true,
+            maxRetries: 10,
+        });
+    } catch (sendError) {
+        console.error('Error sending transaction:', sendError);
+        // If sending fails, retry immediately with higher fee
+        return ensureSendingTx(provider, keypair, tx, retryCount + 1, microLamports * 2);
+    }
 
     try {
-        const confirmation = await Promise.race([confirmationPromise, timeoutPromise]);
+        const confirmation = await provider.confirmTransaction(
+            {
+                signature: txHash,
+                blockhash: latestBlockhash.blockhash,
+                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            },
+            'confirmed',
+        );
 
-        if ((confirmation as any).value.err) {
-            throw new Error('Transaction failed: ' + (confirmation as any).value.err);
+        if (confirmation.value.err) {
+            throw new Error('Transaction failed: ' + confirmation.value.err);
         }
 
         console.log('Transaction confirmed:', txHash);
         return txHash;
     } catch (error) {
         console.error(`Attempt ${retryCount + 1} failed:`, (error as any).message);
+        // Check if the transaction is already confirmed before retrying
+        try {
+            const status = await provider.getSignatureStatus(txHash);
+            if (status.value?.confirmationStatus === 'confirmed') {
+                console.log('Transaction was actually confirmed:', txHash);
+                return txHash;
+            }
+        } catch (checkError) {
+            console.error('Error checking transaction status:', checkError);
+        }
+
+        // If not confirmed, wait before retrying
+        await sleep(5000);
         return ensureSendingTx(provider, keypair, tx, retryCount + 1, microLamports * 2);
     }
 };

@@ -1049,6 +1049,27 @@ export const ensureSendingTx = async (
         return ensureSendingTx(provider, keypair, tx, retryCount + 1, microLamports * 2);
     }
 
+    // First, check if the transaction is already confirmed
+    const maxAttempts = 5;
+    let attempt = 0;
+    while (attempt < maxAttempts) {
+        try {
+            const status = await provider.getSignatureStatus(txHash);
+            if (status.value?.confirmationStatus === 'confirmed') {
+                console.log('Transaction confirmed:', txHash);
+                return txHash;
+            }
+            // If not confirmed yet, wait before next check
+            await sleep(2000);
+            attempt++;
+        } catch (checkError) {
+            console.error('Error checking transaction status:', checkError);
+            attempt++;
+        }
+    }
+
+    // Only if we couldn't confirm the transaction after multiple attempts,
+    // try to confirm it using confirmTransaction
     try {
         const confirmation = await provider.confirmTransaction(
             {
@@ -1060,6 +1081,12 @@ export const ensureSendingTx = async (
         );
 
         if (confirmation.value.err) {
+            // Before retrying, check one more time if the transaction was actually confirmed
+            const finalCheck = await provider.getSignatureStatus(txHash);
+            if (finalCheck.value?.confirmationStatus === 'confirmed') {
+                console.log('Transaction was actually confirmed:', txHash);
+                return txHash;
+            }
             throw new Error('Transaction failed: ' + confirmation.value.err);
         }
 

@@ -1,7 +1,7 @@
 import { Business, BusinessFullData, Relay } from '../src/index';
 
-const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
-const HASH = '0x6a2e71607261d84b6ded5fff6f3cdcd2e9ecd2385134587cc1e7ed261dc75d90';
+const RELA_URL = 'https://5b4522f4.nathanielight.myterminus.com';
+const HASH = '0xd83f7d42b7423b98d70014be67abc6277344356ab588c15396f622057ded4bf8';
 
 const GetBusiness = async () => {
     const business: Business = await new Relay(RELA_URL).getBusiness(HASH);

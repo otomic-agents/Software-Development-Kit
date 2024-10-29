@@ -1004,31 +1004,41 @@ export const getBalance = async (
     }
 };
 
-const isComputeBudgetInstruction = (instruction: TransactionInstruction): boolean => {
-    return ComputeBudgetProgram.programId.equals(instruction.programId);
+const DEFAULT_MICRO_LAMPORTS = 0.0015 * LAMPORTS_PER_SOL;
+const PRIORITY_RATE_MULTIPLIER = 1.5; // Adjust this multiplier as needed
+const getCompetitivePriorityFee = async (connection: Connection): Promise<number> => {
+    try {
+        // Get recent prioritization fees
+        const priorityFees = await connection.getRecentPrioritizationFees();
+
+        if (!priorityFees.length) {
+            return DEFAULT_MICRO_LAMPORTS; // fallback to default if no recent fees
+        }
+
+        // sort the fees from high to low
+        const recentFees = priorityFees.map((fee) => fee.prioritizationFee).sort((a, b) => b - a);
+        // get the median fee
+        const medianFee = recentFees[Math.floor(recentFees.length / 2)];
+
+        if (medianFee == 0) {
+            return DEFAULT_MICRO_LAMPORTS;
+        }
+
+        // Apply multiplier to ensure competitiveness
+        return Math.ceil(medianFee * PRIORITY_RATE_MULTIPLIER);
+    } catch (error) {
+        console.error('Error getting competitive priority fee:', error);
+        return DEFAULT_MICRO_LAMPORTS; // fallback to default
+    }
 };
 
-const MAX_RETRIES = 5;
-const INITIAL_MICRO_LAMPORTS = 0.0015 * LAMPORTS_PER_SOL;
-
-export const ensureSendingTx = async (
-    provider: Connection,
-    keypair: Keypair,
-    tx: Transaction,
-    retryCount = 0,
-    microLamports = INITIAL_MICRO_LAMPORTS,
-): Promise<string> => {
-    if (retryCount >= MAX_RETRIES) {
-        throw new Error('Transaction failed after maximum retries');
-    }
-
-    // In case you don't do it
+// timeout is 120 seconds
+const SENDING_TIMEOUT = 120 * 1000;
+export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
     const latestBlockhash = await provider.getLatestBlockhash('confirmed');
     tx.recentBlockhash = latestBlockhash.blockhash;
 
-    // Remove any existing priority fee instruction
-    tx.instructions = tx.instructions.filter((instr) => !isComputeBudgetInstruction(instr));
-
+    const microLamports = await getCompetitivePriorityFee(provider);
     const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
         microLamports,
     });
@@ -1037,76 +1047,32 @@ export const ensureSendingTx = async (
     tx.feePayer = keypair.publicKey;
     tx.sign(keypair);
 
-    let txHash: string;
-    try {
-        txHash = await provider.sendRawTransaction(tx.serialize(), {
-            skipPreflight: true,
-            maxRetries: 10,
+    let txHash = await provider.sendRawTransaction(tx.serialize(), {
+        skipPreflight: true,
+        maxRetries: 10,
+    });
+
+    let timer = setTimeout(() => {
+        throw new Error(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
+    }, SENDING_TIMEOUT);
+
+    let needToWait = true;
+    while (needToWait) {
+        await sleep(1000);
+        let status = await provider.getSignatureStatus(txHash, {
+            searchTransactionHistory: true,
         });
-    } catch (sendError) {
-        console.error('Error sending transaction:', sendError);
-        // If sending fails, retry immediately with higher fee
-        return ensureSendingTx(provider, keypair, tx, retryCount + 1, microLamports * 2);
-    }
-
-    // First, check if the transaction is already confirmed
-    const maxAttempts = 5;
-    let attempt = 0;
-    while (attempt < maxAttempts) {
-        try {
-            const status = await provider.getSignatureStatus(txHash);
-            if (status.value?.confirmationStatus === 'confirmed') {
-                console.log('Transaction confirmed:', txHash);
-                return txHash;
-            }
-            // If not confirmed yet, wait before next check
-            await sleep(2000);
-            attempt++;
-        } catch (checkError) {
-            console.error('Error checking transaction status:', checkError);
-            attempt++;
+        if (status.value == null) {
+            throw new Error('Transaction not found');
+        }
+        if (status.value.err) {
+            throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+        }
+        if (status.value?.confirmationStatus == 'confirmed' || status.value?.confirmationStatus == 'finalized') {
+            needToWait = false;
         }
     }
 
-    // Only if we couldn't confirm the transaction after multiple attempts,
-    // try to confirm it using confirmTransaction
-    try {
-        const confirmation = await provider.confirmTransaction(
-            {
-                signature: txHash,
-                blockhash: latestBlockhash.blockhash,
-                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-            },
-            'confirmed',
-        );
-
-        if (confirmation.value.err) {
-            // Before retrying, check one more time if the transaction was actually confirmed
-            const finalCheck = await provider.getSignatureStatus(txHash);
-            if (finalCheck.value?.confirmationStatus === 'confirmed') {
-                console.log('Transaction was actually confirmed:', txHash);
-                return txHash;
-            }
-            throw new Error('Transaction failed: ' + confirmation.value.err);
-        }
-
-        console.log('Transaction confirmed:', txHash);
-        return txHash;
-    } catch (error) {
-        console.error(`Attempt ${retryCount + 1} failed:`, (error as any).message);
-        // Check if the transaction is already confirmed before retrying
-        try {
-            const status = await provider.getSignatureStatus(txHash);
-            if (status.value?.confirmationStatus === 'confirmed') {
-                console.log('Transaction was actually confirmed:', txHash);
-                return txHash;
-            }
-        } catch (checkError) {
-            console.error('Error checking transaction status:', checkError);
-        }
-
-        // If not confirmed, wait before retrying
-        await sleep(5000);
-        return ensureSendingTx(provider, keypair, tx, retryCount + 1, microLamports * 2);
-    }
+    clearTimeout(timer);
+    return txHash;
 };

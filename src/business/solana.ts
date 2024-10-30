@@ -1004,7 +1004,7 @@ export const getBalance = async (
     }
 };
 
-const DEFAULT_MICRO_LAMPORTS = 0.0015 * LAMPORTS_PER_SOL;
+const DEFAULT_MICRO_LAMPORTS = 0.002 * LAMPORTS_PER_SOL;
 const PRIORITY_RATE_MULTIPLIER = 1.5; // Adjust this multiplier as needed
 const getCompetitivePriorityFee = async (connection: Connection): Promise<number> => {
     try {
@@ -1032,74 +1032,23 @@ const getCompetitivePriorityFee = async (connection: Connection): Promise<number
     }
 };
 
-const isComputeBudgetInstruction = (instruction: TransactionInstruction): boolean => {
-    return ComputeBudgetProgram.programId.equals(instruction.programId);
-};
-
-// In Solana, transactions have a validity window based on the recentBlockhash field.
-// By default, a transaction is only valid for up to 150 blocks or approximately 1-2 minutes (since Solana produces blocks roughly every 400ms).
-// set timeout to 3 min to make sure the transaction is completely invalid then send a newer one
-const SENDING_TIMEOUT = 3 * 60 * 1000;
 export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
-    return retry(
-        async (_, attempt) => {
-            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
-            tx.recentBlockhash = latestBlockhash.blockhash;
+    const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+    tx.recentBlockhash = latestBlockhash.blockhash;
 
-            // Remove any existing priority fee instruction
-            tx.instructions = tx.instructions.filter((instr) => !isComputeBudgetInstruction(instr));
+    // const microLamports = await getCompetitivePriorityFee(provider);
+    const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: DEFAULT_MICRO_LAMPORTS,
+    });
+    tx.instructions.unshift(addPriorityFee);
 
-            const microLamports = await getCompetitivePriorityFee(provider);
-            console.log(`priority fee: ${attempt * microLamports} microLamports`);
-            const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
-                microLamports: attempt * microLamports,
-            });
-            tx.instructions.unshift(addPriorityFee);
+    tx.feePayer = keypair.publicKey;
+    tx.sign(keypair);
 
-            tx.feePayer = keypair.publicKey;
-            tx.sign(keypair);
-
-            const timeoutPromise = new Promise<string>((_, reject) => {
-                setTimeout(() => {
-                    return reject(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
-                }, SENDING_TIMEOUT);
-            });
-
-            const txPromise = new Promise<string>(async (resolve, reject) => {
-                let txHash = await provider.sendRawTransaction(tx.serialize(), {
-                    skipPreflight: true,
-                    maxRetries: 10,
-                });
-                console.log(`not yet confirmed txHash: ${txHash}`);
-
-                const startTime = Date.now();
-                while (true) {
-                    await sleep(2000);
-                    let status = await provider.getSignatureStatus(txHash, {
-                        searchTransactionHistory: true,
-                    });
-                    if (status.value && status.value.err) {
-                        return reject(`Transaction failed: ${JSON.stringify(status.value.err)}`);
-                    }
-                    if (status.value && status.value.confirmationStatus === 'finalized') {
-                        console.log(`Transaction ${txHash} finalized after ${(Date.now() - startTime) / 1000}s`);
-                        return resolve(txHash);
-                    }
-
-                    if (status.value && status.value.confirmationStatus === 'confirmed') {
-                        console.log(`Transaction ${txHash} confirmed after ${(Date.now() - startTime) / 1000}s`);
-                        return resolve(txHash);
-                    }
-                }
-            });
-
-            return await Promise.race([txPromise, timeoutPromise]);
-        },
-        {
-            retries: 5,
-            onRetry: (error, attempt) => {
-                console.log(`retry ${attempt} -- get error -- ${error}`);
-            },
-        },
-    );
+    let txHash = await provider.sendRawTransaction(tx.serialize(), {
+        skipPreflight: true,
+        maxRetries: 10,
+    });
+    console.log(`not yet confirmed txHash: ${txHash}`);
+    return txHash;
 };

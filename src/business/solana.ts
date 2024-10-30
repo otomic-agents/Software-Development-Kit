@@ -1061,7 +1061,7 @@ export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx
 
             const timeoutPromise = new Promise<string>((_, reject) => {
                 setTimeout(() => {
-                    reject(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
+                    return reject(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
                 }, SENDING_TIMEOUT);
             });
 
@@ -1079,16 +1079,16 @@ export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx
                         searchTransactionHistory: true,
                     });
                     if (status.value && status.value.err) {
-                        reject(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+                        return reject(`Transaction failed: ${JSON.stringify(status.value.err)}`);
                     }
                     if (status.value && status.value.confirmationStatus === 'finalized') {
                         console.log(`Transaction ${txHash} finalized after ${(Date.now() - startTime) / 1000}s`);
-                        resolve(txHash);
+                        return resolve(txHash);
                     }
 
                     if (status.value && status.value.confirmationStatus === 'confirmed') {
                         console.log(`Transaction ${txHash} confirmed after ${(Date.now() - startTime) / 1000}s`);
-                        resolve(txHash);
+                        return resolve(txHash);
                     }
                 }
             });

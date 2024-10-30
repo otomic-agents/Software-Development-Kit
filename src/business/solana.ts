@@ -1050,6 +1050,7 @@ export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx
             tx.instructions = tx.instructions.filter((instr) => !isComputeBudgetInstruction(instr));
 
             const microLamports = await getCompetitivePriorityFee(provider);
+            console.log(`priority fee: ${attempt * microLamports} microLamports`);
             const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
                 microLamports: attempt * microLamports,
             });
@@ -1058,32 +1059,41 @@ export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx
             tx.feePayer = keypair.publicKey;
             tx.sign(keypair);
 
-            let timer = setTimeout(() => {
-                throw new Error(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
-            }, SENDING_TIMEOUT);
-
-            let txHash = await provider.sendRawTransaction(tx.serialize(), {
-                skipPreflight: true,
-                maxRetries: 10,
+            const timeoutPromise = new Promise<string>((_, reject) => {
+                setTimeout(() => {
+                    reject(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
+                }, SENDING_TIMEOUT);
             });
-            console.log(`not yet confirmed txHash: ${txHash}`);   
 
-            let needToWait = true;
-            while (needToWait) {
-                await sleep(2000);
-                let status = await provider.getSignatureStatus(txHash, {
-                    searchTransactionHistory: true,
+            const txPromise = new Promise<string>(async (resolve, reject) => {
+                let txHash = await provider.sendRawTransaction(tx.serialize(), {
+                    skipPreflight: true,
+                    maxRetries: 10,
                 });
-                if (status.value && status.value.err) {
-                    throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
-                }
-                if (status.value && (status.value.confirmationStatus == 'confirmed' || status.value.confirmationStatus == 'finalized')) {
-                    needToWait = false;
-                }
-            }
+                console.log(`not yet confirmed txHash: ${txHash}`);
 
-            clearTimeout(timer);
-            return txHash;
+                const startTime = Date.now();
+                while (true) {
+                    await sleep(2000);
+                    let status = await provider.getSignatureStatus(txHash, {
+                        searchTransactionHistory: true,
+                    });
+                    if (status.value && status.value.err) {
+                        reject(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+                    }
+                    if (status.value && status.value.confirmationStatus === 'finalized') {
+                        console.log(`Transaction ${txHash} finalized after ${(Date.now() - startTime) / 1000}s`);
+                        resolve(txHash);
+                    }
+
+                    if (status.value && status.value.confirmationStatus === 'confirmed') {
+                        console.log(`Transaction ${txHash} confirmed after ${(Date.now() - startTime) / 1000}s`);
+                        resolve(txHash);
+                    }
+                }
+            });
+
+            return await Promise.race([txPromise, timeoutPromise]);
         },
         {
             retries: 5,

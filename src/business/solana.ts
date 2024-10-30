@@ -15,7 +15,7 @@ import { publicKey } from '@metaplex-foundation/umi';
 import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet, Provider } from '@coral-xyz/anchor';
 import msgpack5 from 'msgpack5';
 import pako from 'pako';
-import crypto from 'crypto';
+import retry from 'async-retry';
 import idl from './solanaIdl';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { toBs58Address } from '../utils/format';
@@ -1032,47 +1032,67 @@ const getCompetitivePriorityFee = async (connection: Connection): Promise<number
     }
 };
 
-// timeout is 120 seconds
-const SENDING_TIMEOUT = 120 * 1000;
+const isComputeBudgetInstruction = (instruction: TransactionInstruction): boolean => {
+    return ComputeBudgetProgram.programId.equals(instruction.programId);
+};
+
+// In Solana, transactions have a validity window based on the recentBlockhash field.
+// By default, a transaction is only valid for up to 150 blocks or approximately 1-2 minutes (since Solana produces blocks roughly every 400ms).
+// set timeout to 3 min to make sure the transaction is completely invalid then send a newer one
+const SENDING_TIMEOUT = 3 * 60 * 1000;
 export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
-    const latestBlockhash = await provider.getLatestBlockhash('confirmed');
-    tx.recentBlockhash = latestBlockhash.blockhash;
+    return retry(
+        async (_, attempt) => {
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
 
-    const microLamports = await getCompetitivePriorityFee(provider);
-    const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports,
-    });
-    tx.instructions.unshift(addPriorityFee);
+            // Remove any existing priority fee instruction
+            tx.instructions = tx.instructions.filter((instr) => !isComputeBudgetInstruction(instr));
 
-    tx.feePayer = keypair.publicKey;
-    tx.sign(keypair);
+            const microLamports = await getCompetitivePriorityFee(provider);
+            const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
+                microLamports: attempt * microLamports,
+            });
+            tx.instructions.unshift(addPriorityFee);
 
-    let txHash = await provider.sendRawTransaction(tx.serialize(), {
-        skipPreflight: true,
-        maxRetries: 10,
-    });
+            tx.feePayer = keypair.publicKey;
+            tx.sign(keypair);
 
-    let timer = setTimeout(() => {
-        throw new Error(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
-    }, SENDING_TIMEOUT);
+            let timer = setTimeout(() => {
+                throw new Error(`Transaction timed out after ${SENDING_TIMEOUT / 1000} seconds`);
+            }, SENDING_TIMEOUT);
 
-    let needToWait = true;
-    while (needToWait) {
-        await sleep(1000);
-        let status = await provider.getSignatureStatus(txHash, {
-            searchTransactionHistory: true,
-        });
-        if (status.value == null) {
-            throw new Error('Transaction not found');
-        }
-        if (status.value.err) {
-            throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
-        }
-        if (status.value?.confirmationStatus == 'confirmed' || status.value?.confirmationStatus == 'finalized') {
-            needToWait = false;
-        }
-    }
+            let txHash = await provider.sendRawTransaction(tx.serialize(), {
+                skipPreflight: true,
+                maxRetries: 10,
+            });
 
-    clearTimeout(timer);
-    return txHash;
+            let needToWait = true;
+            while (needToWait) {
+                let status = await provider.getSignatureStatus(txHash, {
+                    searchTransactionHistory: true,
+                });
+                if (status.value == null) {
+                    throw new Error('Transaction not found');
+                }
+                if (status.value.err) {
+                    throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+                }
+                if (status.value.confirmationStatus == 'confirmed' || status.value.confirmationStatus == 'finalized') {
+                    needToWait = false;
+                } else {
+                    await sleep(1000);
+                }
+            }
+
+            clearTimeout(timer);
+            return txHash;
+        },
+        {
+            retries: 5,
+            onRetry: (error, attempt) => {
+                console.log(`retry ${attempt} -- get error -- ${error}`);
+            },
+        },
+    );
 };

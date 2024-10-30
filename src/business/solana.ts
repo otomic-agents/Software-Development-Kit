@@ -1066,22 +1066,19 @@ export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx
                 skipPreflight: true,
                 maxRetries: 10,
             });
+            console.log(`not yet confirmed txHash: ${txHash}`);   
 
             let needToWait = true;
             while (needToWait) {
+                await sleep(2000);
                 let status = await provider.getSignatureStatus(txHash, {
                     searchTransactionHistory: true,
                 });
-                if (status.value == null) {
-                    throw new Error('Transaction not found');
-                }
-                if (status.value.err) {
+                if (status.value && status.value.err) {
                     throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
                 }
-                if (status.value.confirmationStatus == 'confirmed' || status.value.confirmationStatus == 'finalized') {
+                if (status.value && (status.value.confirmationStatus == 'confirmed' || status.value.confirmationStatus == 'finalized')) {
                     needToWait = false;
-                } else {
-                    await sleep(1000);
                 }
             }
 

@@ -41,6 +41,7 @@ import {
     _getTransferOutConfirmTransfer,
     _getTransferOutRefundTransfer,
     _getTransferInConfirmTransfer,
+    _getGasPrice
 } from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from './api/evm/SignQuoteEIP712ByPrivateKey';
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
@@ -61,6 +62,8 @@ import { _getBridge } from './api/GetBridge';
 import { QuoteManager } from './api/Quote';
 import { mathReceived } from './utils/math';
 import { getBalance } from './api/GetBalance';
+import { getBalance as getBalanceEVM } from './business/evm';
+import { getBalance as getBalanceSOLANA } from './business/solana';
 
 import {
     _getSignDataEIP712 as _getSignDataSolana,
@@ -122,6 +125,8 @@ export namespace evm {
     export const getTransferOutRefundTransfer = _getTransferOutRefundTransfer;
 
     export const getTransferInConfirmTransfer = _getTransferInConfirmTransfer;
+
+    export const getGasPrice = _getGasPrice;
 
     export const signQuoteEIP712ByPrivateKey = (
         network: string,
@@ -515,6 +520,8 @@ export namespace business {
 export namespace assistive {
     export const TranslateBridge = translateBridge;
     export const GetBalance = getBalance;
+    export const GetBalanceEVM = getBalanceEVM;
+    export const GetBalanceSOLANA = getBalanceSOLANA;
 }
 
 export class Relay {

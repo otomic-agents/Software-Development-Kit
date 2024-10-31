@@ -304,7 +304,7 @@ export const doApprove = (
             const approveTx = await erc20
                 .getFunction('approve')
                 .send(getOtmoicAddressBySystemChainId(systemChainId, network), amount, {
-                    gasPrice: await getGasPrice(provider, systemChainId, network),
+                    gasPrice: await _getGasPrice(provider, systemChainId, network),
                 });
             await approveTx.wait();
             resolve(approveTx);
@@ -374,7 +374,7 @@ export const doTransferOut = (
                         data.userSign,
                         data.lpSign,
                         {
-                            gasPrice: await getGasPrice(provider, systemChainId, network),
+                            gasPrice: await _getGasPrice(provider, systemChainId, network),
                             value: data.amount,
                         },
                     );
@@ -402,7 +402,7 @@ export const doTransferOut = (
                         data.userSign,
                         data.lpSign,
                         {
-                            gasPrice: await getGasPrice(provider, systemChainId, network),
+                            gasPrice: await _getGasPrice(provider, systemChainId, network),
                         },
                     );
             }
@@ -513,7 +513,7 @@ export const doTransferOutConfirm = (
                     data.preimage,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await getGasPrice(provider, systemChainId, network),
+                        gasPrice: await _getGasPrice(provider, systemChainId, network),
                     },
                 );
             await transferOutCfmTx.wait();
@@ -583,7 +583,7 @@ export const doTransferInConfirm = (
                     data.preimage,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await getGasPrice(provider, systemChainId, network),
+                        gasPrice: await _getGasPrice(provider, systemChainId, network),
                     },
                 );
             await transferInCfmTx.wait();
@@ -651,7 +651,7 @@ export const doTransferOutRefund = (
                     data.earliestRefundTime,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await getGasPrice(provider, systemChainId, network),
+                        gasPrice: await _getGasPrice(provider, systemChainId, network),
                     },
                 );
             await transferOutRfdTx.wait();
@@ -773,7 +773,7 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
     };
 };
 
-async function getGasPrice(provider: JsonRpcProvider, systemChainId: number, network: string): Promise<bigint> {
+export async function _getGasPrice(provider: JsonRpcProvider, systemChainId: number, network: string): Promise<bigint> {
     let gasPrice = await getGasPriceFromNode(provider);
     if (!gasPrice) {
         gasPrice = await getGasPriceFromHistory(provider);

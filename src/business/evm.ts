@@ -792,6 +792,17 @@ export async function _getGasPrice(provider: JsonRpcProvider, systemChainId: num
     return ret;
 }
 
+export async function _getOnChainGasPrice(systemChainId: number, network: string): Promise<bigint> {
+    const provider = getProvider(getDefaultRPC(systemChainId, network));
+    
+    let gasPrice = await getGasPriceFromNode(provider);
+    if (!gasPrice) {
+        gasPrice = await getGasPriceFromHistory(provider);
+    }
+
+    return gasPrice || BigInt(0);
+}
+
 async function getGasPriceFromHistory(provider: JsonRpcProvider): Promise<bigint | undefined> {
     return new Promise((resolve, reject) => {
         provider

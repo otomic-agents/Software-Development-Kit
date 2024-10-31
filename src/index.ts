@@ -41,7 +41,8 @@ import {
     _getTransferOutConfirmTransfer,
     _getTransferOutRefundTransfer,
     _getTransferInConfirmTransfer,
-    _getGasPrice
+    _getGasPrice,
+    _getOnChainGasPrice,
 } from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from './api/evm/SignQuoteEIP712ByPrivateKey';
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
@@ -127,6 +128,8 @@ export namespace evm {
     export const getTransferInConfirmTransfer = _getTransferInConfirmTransfer;
 
     export const getGasPrice = _getGasPrice;
+
+    export const getOnChainGasPrice = _getOnChainGasPrice;
 
     export const signQuoteEIP712ByPrivateKey = (
         network: string,

@@ -306,7 +306,6 @@ export const doApprove = (
                 .send(getOtmoicAddressBySystemChainId(systemChainId, network), amount, {
                     gasPrice: await _getGasPrice(provider, systemChainId, network),
                 });
-            await approveTx.wait();
             resolve(approveTx);
         } catch (err) {
             reject(err);
@@ -406,7 +405,6 @@ export const doTransferOut = (
                         },
                     );
             }
-            await transferOutTx.wait();
             resolve(transferOutTx);
         } catch (err) {
             reject(err);
@@ -516,7 +514,6 @@ export const doTransferOutConfirm = (
                         gasPrice: await _getGasPrice(provider, systemChainId, network),
                     },
                 );
-            await transferOutCfmTx.wait();
             resolve(transferOutCfmTx);
         } catch (err) {
             reject(err);
@@ -586,7 +583,6 @@ export const doTransferInConfirm = (
                         gasPrice: await _getGasPrice(provider, systemChainId, network),
                     },
                 );
-            await transferInCfmTx.wait();
             resolve(transferInCfmTx);
         } catch (err) {
             reject(err);
@@ -654,7 +650,6 @@ export const doTransferOutRefund = (
                         gasPrice: await _getGasPrice(provider, systemChainId, network),
                     },
                 );
-            await transferOutRfdTx.wait();
             resolve(transferOutRfdTx);
         } catch (err) {
             reject(err);

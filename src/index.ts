@@ -27,7 +27,7 @@ export { ResponseTransferOut };
 import { ResponseSolana } from './interface/api';
 export { ResponseSolana };
 
-import { getChainName, getChainType, getNativeTokenName } from './utils/chain';
+import { getChainName, getChainType, getNativeTokenName, getTokenAddress } from './utils/chain';
 import { getChainId } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
@@ -95,6 +95,7 @@ export namespace utils {
     export const Sleep = sleep;
     export const MathReceived = mathReceived;
     export const GetChainType = getChainType;
+    export const GetTokenAddress = getTokenAddress;
     export const EvmDecimals = _evmDecimals;
     export const SolanaDecimals = _solanaDecimals;
     export const Decimals = (system_chain_id: number, token_address: string, rpc: string) => {

@@ -1,3 +1,5 @@
+import { toBs58Address } from "./format";
+
 export const getNativeTokenName = (systemChainId: number): string => {
     switch (systemChainId) {
         case 9000:
@@ -316,3 +318,22 @@ export const getMaximumGasPrice = (systemChainId: number, network: string): bigi
             throw new Error(`not support chain: ${systemChainId}`);
     }
 };
+
+export const getTokenAddress = (contractAddress: string, systemChainId: number) => {
+    if (systemChainId == 501) {
+        if (contractAddress.startsWith('0x')) {
+            return toBs58Address(contractAddress)
+        } else {
+            
+            return toBs58Address(BigInt(contractAddress).toString(16))
+        }
+
+    } else {
+
+        if (contractAddress.startsWith('0x')) {
+            return contractAddress
+        } else {
+            return BigInt(contractAddress).toString(16)
+        }    
+    }
+}

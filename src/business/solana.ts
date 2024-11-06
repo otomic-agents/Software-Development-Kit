@@ -91,6 +91,11 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
         }
     });
 
+export const decimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
+    const rpc = getDefaultRPC(system_chain_id, network);
+    return decimals(system_chain_id, token_address, rpc);
+};
+
 export const symbol = (system_chain_id: number, token_address: string, rpc: string): Promise<string> =>
     new Promise(async (resolve, reject) => {
         try {
@@ -540,7 +545,12 @@ export const _getTransferOutConfirmTransaction = (
         }
     });
 
-export const _getTransferOutRefundTransaction = (preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider) =>
+export const _getTransferOutRefundTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: string,
+    pluginProvider?: Provider,
+) =>
     new Promise<Transaction>(async (resolve, reject) => {
         if (provider == undefined) {
             provider = getJsonRpcProvider(preBusiness, undefined, network);
@@ -557,8 +567,8 @@ export const _getTransferOutRefundTransaction = (preBusiness: PreBusiness, provi
                         new AnchorWallet(
                             Keypair.fromSeed(
                                 Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1,
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
                                 ]),
                             ),
                         ),
@@ -573,7 +583,6 @@ export const _getTransferOutRefundTransaction = (preBusiness: PreBusiness, provi
                     pluginProvider,
                 );
             }
-
 
             // user
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
@@ -639,7 +648,7 @@ export const _getTransferOutRefundTransaction = (preBusiness: PreBusiness, provi
                     tokenProgram: tokenProgramId,
                 })
                 .transaction();
-                
+
             const latestBlockhash = await provider.getLatestBlockhash('confirmed');
             tx.recentBlockhash = latestBlockhash.blockhash;
             tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);

@@ -1,4 +1,4 @@
-import { toBs58Address } from "./format";
+import { toBs58Address } from './format';
 
 export const getNativeTokenName = (systemChainId: number): string => {
     switch (systemChainId) {
@@ -322,18 +322,15 @@ export const getMaximumGasPrice = (systemChainId: number, network: string): bigi
 export const getTokenAddress = (contractAddress: string, systemChainId: number) => {
     if (systemChainId == 501) {
         if (contractAddress.startsWith('0x')) {
-            return toBs58Address(contractAddress)
+            return toBs58Address(contractAddress);
         } else {
-            
-            return toBs58Address(BigInt(contractAddress).toString(16))
+            return toBs58Address(BigInt(contractAddress).toString(16));
         }
-
     } else {
-
         if (contractAddress.startsWith('0x')) {
-            return contractAddress
+            return contractAddress;
         } else {
-            return BigInt(contractAddress).toString(16)
-        }    
+            return BigInt(contractAddress).toString(16);
+        }
     }
-}
+};

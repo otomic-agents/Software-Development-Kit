@@ -18,7 +18,7 @@ export class QuoteManager {
         }
 
         this.asking = true;
-        this.gotQuote = false
+        this.gotQuote = false;
         this.socket = io(`${relayUrl}`, { transports: ['websocket'] });
 
         let connectionTimeout = setTimeout(() => {

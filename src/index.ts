@@ -35,6 +35,7 @@ import {
     _getComplainSignData,
     _getSignDataEIP712,
     decimals as _evmDecimals,
+    decimalsDefaultRpc as _evmDecimalsDefaultRpc,
     _isNeedApprove,
     _getApproveTransfer,
     _getTransferOutTransfer,
@@ -73,6 +74,7 @@ import {
     _getTransferOutTransaction,
     _getTransferOutRefundTransaction,
     decimals as _solanaDecimals,
+    decimalsDefaultRpc as _solanaDecimalsDefaultRpc,
 } from './business/solana';
 import { _signQuoteByPrivateKey } from './api/solana/SignQuoteByPrivateKey';
 import { _signQuoteByWalletPlugin } from './api/solana/SignQuoteByWalletPlugin';
@@ -93,18 +95,27 @@ export namespace utils {
     export const GetChainName = getChainName;
     export const GetNativeTokenName = getNativeTokenName;
     export const GetChainId = getChainId;
-    export const GetNativeTokenDecimals = getNativeTokenDecimals
+    export const GetNativeTokenDecimals = getNativeTokenDecimals;
     export const Sleep = sleep;
     export const MathReceived = mathReceived;
     export const GetChainType = getChainType;
     export const GetTokenAddress = getTokenAddress;
     export const EvmDecimals = _evmDecimals;
+    export const EvmDecimalsDefaultRpc = _evmDecimalsDefaultRpc;
     export const SolanaDecimals = _solanaDecimals;
+    export const SolanaDecimalsDefaultRpc = _solanaDecimalsDefaultRpc;
     export const Decimals = (system_chain_id: number, token_address: string, rpc: string) => {
         if (system_chain_id == 501) {
             return SolanaDecimals(system_chain_id, token_address, rpc);
         } else {
             return EvmDecimals(system_chain_id, token_address, rpc);
+        }
+    };
+    export const DecimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
+        if (system_chain_id == 501) {
+            return SolanaDecimalsDefaultRpc(system_chain_id, token_address, network);
+        } else {
+            return EvmDecimalsDefaultRpc(system_chain_id, token_address, network);
         }
     };
 }
@@ -341,7 +352,7 @@ export namespace solana {
         provider: Connection | undefined,
         network: string,
         pluginProvider?: Provider,
-    ) => _getTransferOutRefundTransaction(preBusiness, provider, network, pluginProvider)
+    ) => _getTransferOutRefundTransaction(preBusiness, provider, network, pluginProvider);
 
     export const transferOutConfirmByWalletPlugin = (
         preBusiness: PreBusiness,

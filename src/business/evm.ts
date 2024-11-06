@@ -81,6 +81,11 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
         }
     });
 
+export const decimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
+    const rpc = getDefaultRPC(system_chain_id, network);
+    return decimals(system_chain_id, token_address, rpc);
+};
+
 export const symbol = (system_chain_id: number, token_address: string, rpc: string) =>
     new Promise<string>(async (resolve, reject) => {
         try {
@@ -789,7 +794,7 @@ export async function _getGasPrice(provider: JsonRpcProvider, systemChainId: num
 
 export async function _getOnChainGasPrice(systemChainId: number, network: string): Promise<bigint> {
     const provider = getProvider(getDefaultRPC(systemChainId, network));
-    
+
     let gasPrice = await getGasPriceFromNode(provider);
     if (!gasPrice) {
         gasPrice = await getGasPriceFromHistory(provider);

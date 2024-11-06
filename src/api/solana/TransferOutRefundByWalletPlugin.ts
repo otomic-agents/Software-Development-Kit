@@ -1,5 +1,5 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { doTransferOutRefund, getJsonRpcProvider } from '../../business/solana';
+import { _getTransferOutRefundTransaction, getJsonRpcProvider } from '../../business/solana';
 import { PreBusiness } from '../../interface/interface';
 import { ResponseSolana } from '../../interface/api';
 
@@ -13,7 +13,7 @@ export const _transferOutRefundByWalletPlugin = (
         try {
             const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
 
-            let tx = await doTransferOutRefund(preBusiness, provider, network);
+            let tx = await _getTransferOutRefundTransaction(preBusiness, provider, network);
 
             const latestBlockhash = await provider.getLatestBlockhash('confirmed');
             tx.recentBlockhash = latestBlockhash.blockhash;

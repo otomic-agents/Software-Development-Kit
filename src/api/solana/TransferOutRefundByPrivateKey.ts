@@ -1,5 +1,5 @@
 import { Connection, Keypair } from '@solana/web3.js';
-import { doTransferOutRefund, getJsonRpcProvider, ensureSendingTx } from '../../business/solana';
+import { _getTransferOutRefundTransaction, getJsonRpcProvider, ensureSendingTx } from '../../business/solana';
 import { PreBusiness } from '../../interface/interface';
 import { removePrefix0x } from '../../utils/format';
 import { ResponseSolana } from '../../interface/api';
@@ -15,7 +15,7 @@ export const _transferOutRefundByPrivateKey = (
         try {
             const keypair = Keypair.fromSecretKey(new Uint8Array(Buffer.from(removePrefix0x(privateKey), 'hex')));
             const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
-            let tx = await doTransferOutRefund(preBusiness, provider, network);
+            let tx = await _getTransferOutRefundTransaction(preBusiness, provider, network);
 
             let txHash = await ensureSendingTx(provider, keypair, tx);
 

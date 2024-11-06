@@ -540,27 +540,40 @@ export const _getTransferOutConfirmTransaction = (
         }
     });
 
-export const doTransferOutRefund = (preBusiness: PreBusiness, provider: Connection, network: string) =>
+export const _getTransferOutRefundTransaction = (preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider) =>
     new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
             // setup a dummy provider
-            setProvider(
-                new AnchorProvider(
-                    new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
+            let otmoic: Program;
+            if (pluginProvider == undefined) {
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1,
+                                ]),
+                            ),
                         ),
+                        {},
                     ),
-                    {},
-                ),
-            );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+                );
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+            } else {
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
+            }
+
 
             // user
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
@@ -626,6 +639,10 @@ export const doTransferOutRefund = (preBusiness: PreBusiness, provider: Connecti
                     tokenProgram: tokenProgramId,
                 })
                 .transaction();
+                
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
 
             resolve(tx);
         } catch (err) {

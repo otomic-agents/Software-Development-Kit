@@ -5,6 +5,7 @@ export const _getBusiness = (relayUrl: string, hash: string) =>
     new Promise<Business>((resolve, reject) => {
         superagent
             .post(`${relayUrl}/relay/web/fetch_business`)
+            // .set('Connection', 'keep-alive')
             .query({ business_hash: hash })
             .then((resp) => {
                 if (resp.statusCode == 200) {

@@ -28,7 +28,7 @@ import { ResponseSolana } from './interface/api';
 export { ResponseSolana };
 
 import { getChainName, getChainType, getNativeTokenName, getTokenAddress } from './utils/chain';
-import { getChainId } from './utils/chain';
+import { getChainId, getNativeTokenDecimals } from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
 import {
@@ -71,6 +71,7 @@ import {
     _getSignPreambleEIP712,
     _getTransferOutConfirmTransaction,
     _getTransferOutTransaction,
+    _getTransferOutRefundTransaction,
     decimals as _solanaDecimals,
 } from './business/solana';
 import { _signQuoteByPrivateKey } from './api/solana/SignQuoteByPrivateKey';
@@ -92,6 +93,7 @@ export namespace utils {
     export const GetChainName = getChainName;
     export const GetNativeTokenName = getNativeTokenName;
     export const GetChainId = getChainId;
+    export const GetNativeTokenDecimals = getNativeTokenDecimals
     export const Sleep = sleep;
     export const MathReceived = mathReceived;
     export const GetChainType = getChainType;
@@ -333,6 +335,13 @@ export namespace solana {
         network: string,
         pluginProvider?: Provider,
     ) => _getTransferOutTransaction(preBusiness, provider, network, pluginProvider);
+
+    export const getTransferOutRefundTransaction = (
+        preBusiness: PreBusiness,
+        provider: Connection | undefined,
+        network: string,
+        pluginProvider?: Provider,
+    ) => _getTransferOutRefundTransaction(preBusiness, provider, network, pluginProvider)
 
     export const transferOutConfirmByWalletPlugin = (
         preBusiness: PreBusiness,

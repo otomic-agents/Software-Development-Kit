@@ -52,7 +52,7 @@ const GetBalance = async () => {
 GetBalance();
 ```
 
-For more detailed usage and additional examples, refer to the example files in the directory.
+For more detailed usage and additional examples, refer to the example folder in the [otmoic-sdk](https://github.com/otmoic/Software-Development-Kit) repository.
 
 ## API Reference
 
@@ -76,94 +76,97 @@ Creates a new Relay instance.
 
 ##### Methods
 
--   **getBridge**
+###### **getBridge**
 
-    ```typescript
-    getBridge(): Promise<Bridge[]>
-    ```
+```typescript
+getBridge(): Promise<Bridge[]>
+```
 
-    Retrieves all available bridges from the relay service.
+Retrieves all available bridges from the relay service.
 
-    -   **Returns**:
-        -   `Promise<Bridge[]>`: Array of available bridge configurations
+-   **Returns**:
+    -   `Promise<Bridge[]>`: Array of available bridge configurations
 
--   **ask**
+###### **ask**
 
-    ```typescript
-    ask(askIF: AskIF, callback: OnQuoteIF): void
-    ```
+```typescript
+ask(askIF: AskIF, callback: OnQuoteIF): void
+```
 
-    Initiates a quote request for a swap operation with continuous updates.
+Initiates a quote request for a swap operation with continuous updates.
 
-    -   **Parameters**:
-        -   `askIF` (AskIF): Quote request parameters including:
-            -   `bridge`: Bridge configuration
-            -   `amount`: Amount to swap
-            -   `swapToNative`: Percentage to swap to native token
-        -   `callback` (OnQuoteIF): Callback functions for quote responses:
-            -   `onQuote`: Handler for quote updates
-    -   **Returns**: void
+-   **Parameters**:
+    -   `askIF` (AskIF): Quote request parameters including:
+        -   `bridge`: Bridge configuration
+        -   `amount`: Amount to swap
+        -   `swapToNative`: Percentage to swap to native token
+    -   `callback` (OnQuoteIF): Callback functions for quote responses:
+        -   `onQuote`: Handler for quote updates
+-   **Returns**: void
 
--   **stopAsk**
+###### **stopAsk**
 
-    ```typescript
-    stopAsk(): void
-    ```
+```typescript
+stopAsk(): void
+```
 
-    Terminates the current quote request and stops receiving updates.
+Terminates the current quote request and stops receiving updates.
 
-    -   **Returns**: void
+-   **Returns**: void
 
--   **swap**
+###### **swap**
 
-    ```typescript
-    swap(quote: Quote, signData: SignData, signed: string): Promise<PreBusiness>
-    ```
+```typescript
+swap(quote: Quote, signData: SignData, signed: string): Promise<PreBusiness>
+```
 
-    Executes a swap operation with a signed quote.
+Executes a swap operation with a signed quote.
 
-    -   **Parameters**:
-        -   `quote` (Quote): The quote data for the swap
-        -   `signData` (SignData): The signed data object
-        -   `signed` (string): The signature
-    -   **Returns**:
-        -   `Promise<PreBusiness>`: Pre-business data for the swap
+-   **Parameters**:
+    -   `quote` (Quote): The quote data for the swap
+    -   `signData` (SignData): The signed data object
+    -   `signed` (string): The signature
+-   **Returns**:
+    -   `Promise<PreBusiness>`: Pre-business data for the swap
 
--   **getHistory**
+###### **getHistory**
 
-    ```typescript
-    getHistory(address: string): Promise<BusinessFullData[]>
-    ```
+```typescript
+getHistory(address: string): Promise<BusinessFullData[]>
+```
 
-    Retrieves swap history for a given address.
+Retrieves swap history for a given address.
 
-    -   **Parameters**:
-        -   `address` (string): The wallet address to query
-    -   **Returns**:
-        -   `Promise<BusinessFullData[]>`: Array of detailed business history
+-   **Parameters**:
+    -   `address` (string): The wallet address to query
+-   **Returns**:
+    -   `Promise<BusinessFullData[]>`: Array of detailed business history
 
--   **getBusiness**
+###### **getBusiness**
 
-    ```typescript
-    getBusiness(hash: string): Promise<Business>
-    ```
+```typescript
+getBusiness(hash: string): Promise<Business>
+```
 
-    Gets business details by transaction hash.
+Gets business details by transaction hash.
 
-    -   **Parameters**:
-        -   `hash` (string): Transaction hash
-    -   **Returns**:
-        -   `Promise<Business>`: Business transaction details
+-   **Parameters**:
+    -   `hash` (string): Transaction hash
+-   **Returns**:
+    -   `Promise<Business>`: Business transaction details
 
--   **getBusinessFull**
-    ```typescript
-    getBusinessFull(hash: string): Promise<BusinessFullData>
-    ```
-    Gets detailed business information by transaction hash.
-    -   **Parameters**:
-        -   `hash` (string): Transaction hash
-    -   **Returns**:
-        -   `Promise<BusinessFullData>`: Detailed business transaction data
+###### **getBusinessFull**
+
+```typescript
+getBusinessFull(hash: string): Promise<BusinessFullData>
+```
+
+Gets detailed business information by transaction hash.
+
+-   **Parameters**:
+    -   `hash` (string): Transaction hash
+-   **Returns**:
+    -   `Promise<BusinessFullData>`: Detailed business transaction data
 
 ### Namespaces
 
@@ -171,1029 +174,1046 @@ Creates a new Relay instance.
 
 Collection of utility functions for chain operations and calculations.
 
--   **GetChainName**
+##### **GetChainName**
 
-    ```typescript
-    GetChainName(systemChainId: number): string
-    ```
+```typescript
+GetChainName(systemChainId: number): string
+```
 
-    Converts a system chain ID to its human-readable name.
+Converts a system chain ID to its human-readable name.
 
-    -   **Parameters**:
-        -   `systemChainId` (number): The system chain ID
-    -   **Returns**:
-        -   `string`: Human-readable chain name (e.g., "Ethereum", "Solana")
+-   **Parameters**:
+    -   `systemChainId` (number): The system chain ID
+-   **Returns**:
+    -   `string`: Human-readable chain name (e.g., "Ethereum", "Solana")
 
--   **GetNativeTokenName**
+##### **GetNativeTokenName**
 
-    ```typescript
-    GetNativeTokenName(systemChainId: number): string
-    ```
+```typescript
+GetNativeTokenName(systemChainId: number): string
+```
 
-    Retrieves the native token name for a given blockchain.
+Retrieves the native token name for a given blockchain.
 
-    -   **Parameters**:
-        -   `systemChainId` (number): The system chain ID
-    -   **Returns**:
-        -   `string`: Native token name (e.g., "ETH", "SOL")
+-   **Parameters**:
+    -   `systemChainId` (number): The system chain ID
+-   **Returns**:
+    -   `string`: Native token name (e.g., "ETH", "SOL")
 
--   **GetChainId**
+##### **GetChainId**
 
-    ```typescript
-    GetChainId(systemChainId: string, network: string): number
-    ```
+```typescript
+GetChainId(systemChainId: string, network: string): number
+```
 
-    Converts a system chain ID to the network-specific chain ID.
+Converts a system chain ID to the network-specific chain ID.
 
-    -   **Parameters**:
-        -   `systemChainId` (string): The system chain ID
-        -   `network` (string): Network type ('mainnet' or 'testnet')
-    -   **Returns**:
-        -   `number`: Network-specific chain ID
+-   **Parameters**:
+    -   `systemChainId` (string): The system chain ID
+    -   `network` (string): Network type ('mainnet' or 'testnet')
+-   **Returns**:
+    -   `number`: Network-specific chain ID
 
--   **GetNativeTokenDecimals**
+##### **GetNativeTokenDecimals**
 
-    ```typescript
-    GetNativeTokenDecimals(systemChainId: number): number
-    ```
+```typescript
+GetNativeTokenDecimals(systemChainId: number): number
+```
 
-    Retrieves the number of decimals for the native token of a chain.
+Retrieves the number of decimals for the native token of a chain.
 
-    -   **Parameters**:
-        -   `systemChainId` (number): The system chain ID
-    -   **Returns**:
-        -   `number`: Number of decimals for the native token
+-   **Parameters**:
+    -   `systemChainId` (number): The system chain ID
+-   **Returns**:
+    -   `number`: Number of decimals for the native token
 
--   **Sleep**
+##### **Sleep**
 
-    ```typescript
-    Sleep(ms: number): Promise<void>
-    ```
+```typescript
+Sleep(ms: number): Promise<void>
+```
 
-    Pauses execution for a specified duration.
+Pauses execution for a specified duration.
 
-    -   **Parameters**:
-        -   `ms` (number): Duration in milliseconds
-    -   **Returns**:
-        -   `Promise<void>`: Resolves after the specified duration
+-   **Parameters**:
+    -   `ms` (number): Duration in milliseconds
+-   **Returns**:
+    -   `Promise<void>`: Resolves after the specified duration
 
--   **MathReceived**
+##### **MathReceived**
 
-    ```typescript
-    MathReceived(quote: Quote, amount: string, swapToNative: number): Promise<{ dstAmount: string; dstNativeAmount: string }>
-    ```
+```typescript
+MathReceived(quote: Quote, amount: string, swapToNative: number): Promise<{ dstAmount: string; dstNativeAmount: string }>
+```
 
-    Calculates the received amounts after a swap, considering fees and conversions.
+Calculates the received amounts after a swap, considering fees and conversions.
 
-    -   **Parameters**:
-        -   `quote` (Quote): The quote data
-        -   `amount` (string): Amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-    -   **Returns**:
-        -   `Promise<{ dstAmount: string; dstNativeAmount: string }>`: Object containing destination amounts
+-   **Parameters**:
+    -   `quote` (Quote): The quote data
+    -   `amount` (string): Amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+-   **Returns**:
+    -   `Promise<{ dstAmount: string; dstNativeAmount: string }>`: Object containing destination amounts
 
--   **GetChainType**
+##### **GetChainType**
 
-    ```typescript
-    GetChainType(systemChainId: number): string
-    ```
+```typescript
+GetChainType(systemChainId: number): string
+```
 
-    Determines the type of blockchain (e.g., 'evm', 'solana') based on the system chain ID.
+Determines the type of blockchain (e.g., 'evm', 'solana') based on the system chain ID.
 
-    -   **Parameters**:
-        -   `systemChainId` (number): The system chain ID
-    -   **Returns**:
-        -   `string`: Type of blockchain
+-   **Parameters**:
+    -   `systemChainId` (number): The system chain ID
+-   **Returns**:
+    -   `string`: Type of blockchain
 
--   **GetTokenAddress**
+##### **GetTokenAddress**
 
-    ```typescript
-    GetTokenAddress(systemChainId: number, token: string): string
-    ```
+```typescript
+GetTokenAddress(systemChainId: number, token: string): string
+```
 
-    Retrieves the standardized token address for a given chain.
+Retrieves the standardized token address for a given chain.
 
-    -   **Parameters**:
-        -   `systemChainId` (number): The system chain ID
-        -   `token` (string): Token identifier
-    -   **Returns**:
-        -   `string`: Standardized token address
+-   **Parameters**:
+    -   `systemChainId` (number): The system chain ID
+    -   `token` (string): Token identifier
+-   **Returns**:
+    -   `string`: Standardized token address
 
--   **Decimals**
+##### **Decimals**
 
-    ```typescript
-    Decimals(system_chain_id: number, token_address: string, rpc: string): Promise<number>
-    ```
+```typescript
+Decimals(system_chain_id: number, token_address: string, rpc: string): Promise<number>
+```
 
-    Retrieves the number of decimals for a token on any chain.
+Retrieves the number of decimals for a token on any chain.
 
-    -   **Parameters**:
-        -   `system_chain_id` (number): The system chain ID
-        -   `token_address` (string): The token address
-        -   `rpc` (string): The RPC endpoint
-    -   **Returns**:
-        -   `Promise<number>`: Number of decimals for the token
+-   **Parameters**:
+    -   `system_chain_id` (number): The system chain ID
+    -   `token_address` (string): The token address
+    -   `rpc` (string): The RPC endpoint
+-   **Returns**:
+    -   `Promise<number>`: Number of decimals for the token
 
--   **DecimalsDefaultRpc**
+##### **DecimalsDefaultRpc**
 
-    ```typescript
-    DecimalsDefaultRpc(system_chain_id: number, token_address: string, network: string): Promise<number>
-    ```
+```typescript
+DecimalsDefaultRpc(system_chain_id: number, token_address: string, network: string): Promise<number>
+```
 
-    Retrieves the number of decimals for a token using the default RPC endpoint.
+Retrieves the number of decimals for a token using the default RPC endpoint.
 
-    -   **Parameters**:
-        -   `system_chain_id` (number): The system chain ID
-        -   `token_address` (string): The token address
-        -   `network` (string): Network type ('mainnet' or 'testnet')
-    -   **Returns**:
-        -   `Promise<number>`: Number of decimals for the token
+-   **Parameters**:
+    -   `system_chain_id` (number): The system chain ID
+    -   `token_address` (string): The token address
+    -   `network` (string): Network type ('mainnet' or 'testnet')
+-   **Returns**:
+    -   `Promise<number>`: Number of decimals for the token
 
--   **EvmDecimals**
+##### **EvmDecimals**
 
-    ```typescript
-    EvmDecimals(system_chain_id: number, token_address: string, rpc: string): Promise<number>
-    ```
+```typescript
+EvmDecimals(system_chain_id: number, token_address: string, rpc: string): Promise<number>
+```
 
-    Retrieves the number of decimals for a token on EVM chains.
+Retrieves the number of decimals for a token on EVM chains.
 
-    -   **Parameters**:
-        -   `system_chain_id` (number): The system chain ID
-        -   `token_address` (string): The token address
-        -   `rpc` (string): The RPC endpoint
-    -   **Returns**:
-        -   `Promise<number>`: Number of decimals for the token
+-   **Parameters**:
+    -   `system_chain_id` (number): The system chain ID
+    -   `token_address` (string): The token address
+    -   `rpc` (string): The RPC endpoint
+-   **Returns**:
+    -   `Promise<number>`: Number of decimals for the token
 
--   **EvmDecimalsDefaultRpc**
+##### **EvmDecimalsDefaultRpc**
 
-    ```typescript
-    EvmDecimalsDefaultRpc(system_chain_id: number, token_address: string, network: string): Promise<number>
-    ```
+```typescript
+EvmDecimalsDefaultRpc(system_chain_id: number, token_address: string, network: string): Promise<number>
+```
 
-    Retrieves the number of decimals for a token on EVM chains using the default RPC endpoint.
+Retrieves the number of decimals for a token on EVM chains using the default RPC endpoint.
 
-    -   **Parameters**:
-        -   `system_chain_id` (number): The system chain ID
-        -   `token_address` (string): The token address
-        -   `network` (string): Network type ('mainnet' or 'testnet')
-    -   **Returns**:
-        -   `Promise<number>`: Number of decimals for the token
+-   **Parameters**:
+    -   `system_chain_id` (number): The system chain ID
+    -   `token_address` (string): The token address
+    -   `network` (string): Network type ('mainnet' or 'testnet')
+-   **Returns**:
+    -   `Promise<number>`: Number of decimals for the token
 
--   **SolanaDecimals**
+##### **SolanaDecimals**
 
-    ```typescript
-    SolanaDecimals(system_chain_id: number, token_address: string, rpc: string): Promise<number>
-    ```
+```typescript
+SolanaDecimals(system_chain_id: number, token_address: string, rpc: string): Promise<number>
+```
 
-    Retrieves the number of decimals for a token on Solana.
+Retrieves the number of decimals for a token on Solana.
 
-    -   **Parameters**:
-        -   `system_chain_id` (number): The system chain ID
-        -   `token_address` (string): The token address
-        -   `rpc` (string): The RPC endpoint
-    -   **Returns**:
-        -   `Promise<number>`: Number of decimals for the token
+-   **Parameters**:
+    -   `system_chain_id` (number): The system chain ID
+    -   `token_address` (string): The token address
+    -   `rpc` (string): The RPC endpoint
+-   **Returns**:
+    -   `Promise<number>`: Number of decimals for the token
 
--   **SolanaDecimalsDefaultRpc**
-    ```typescript
-    SolanaDecimalsDefaultRpc(system_chain_id: number, token_address: string, network: string): Promise<number>
-    ```
-    Retrieves the number of decimals for a token on Solana using the default RPC endpoint.
-    -   **Parameters**:
-        -   `system_chain_id` (number): The system chain ID
-        -   `token_address` (string): The token address
-        -   `network` (string): Network type ('mainnet' or 'testnet')
-    -   **Returns**:
-        -   `Promise<number>`: Number of decimals for the token
+##### **SolanaDecimalsDefaultRpc**
+
+```typescript
+SolanaDecimalsDefaultRpc(system_chain_id: number, token_address: string, network: string): Promise<number>
+```
+
+Retrieves the number of decimals for a token on Solana using the default RPC endpoint.
+
+-   **Parameters**:
+    -   `system_chain_id` (number): The system chain ID
+    -   `token_address` (string): The token address
+    -   `network` (string): Network type ('mainnet' or 'testnet')
+-   **Returns**:
+    -   `Promise<number>`: Number of decimals for the token
 
 #### `evm`
 
 Ethereum Virtual Machine related functions for handling transactions and signatures.
 
--   **getComplainSignData**
-
-    ```typescript
-    getComplainSignData(preBusiness: PreBusiness): any
-    ```
-
-    Retrieves sign data for a complaint on EVM chains.
+##### **getComplainSignData**
+
+```typescript
+getComplainSignData(preBusiness: PreBusiness): Promise<SignData>
+```
+
+Retrieves sign data for a complaint on EVM chains.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-    -   **Returns**:
-        -   `any`: Sign data for the complaint
-
--   **signComplainEIP712ByTermiPass**
-
-    ```typescript
-    signComplainEIP712ByTermiPass(preBusiness: PreBusiness, termiPass: any, network: string): Promise<{ signData: SignData; signed: string }>
-    ```
-
-    Signs complaint data using TermiPass.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `termiPass` (any): TermiPass instance
-        -   `network` (string): Network type
-    -   **Returns**:
-        -   `Promise<{ signData: SignData; signed: string }>`: Signed complaint data
-
--   **signComplainEIP712ByPrivateKey**
-
-    ```typescript
-    signComplainEIP712ByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string): Promise<{ signData: SignData; signed: string }>
-    ```
-
-    Signs complaint data using a private key.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): Private key for signing
-        -   `network` (string): Network type
-    -   **Returns**:
-        -   `Promise<{ signData: SignData; signed: string }>`: Signed complaint data
-
--   **getSignDataEIP712**
-
-    ```typescript
-    getSignDataEIP712(quote: Quote, network: string, amount: string, dstAmount: string, dstNativeAmount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<any>
-    ```
-
-    Retrieves EIP-712 sign data for a quote.
-
-    -   **Parameters**:
-        -   `quote` (Quote): Quote data
-        -   `network` (string): Network type
-        -   `amount` (string): Amount to be swapped
-        -   `dstAmount` (string): Destination amount
-        -   `dstNativeAmount` (string): Destination native amount
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): Receiving address
-        -   `expectedSingleStepTime` (number, optional): Expected time for a single step
-        -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
-        -   `earliestRefundTime` (number, optional): Earliest refund time
-        -   `rpcSrc` (string, optional): Source RPC endpoint
-        -   `rpcDst` (string, optional): Destination RPC endpoint
-    -   **Returns**:
-        -   `Promise<any>`: EIP-712 sign data
-
--   **isNeedApprove**
-
-    ```typescript
-    isNeedApprove(quote: Quote, network: string, sender: string, rpc?: string): Promise<boolean>
-    ```
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+-   **Returns**:
+    -   `Promise<SignData>`: Sign data for the complaint
+
+##### **signComplainEIP712ByTermiPass**
+
+```typescript
+signComplainEIP712ByTermiPass(preBusiness: PreBusiness, termiPass: any, network: string): Promise<{ signData: SignData; signed: string }>
+```
+
+Signs complaint data using TermiPass.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `termiPass` (any): TermiPass instance
+    -   `network` (string): Network type
+-   **Returns**:
+    -   `Promise<{ signData: SignData; signed: string }>`: Signed complaint data
+
+##### **signComplainEIP712ByPrivateKey**
+
+```typescript
+signComplainEIP712ByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string): Promise<{ signData: SignData; signed: string }>
+```
+
+Signs complaint data using a private key.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): Private key for signing
+    -   `network` (string): Network type
+-   **Returns**:
+    -   `Promise<{ signData: SignData; signed: string }>`: Signed complaint data
+
+##### **getSignDataEIP712**
+
+```typescript
+getSignDataEIP712(quote: Quote, network: string, amount: string, dstAmount: string, dstNativeAmount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<SignData>
+```
+
+Retrieves EIP-712 sign data for a quote.
+
+-   **Parameters**:
+    -   `quote` (Quote): Quote data
+    -   `network` (string): Network type
+    -   `amount` (string): Amount to be swapped
+    -   `dstAmount` (string): Destination amount
+    -   `dstNativeAmount` (string): Destination native amount
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): Receiving address
+    -   `expectedSingleStepTime` (number, optional): Expected time for a single step
+    -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
+    -   `earliestRefundTime` (number, optional): Earliest refund time
+    -   `rpcSrc` (string, optional): Source RPC endpoint
+    -   `rpcDst` (string, optional): Destination RPC endpoint
+-   **Returns**:
+    -   `Promise<SignData>`: EIP-712 sign data
+
+##### **isNeedApprove**
+
+```typescript
+isNeedApprove(quote: Quote, network: string, sender: string, rpc?: string): Promise<boolean>
+```
 
-    Checks if an approval is needed for a token transfer.
-
-    -   **Parameters**:
-        -   `quote` (Quote): Quote data
-        -   `network` (string): Network type
-        -   `sender` (string): Sender address
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<boolean>`: True if approval is needed, false otherwise
-
--   **getApproveTransfer**
+Checks if an approval is needed for a token transfer.
+
+-   **Parameters**:
+    -   `quote` (Quote): Quote data
+    -   `network` (string): Network type
+    -   `sender` (string): Sender address
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<boolean>`: True if approval is needed, false otherwise
+
+##### **getApproveTransfer**
 
-    ```typescript
-    getApproveTransfer(quote: Quote, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
+```typescript
+getApproveTransfer(quote: Quote, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
+```
 
-    Constructs a raw transaction for approving a token transfer on the blockchain.
-
-    -   **Parameters**:
-        -   `quote` (Quote): Quote data
-        -   `network` (string): Network type
-        -   `sender` (string): Sender address
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Raw transaction data for the approval
+Constructs a raw transaction for approving a token transfer on the blockchain.
+
+-   **Parameters**:
+    -   `quote` (Quote): Quote data
+    -   `network` (string): Network type
+    -   `sender` (string): Sender address
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Raw transaction data for the approval
 
--   **getTransferOutTransfer**
+##### **getTransferOutTransfer**
 
-    ```typescript
-    getTransferOutTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
+```typescript
+getTransferOutTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
+```
 
-    Constructs a raw transaction for initiating a transfer out operation on the blockchain.
+Constructs a raw transaction for initiating a transfer out operation on the blockchain.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `network` (string): Network type
-        -   `sender` (string): Sender address
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Raw transaction data for the transfer out
-
--   **getTransferOutConfirmTransfer**
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `network` (string): Network type
+    -   `sender` (string): Sender address
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Raw transaction data for the transfer out
+
+##### **getTransferOutConfirmTransfer**
 
-    ```typescript
-    getTransferOutConfirmTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
+```typescript
+getTransferOutConfirmTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
+```
 
-    Constructs a raw transaction for confirming a transfer out on the blockchain.
+Constructs a raw transaction for confirming a transfer out on the blockchain.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `network` (string): Network type
-        -   `sender` (string): Sender address
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Raw transaction data for the confirmation
-
--   **getTransferOutRefundTransfer**
-
-    ```typescript
-    getTransferOutRefundTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
-
-    Constructs a raw transaction for refunding a transfer out on the blockchain.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `network` (string): Network type
-        -   `sender` (string): Sender address
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Raw transaction data for the refund
-
--   **getTransferInConfirmTransfer**
-
-    ```typescript
-    getTransferInConfirmTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
-
-    Constructs a raw transaction for confirming a transfer in on the blockchain.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `network` (string): Network type
-        -   `sender` (string): Sender address
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Raw transaction data for the confirmation
-
--   **getGasPrice**
-
-    ```typescript
-    getGasPrice(network: string, rpc?: string): Promise<string>
-    ```
-
-    Retrieves the current gas price for a network.
-
-    -   **Parameters**:
-        -   `network` (string): Network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<string>`: Current gas price
-
--   **getOnChainGasPrice**
-
-    ```typescript
-    getOnChainGasPrice(network: string, rpc?: string): Promise<string>
-    ```
-
-    Retrieves the on-chain gas price for a network.
-
-    -   **Parameters**:
-        -   `network` (string): Network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<string>`: On-chain gas price
-
--   **signQuoteEIP712ByPrivateKey**
-
-    ```typescript
-    signQuoteEIP712ByPrivateKey(quote: Quote, privateKey: string, network: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
-    ```
-
-    Signs a quote using EIP-712 standard with a private key.
-
-    -   **Parameters**:
-        -   `quote` (Quote): The quote data to be signed
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `amount` (string): The amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): The address to receive the swapped tokens
-        -   `expectedSingleStepTime` (number, optional): Expected time for a single step
-        -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
-        -   `earliestRefundTime` (number, optional): Earliest refund time
-        -   `rpcSrc` (string, optional): Source RPC endpoint
-        -   `rpcDst` (string, optional): Destination RPC endpoint
-    -   **Returns**:
-        -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
-
--   **signQuoteEIP712ByMetamaskAPI**
-
-    ```typescript
-    signQuoteEIP712ByMetamaskAPI(quote: Quote, metamaskAPI: any, network: string, sender: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
-    ```
-
-    Signs a quote using EIP-712 standard with Metamask API.
-
-    -   **Parameters**:
-        -   `quote` (Quote): The quote data to be signed
-        -   `metamaskAPI` (any): The Metamask API instance
-        -   `network` (string): The network type
-        -   `sender` (string): The sender address
-        -   `amount` (string): The amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): The address to receive the swapped tokens
-        -   `expectedSingleStepTime` (number, optional): Expected time for a single step
-        -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
-        -   `earliestRefundTime` (number, optional): Earliest refund time
-        -   `rpcSrc` (string, optional): Source RPC endpoint
-        -   `rpcDst` (string, optional): Destination RPC endpoint
-    -   **Returns**:
-        -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
-
--   **transferOutByPrivateKey**
-
-    ```typescript
-    transferOutByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseTransferOut>
-    ```
-
-    Initiates a transfer out operation using a private key.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseTransferOut>`: Response of the transfer out operation
-
--   **transferOutByMetamaskAPI**
-
-    ```typescript
-    transferOutByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string): Promise<ResponseTransferOut>
-    ```
-
-    Initiates a transfer out operation using Metamask API.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `metamaskAPI` (any): The Metamask API instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseTransferOut>`: Response of the transfer out operation
-
--   **transferOutConfirmByPrivateKey**
-
-    ```typescript
-    transferOutConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
-
-    Confirms a transfer out operation using a private key.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Response of the transfer out confirmation
-
--   **transferOutConfirmByMetamaskAPI**
-
-    ```typescript
-    transferOutConfirmByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
-
-    Confirms a transfer out operation using Metamask API.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `metamaskAPI` (any): The Metamask API instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Response of the transfer out confirmation
-
--   **transferOutRefundByPrivateKey**
-
-    ```typescript
-    transferOutRefundByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
-
-    Refunds a transfer out operation using a private key.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Response of the transfer out refund
-
--   **transferOutRefundByMetamaskAPI**
-
-    ```typescript
-    transferOutRefundByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string): Promise<ContractTransactionResponse>
-    ```
-
-    Refunds a transfer out operation using Metamask API.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `metamaskAPI` (any): The Metamask API instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Response of the transfer out refund
-
--   **transferInConfirmByPrivateKey**
-
-    ```typescript
-    transferInConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string, sender: string): Promise<ContractTransactionResponse>
-    ```
-
-    Confirms a transfer in operation using a private key.
-
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-        -   `sender` (string): The sender address
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Response of the transfer in confirmation
-
--   **transferInConfirmByMetamaskAPI**
-    ```typescript
-    transferInConfirmByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string, sender: string): Promise<ContractTransactionResponse>
-    ```
-    Confirms a transfer in operation using Metamask API.
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `metamaskAPI` (any): The Metamask API instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-        -   `sender` (string): The sender address
-    -   **Returns**:
-        -   `Promise<ContractTransactionResponse>`: Response of the transfer in confirmation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `network` (string): Network type
+    -   `sender` (string): Sender address
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Raw transaction data for the confirmation
+
+##### **getTransferOutRefundTransfer**
+
+```typescript
+getTransferOutRefundTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
+```
+
+Constructs a raw transaction for refunding a transfer out on the blockchain.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `network` (string): Network type
+    -   `sender` (string): Sender address
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Raw transaction data for the refund
+
+##### **getTransferInConfirmTransfer**
+
+```typescript
+getTransferInConfirmTransfer(preBusiness: PreBusiness, network: string, sender: string, rpc?: string): Promise<ContractTransactionResponse>
+```
+
+Constructs a raw transaction for confirming a transfer in on the blockchain.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `network` (string): Network type
+    -   `sender` (string): Sender address
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Raw transaction data for the confirmation
+
+##### **getGasPrice**
+
+```typescript
+getGasPrice(network: string, rpc?: string): Promise<string>
+```
+
+Retrieves the current gas price for a network.
+
+-   **Parameters**:
+    -   `network` (string): Network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<string>`: Current gas price
+
+##### **getOnChainGasPrice**
+
+```typescript
+getOnChainGasPrice(network: string, rpc?: string): Promise<string>
+```
+
+Retrieves the on-chain gas price for a network.
+
+-   **Parameters**:
+    -   `network` (string): Network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<string>`: On-chain gas price
+
+##### **signQuoteEIP712ByPrivateKey**
+
+```typescript
+signQuoteEIP712ByPrivateKey(quote: Quote, privateKey: string, network: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
+```
+
+Signs a quote using EIP-712 standard with a private key.
+
+-   **Parameters**:
+    -   `quote` (Quote): The quote data to be signed
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `amount` (string): The amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): The address to receive the swapped tokens
+    -   `expectedSingleStepTime` (number, optional): Expected time for a single step
+    -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
+    -   `earliestRefundTime` (number, optional): Earliest refund time
+    -   `rpcSrc` (string, optional): Source RPC endpoint
+    -   `rpcDst` (string, optional): Destination RPC endpoint
+-   **Returns**:
+    -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
+
+##### **signQuoteEIP712ByMetamaskAPI**
+
+```typescript
+signQuoteEIP712ByMetamaskAPI(quote: Quote, metamaskAPI: any, network: string, sender: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
+```
+
+Signs a quote using EIP-712 standard with Metamask API.
+
+-   **Parameters**:
+    -   `quote` (Quote): The quote data to be signed
+    -   `metamaskAPI` (any): The Metamask API instance
+    -   `network` (string): The network type
+    -   `sender` (string): The sender address
+    -   `amount` (string): The amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): The address to receive the swapped tokens
+    -   `expectedSingleStepTime` (number, optional): Expected time for a single step
+    -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
+    -   `earliestRefundTime` (number, optional): Earliest refund time
+    -   `rpcSrc` (string, optional): Source RPC endpoint
+    -   `rpcDst` (string, optional): Destination RPC endpoint
+-   **Returns**:
+    -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
+
+##### **transferOutByPrivateKey**
+
+```typescript
+transferOutByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseTransferOut>
+```
+
+Initiates a transfer out operation using a private key.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseTransferOut>`: Response of the transfer out operation
+
+##### **transferOutByMetamaskAPI**
+
+```typescript
+transferOutByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string): Promise<ResponseTransferOut>
+```
+
+Initiates a transfer out operation using Metamask API.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `metamaskAPI` (any): The Metamask API instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseTransferOut>`: Response of the transfer out operation
+
+##### **transferOutConfirmByPrivateKey**
+
+```typescript
+transferOutConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ContractTransactionResponse>
+```
+
+Confirms a transfer out operation using a private key.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Response of the transfer out confirmation
+
+##### **transferOutConfirmByMetamaskAPI**
+
+```typescript
+transferOutConfirmByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string): Promise<ContractTransactionResponse>
+```
+
+Confirms a transfer out operation using Metamask API.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `metamaskAPI` (any): The Metamask API instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Response of the transfer out confirmation
+
+##### **transferOutRefundByPrivateKey**
+
+```typescript
+transferOutRefundByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ContractTransactionResponse>
+```
+
+Refunds a transfer out operation using a private key.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Response of the transfer out refund
+
+##### **transferOutRefundByMetamaskAPI**
+
+```typescript
+transferOutRefundByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string): Promise<ContractTransactionResponse>
+```
+
+Refunds a transfer out operation using Metamask API.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `metamaskAPI` (any): The Metamask API instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Response of the transfer out refund
+
+##### **transferInConfirmByPrivateKey**
+
+```typescript
+transferInConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string, sender: string): Promise<ContractTransactionResponse>
+```
+
+Confirms a transfer in operation using a private key.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+    -   `sender` (string): The sender address
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Response of the transfer in confirmation
+
+##### **transferInConfirmByMetamaskAPI**
+
+```typescript
+transferInConfirmByMetamaskAPI(preBusiness: PreBusiness, metamaskAPI: any, network: string, rpc?: string, sender: string): Promise<ContractTransactionResponse>
+```
+
+Confirms a transfer in operation using Metamask API.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `metamaskAPI` (any): The Metamask API instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+    -   `sender` (string): The sender address
+-   **Returns**:
+    -   `Promise<ContractTransactionResponse>`: Response of the transfer in confirmation
 
 #### `solana`
 
 Solana related functions for handling transactions and signatures on the Solana blockchain.
 
--   **getSignData**
+##### **getSignData**
 
-    ```typescript
-    getSignData(quote: Quote, network: string, amount: string, swapToNative: number, receivingAddress: string): Promise<any>
-    ```
+```typescript
+getSignData(quote: Quote, network: string, amount: string, swapToNative: number, receivingAddress: string): Promise<SignData>
+```
 
-    Retrieves sign data for a quote on Solana.
+Retrieves sign data for a quote on Solana.
 
-    -   **Parameters**:
-        -   `quote` (Quote): The quote data
-        -   `network` (string): The network type
-        -   `amount` (string): The amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): The address to receive the swapped tokens
-    -   **Returns**:
-        -   `Promise<any>`: Sign data for the quote
+-   **Parameters**:
+    -   `quote` (Quote): The quote data
+    -   `network` (string): The network type
+    -   `amount` (string): The amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): The address to receive the swapped tokens
+-   **Returns**:
+    -   `Promise<SignData>`: Sign data for the quote
 
--   **getSignPreamble**
+##### **getSignPreamble**
 
-    ```typescript
-    getSignPreamble(quote: Quote, network: string, amount: string, swapToNative: number, receivingAddress: string): string
-    ```
+```typescript
+getSignPreamble(quote: Quote, network: string, amount: string, swapToNative: number, receivingAddress: string): string
+```
 
-    Constructs the preamble for signing a quote on Solana.
+Constructs the preamble for signing a quote on Solana.
 
-    -   **Parameters**:
-        -   `quote` (Quote): The quote data
-        -   `network` (string): The network type
-        -   `amount` (string): The amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): The address to receive the swapped tokens
-    -   **Returns**:
-        -   `string`: The preamble string for signing
+-   **Parameters**:
+    -   `quote` (Quote): The quote data
+    -   `network` (string): The network type
+    -   `amount` (string): The amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): The address to receive the swapped tokens
+-   **Returns**:
+    -   `string`: The preamble string for signing
 
--   **signQuoteByPrivateKey**
+##### **signQuoteByPrivateKey**
 
-    ```typescript
-    signQuoteByPrivateKey(network: string, quote: Quote, privateKey: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
-    ```
+```typescript
+signQuoteByPrivateKey(network: string, quote: Quote, privateKey: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
+```
 
-    Signs a quote using a private key on Solana.
+Signs a quote using a private key on Solana.
 
-    -   **Parameters**:
-        -   `network` (string): The network type
-        -   `quote` (Quote): The quote data to be signed
-        -   `privateKey` (string): The private key for signing
-        -   `amount` (string): The amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): The address to receive the swapped tokens
-        -   `expectedSingleStepTime` (number, optional): Expected time for a single step
-        -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
-        -   `earliestRefundTime` (number, optional): Earliest refund time
-        -   `rpcSrc` (string, optional): Source RPC endpoint
-        -   `rpcDst` (string, optional): Destination RPC endpoint
-    -   **Returns**:
-        -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
+-   **Parameters**:
+    -   `network` (string): The network type
+    -   `quote` (Quote): The quote data to be signed
+    -   `privateKey` (string): The private key for signing
+    -   `amount` (string): The amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): The address to receive the swapped tokens
+    -   `expectedSingleStepTime` (number, optional): Expected time for a single step
+    -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
+    -   `earliestRefundTime` (number, optional): Earliest refund time
+    -   `rpcSrc` (string, optional): Source RPC endpoint
+    -   `rpcDst` (string, optional): Destination RPC endpoint
+-   **Returns**:
+    -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
 
--   **signQuoteByWalletPlugin**
+##### **signQuoteByWalletPlugin**
 
-    ```typescript
-    signQuoteByWalletPlugin(network: string, quote: Quote, phantomAPI: any, sender: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
-    ```
+```typescript
+signQuoteByWalletPlugin(network: string, quote: Quote, phantomAPI: any, sender: string, amount: string, swapToNative: number, receivingAddress: string, expectedSingleStepTime?: number, tolerantSingleStepTime?: number, earliestRefundTime?: number, rpcSrc?: string, rpcDst?: string): Promise<{ signData: SignData; signed: string }>
+```
 
-    Signs a quote using a wallet plugin on Solana.
+Signs a quote using a wallet plugin on Solana.
 
-    -   **Parameters**:
-        -   `network` (string): The network type
-        -   `quote` (Quote): The quote data to be signed
-        -   `phantomAPI` (any): The wallet plugin instance
-        -   `sender` (string): The sender address
-        -   `amount` (string): The amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): The address to receive the swapped tokens
-        -   `expectedSingleStepTime` (number, optional): Expected time for a single step
-        -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
-        -   `earliestRefundTime` (number, optional): Earliest refund time
-        -   `rpcSrc` (string, optional): Source RPC endpoint
-        -   `rpcDst` (string, optional): Destination RPC endpoint
-    -   **Returns**:
-        -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
+-   **Parameters**:
+    -   `network` (string): The network type
+    -   `quote` (Quote): The quote data to be signed
+    -   `phantomAPI` (any): The wallet plugin instance
+    -   `sender` (string): The sender address
+    -   `amount` (string): The amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): The address to receive the swapped tokens
+    -   `expectedSingleStepTime` (number, optional): Expected time for a single step
+    -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
+    -   `earliestRefundTime` (number, optional): Earliest refund time
+    -   `rpcSrc` (string, optional): Source RPC endpoint
+    -   `rpcDst` (string, optional): Destination RPC endpoint
+-   **Returns**:
+    -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
 
--   **transferOutByPrivateKey**
+##### **transferOutByPrivateKey**
 
-    ```typescript
-    transferOutByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseSolana>
-    ```
+```typescript
+transferOutByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseSolana>
+```
 
-    Initiates a transfer out operation using a private key on Solana.
+Initiates a transfer out operation using a private key on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer out operation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer out operation
 
--   **transferOutByWalletPlugin**
+##### **transferOutByWalletPlugin**
 
-    ```typescript
-    transferOutByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string): Promise<ResponseSolana>
-    ```
+```typescript
+transferOutByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string): Promise<ResponseSolana>
+```
 
-    Initiates a transfer out operation using a wallet plugin on Solana.
+Initiates a transfer out operation using a wallet plugin on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `phantomAPI` (any): The wallet plugin instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer out operation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `phantomAPI` (any): The wallet plugin instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer out operation
 
--   **transferOutConfirmByPrivateKey**
+##### **transferOutConfirmByPrivateKey**
 
-    ```typescript
-    transferOutConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseSolana>
-    ```
+```typescript
+transferOutConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseSolana>
+```
 
-    Confirms a transfer out operation using a private key on Solana.
+Confirms a transfer out operation using a private key on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer out confirmation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer out confirmation
 
--   **transferOutConfirmByWalletPlugin**
+##### **transferOutConfirmByWalletPlugin**
 
-    ```typescript
-    transferOutConfirmByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string): Promise<ResponseSolana>
-    ```
+```typescript
+transferOutConfirmByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string): Promise<ResponseSolana>
+```
 
-    Confirms a transfer out operation using a wallet plugin on Solana.
+Confirms a transfer out operation using a wallet plugin on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `phantomAPI` (any): The wallet plugin instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer out confirmation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `phantomAPI` (any): The wallet plugin instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer out confirmation
 
--   **getTransferOutTransaction**
+##### **getTransferOutTransaction**
 
-    ```typescript
-    getTransferOutTransaction(preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider): Promise<any>
-    ```
+```typescript
+getTransferOutTransaction(preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider): Promise<Transaction>
+```
 
-    Constructs a transaction for initiating a transfer out operation on Solana.
+Constructs a transaction for initiating a transfer out operation on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `provider` (Connection | undefined): Solana connection provider
-        -   `network` (string): The network type
-        -   `pluginProvider` (Provider, optional): Plugin provider
-    -   **Returns**:
-        -   `Promise<any>`: Transaction data for the transfer out
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `provider` (Connection | undefined): Solana connection provider
+    -   `network` (string): The network type
+    -   `pluginProvider` (Provider, optional): Plugin provider
+-   **Returns**:
+    -   `Promise<Transaction>`: Transaction data for the transfer out
 
--   **getTransferOutConfirmTransaction**
+##### **getTransferOutConfirmTransaction**
 
-    ```typescript
-    getTransferOutConfirmTransaction(preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider): Promise<any>
-    ```
+```typescript
+getTransferOutConfirmTransaction(preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider): Promise<aTransactionny>
+```
 
-    Constructs a transaction for confirming a transfer out operation on Solana.
+Constructs a transaction for confirming a transfer out operation on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `provider` (Connection | undefined): Solana connection provider
-        -   `network` (string): The network type
-        -   `pluginProvider` (Provider, optional): Plugin provider
-    -   **Returns**:
-        -   `Promise<any>`: Transaction data for the confirmation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `provider` (Connection | undefined): Solana connection provider
+    -   `network` (string): The network type
+    -   `pluginProvider` (Provider, optional): Plugin provider
+-   **Returns**:
+    -   `Promise<Transaction>`: Transaction data for the confirmation
 
--   **getTransferOutRefundTransaction**
+##### **getTransferOutRefundTransaction**
 
-    ```typescript
-    getTransferOutRefundTransaction(preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider): Promise<any>
-    ```
+```typescript
+getTransferOutRefundTransaction(preBusiness: PreBusiness, provider: Connection | undefined, network: string, pluginProvider?: Provider): Promise<Transaction>
+```
 
-    Constructs a transaction for refunding a transfer out operation on Solana.
+Constructs a transaction for refunding a transfer out operation on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `provider` (Connection | undefined): Solana connection provider
-        -   `network` (string): The network type
-        -   `pluginProvider` (Provider, optional): Plugin provider
-    -   **Returns**:
-        -   `Promise<any>`: Transaction data for the refund
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `provider` (Connection | undefined): Solana connection provider
+    -   `network` (string): The network type
+    -   `pluginProvider` (Provider, optional): Plugin provider
+-   **Returns**:
+    -   `Promise<Transaction>`: Transaction data for the refund
 
--   **transferOutRefundByPrivateKey**
+##### **transferOutRefundByPrivateKey**
 
-    ```typescript
-    transferOutRefundByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseSolana>
-    ```
+```typescript
+transferOutRefundByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string): Promise<ResponseSolana>
+```
 
-    Refunds a transfer out operation using a private key on Solana.
+Refunds a transfer out operation using a private key on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer out refund
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer out refund
 
--   **transferOutRefundByWalletPlugin**
+##### **transferOutRefundByWalletPlugin**
 
-    ```typescript
-    transferOutRefundByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string): Promise<ResponseSolana>
-    ```
+```typescript
+transferOutRefundByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string): Promise<ResponseSolana>
+```
 
-    Refunds a transfer out operation using a wallet plugin on Solana.
+Refunds a transfer out operation using a wallet plugin on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `phantomAPI` (any): The wallet plugin instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer out refund
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `phantomAPI` (any): The wallet plugin instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer out refund
 
--   **transferInConfirmByPrivateKey**
+##### **transferInConfirmByPrivateKey**
 
-    ```typescript
-    transferInConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string, sender: string): Promise<ResponseSolana>
-    ```
+```typescript
+transferInConfirmByPrivateKey(preBusiness: PreBusiness, privateKey: string, network: string, rpc?: string, sender: string): Promise<ResponseSolana>
+```
 
-    Confirms a transfer in operation using a private key on Solana.
+Confirms a transfer in operation using a private key on Solana.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-        -   `sender` (string): The sender address
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer in confirmation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+    -   `sender` (string): The sender address
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer in confirmation
 
--   **transferInConfirmByWalletPlugin**
-    ```typescript
-    transferInConfirmByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string, sender: string): Promise<ResponseSolana>
-    ```
-    Confirms a transfer in operation using a wallet plugin on Solana.
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `phantomAPI` (any): The wallet plugin instance
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-        -   `sender` (string): The sender address
-    -   **Returns**:
-        -   `Promise<ResponseSolana>`: Response of the transfer in confirmation
+##### **transferInConfirmByWalletPlugin**
+
+```typescript
+transferInConfirmByWalletPlugin(preBusiness: PreBusiness, phantomAPI: any, network: string, rpc?: string, sender: string): Promise<ResponseSolana>
+```
+
+Confirms a transfer in operation using a wallet plugin on Solana.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `phantomAPI` (any): The wallet plugin instance
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+    -   `sender` (string): The sender address
+-   **Returns**:
+    -   `Promise<ResponseSolana>`: Response of the transfer in confirmation
 
 #### `business`
 
 The `business` namespace provides methods to interact with the Otmoic business service. It allows you to sign, send, confirm and refund assets, and submit complaints.
 
--   **signQuoteByPrivateKey**
+##### **signQuoteByPrivateKey**
 
-    ```typescript
-    signQuoteByPrivateKey(
-        network: string,
-        quote: Quote,
-        privateKey: string,
-        amount: string,
-        swapToNative: number,
-        receivingAddress: string,
-        expectedSingleStepTime?: number,
-        tolerantSingleStepTime?: number,
-        earliestRefundTime?: number,
-        rpcSrc?: string,
-        rpcDst?: string
-    ): Promise<{ signData: SignData; signed: string }>
-    ```
+```typescript
+signQuoteByPrivateKey(
+    network: string,
+    quote: Quote,
+    privateKey: string,
+    amount: string,
+    swapToNative: number,
+    receivingAddress: string,
+    expectedSingleStepTime?: number,
+    tolerantSingleStepTime?: number,
+    earliestRefundTime?: number,
+    rpcSrc?: string,
+    rpcDst?: string
+): Promise<{ signData: SignData; signed: string }>
+```
 
-    Signs a quote using a private key, supporting both EVM and Solana networks.
+Signs a quote using a private key, supporting both EVM and Solana networks.
 
-    -   **Parameters**:
-        -   `network` (string): The network type
-        -   `quote` (Quote): The quote data to be signed
-        -   `privateKey` (string): The private key for signing
-        -   `amount` (string): The amount to be swapped
-        -   `swapToNative` (number): Percentage to swap to native token
-        -   `receivingAddress` (string): The address to receive the swapped tokens
-        -   `expectedSingleStepTime` (number, optional): Expected time for a single step
-        -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
-        -   `earliestRefundTime` (number, optional): Earliest refund time
-        -   `rpcSrc` (string, optional): Source RPC endpoint
-        -   `rpcDst` (string, optional): Destination RPC endpoint
-    -   **Returns**:
-        -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
+-   **Parameters**:
+    -   `network` (string): The network type
+    -   `quote` (Quote): The quote data to be signed
+    -   `privateKey` (string): The private key for signing
+    -   `amount` (string): The amount to be swapped
+    -   `swapToNative` (number): Percentage to swap to native token
+    -   `receivingAddress` (string): The address to receive the swapped tokens
+    -   `expectedSingleStepTime` (number, optional): Expected time for a single step
+    -   `tolerantSingleStepTime` (number, optional): Tolerant time for a single step
+    -   `earliestRefundTime` (number, optional): Earliest refund time
+    -   `rpcSrc` (string, optional): Source RPC endpoint
+    -   `rpcDst` (string, optional): Destination RPC endpoint
+-   **Returns**:
+    -   `Promise<{ signData: SignData; signed: string }>`: The signed data and signature
 
--   **transferOutByPrivateKey**
+##### **transferOutByPrivateKey**
 
-    ```typescript
-    transferOutByPrivateKey(
-        preBusiness: PreBusiness,
-        privateKey: string,
-        network: string,
-        rpc?: string
-    ): Promise<ResponseTransferOut | ResponseSolana>
-    ```
+```typescript
+transferOutByPrivateKey(
+    preBusiness: PreBusiness,
+    privateKey: string,
+    network: string,
+    rpc?: string
+): Promise<ResponseTransferOut | ResponseSolana>
+```
 
-    Initiates a transfer out operation using a private key, supporting both EVM and Solana networks.
+Initiates a transfer out operation using a private key, supporting both EVM and Solana networks.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer out operation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer out operation
 
--   **transferOutConfirmByPrivateKey**
+##### **transferOutConfirmByPrivateKey**
 
-    ```typescript
-    transferOutConfirmByPrivateKey(
-        preBusiness: PreBusiness,
-        privateKey: string,
-        network: string,
-        rpc?: string
-    ): Promise<ResponseTransferOut | ResponseSolana>
-    ```
+```typescript
+transferOutConfirmByPrivateKey(
+    preBusiness: PreBusiness,
+    privateKey: string,
+    network: string,
+    rpc?: string
+): Promise<ResponseTransferOut | ResponseSolana>
+```
 
-    Confirms a transfer out operation using a private key, supporting both EVM and Solana networks.
+Confirms a transfer out operation using a private key, supporting both EVM and Solana networks.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer out confirmation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer out confirmation
 
--   **transferInConfirmByPrivateKey**
+##### **transferInConfirmByPrivateKey**
 
-    ```typescript
-    transferInConfirmByPrivateKey(
-        preBusiness: PreBusiness,
-        privateKey: string,
-        network: string,
-        rpc?: string,
-        sender: string
-    ): Promise<ResponseTransferOut | ResponseSolana>
-    ```
+```typescript
+transferInConfirmByPrivateKey(
+    preBusiness: PreBusiness,
+    privateKey: string,
+    network: string,
+    rpc?: string,
+    sender: string
+): Promise<ResponseTransferOut | ResponseSolana>
+```
 
-    Confirms a transfer in operation using a private key, supporting both EVM and Solana networks.
+Confirms a transfer in operation using a private key, supporting both EVM and Solana networks.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-        -   `sender` (string): The sender address
-    -   **Returns**:
-        -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer in confirmation
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+    -   `sender` (string): The sender address
+-   **Returns**:
+    -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer in confirmation
 
--   **transferOutRefundByPrivateKey**
+##### **transferOutRefundByPrivateKey**
 
-    ```typescript
-    transferOutRefundByPrivateKey(
-        preBusiness: PreBusiness,
-        privateKey: string,
-        network: string,
-        rpc?: string
-    ): Promise<ResponseTransferOut | ResponseSolana>
-    ```
+```typescript
+transferOutRefundByPrivateKey(
+    preBusiness: PreBusiness,
+    privateKey: string,
+    network: string,
+    rpc?: string
+): Promise<ResponseTransferOut | ResponseSolana>
+```
 
-    Refunds a transfer out operation using a private key, supporting both EVM and Solana networks.
+Refunds a transfer out operation using a private key, supporting both EVM and Solana networks.
 
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-        -   `rpc` (string, optional): RPC endpoint
-    -   **Returns**:
-        -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer out refund
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+    -   `rpc` (string, optional): RPC endpoint
+-   **Returns**:
+    -   `Promise<ResponseTransferOut | ResponseSolana>`: Response of the transfer out refund
 
--   **complainByPrivateKey**
-    ```typescript
-    complainByPrivateKey(
-        preBusiness: PreBusiness,
-        privateKey: string,
-        network: string
-    ): Promise<string>
-    ```
-    Submits a complaint using a private key, supporting EVM networks.
-    -   **Parameters**:
-        -   `preBusiness` (PreBusiness): Pre-business data
-        -   `privateKey` (string): The private key for signing
-        -   `network` (string): The network type
-    -   **Returns**:
-        -   `Promise<string>`: Result of the complaint submission
+##### **complainByPrivateKey**
+
+```typescript
+complainByPrivateKey(
+    preBusiness: PreBusiness,
+    privateKey: string,
+    network: string
+): Promise<string>
+```
+
+Submits a complaint using a private key, supporting EVM networks.
+
+-   **Parameters**:
+    -   `preBusiness` (PreBusiness): Pre-business data
+    -   `privateKey` (string): The private key for signing
+    -   `network` (string): The network type
+-   **Returns**:
+    -   `Promise<string>`: Result of the complaint submission
 
 #### `assistive`
 
 The `assistive` namespace provides methods that used for auxiliary operations that support the main business logic.
 
--   **TranslateBridge**
+##### **TranslateBridge**
 
-    ```typescript
-    TranslateBridge(bridgeData: any): TranslatedBridge
-    ```
+```typescript
+TranslateBridge(bridges: Bridge[], network: string, rpcs: { [key: string]: string }): Promise<TranslatedBridge[]>
+```
 
-    Translates bridge data into a standardized format.
+Translates bridge data into a standardized format.
 
-    -   **Parameters**:
-        -   `bridgeData` (any): The raw bridge data to be translated
-    -   **Returns**:
-        -   `TranslatedBridge`: The translated bridge data
+-   **Parameters**:
+    -   `bridges` (Bridge[]): The raw bridge data to be translated
+    -   `network` (string): The network type
+    -   `rpcs` ({ [key: string]: string }): RPC endpoints
+-   **Returns**:
+    -   `Promise<TranslatedBridge[]>`: The translated bridge data
 
--   **GetBalance**
+##### **GetBalance**
 
-    ```typescript
-    GetBalance(address: string, network: string, tokenAddress: string): Promise<string>
-    ```
+```typescript
+GetBalance(address: string, network: string, tokenAddress: string): Promise<string>
+```
 
-    Retrieves the balance of a specific token for a given address on a specified network.
+Retrieves the balance of a specific token for a given address on a specified network.
 
-    -   **Parameters**:
-        -   `address` (string): The address to check the balance for
-        -   `network` (string): The network type
-        -   `tokenAddress` (string): The address of the token
-    -   **Returns**:
-        -   `Promise<string>`: The balance of the token
+-   **Parameters**:
+    -   `address` (string): The address to check the balance for
+    -   `network` (string): The network type
+    -   `tokenAddress` (string): The address of the token
+-   **Returns**:
+    -   `Promise<string>`: The balance of the token
 
--   **GetBalanceEVM**
+##### **GetBalanceEVM**
 
-    ```typescript
-    GetBalanceEVM(address: string, network: string, tokenAddress: string): Promise<string>
-    ```
+```typescript
+GetBalanceEVM(address: string, network: string, tokenAddress: string): Promise<string>
+```
 
-    Retrieves the balance of a specific token for a given address on an EVM network.
+Retrieves the balance of a specific token for a given address on an EVM network.
 
-    -   **Parameters**:
-        -   `address` (string): The address to check the balance for
-        -   `network` (string): The network type
-        -   `tokenAddress` (string): The address of the token
-    -   **Returns**:
-        -   `Promise<string>`: The balance of the token
+-   **Parameters**:
+    -   `address` (string): The address to check the balance for
+    -   `network` (string): The network type
+    -   `tokenAddress` (string): The address of the token
+-   **Returns**:
+    -   `Promise<string>`: The balance of the token
 
--   **GetBalanceSOLANA**
-    ```typescript
-    GetBalanceSOLANA(address: string, network: string, tokenAddress: string): Promise<string>
-    ```
-    Retrieves the balance of a specific token for a given address on the Solana network.
-    -   **Parameters**:
-        -   `address` (string): The address to check the balance for
-        -   `network` (string): The network type
-        -   `tokenAddress` (string): The address of the token
-    -   **Returns**:
-        -   `Promise<string>`: The balance of the token
+##### **GetBalanceSOLANA**
+
+```typescript
+GetBalanceSOLANA(address: string, network: string, tokenAddress: string): Promise<string>
+```
+
+Retrieves the balance of a specific token for a given address on the Solana network.
+
+-   **Parameters**:
+    -   `address` (string): The address to check the balance for
+    -   `network` (string): The network type
+    -   `tokenAddress` (string): The address of the token
+-   **Returns**:
+    -   `Promise<string>`: The balance of the token
 
 ## Contributing
 

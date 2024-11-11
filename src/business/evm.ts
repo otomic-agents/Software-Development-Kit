@@ -295,12 +295,18 @@ export const doApprove = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
             const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token;
             const amount = preBusiness.swap_asset_information.amount;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider).connect(
                 wallet == undefined ? await provider.getSigner() : wallet,
@@ -309,7 +315,7 @@ export const doApprove = (
             const approveTx = await erc20
                 .getFunction('approve')
                 .send(getOtmoicAddressBySystemChainId(systemChainId, network), amount, {
-                    gasPrice: await _getGasPrice(provider, systemChainId, network),
+                    gasPrice: gasPrice.amount,
                 });
             resolve(approveTx);
         } catch (err) {
@@ -340,10 +346,16 @@ export const doTransferOut = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -378,7 +390,7 @@ export const doTransferOut = (
                         data.userSign,
                         data.lpSign,
                         {
-                            gasPrice: await _getGasPrice(provider, systemChainId, network),
+                            gasPrice: gasPrice.amount,
                             value: data.amount,
                         },
                     );
@@ -406,7 +418,7 @@ export const doTransferOut = (
                         data.userSign,
                         data.lpSign,
                         {
-                            gasPrice: await _getGasPrice(provider, systemChainId, network),
+                            gasPrice: gasPrice.amount,
                         },
                     );
             }
@@ -490,10 +502,16 @@ export const doTransferOutConfirm = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -516,7 +534,7 @@ export const doTransferOutConfirm = (
                     data.preimage,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await _getGasPrice(provider, systemChainId, network),
+                        gasPrice: gasPrice.amount,
                     },
                 );
             resolve(transferOutCfmTx);
@@ -559,10 +577,16 @@ export const doTransferInConfirm = (
     wallet: Wallet | undefined,
     network: string,
     sender: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -585,7 +609,7 @@ export const doTransferInConfirm = (
                     data.preimage,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await _getGasPrice(provider, systemChainId, network),
+                        gasPrice: gasPrice.amount,
                     },
                 );
             resolve(transferInCfmTx);
@@ -627,10 +651,16 @@ export const doTransferOutRefund = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -652,7 +682,7 @@ export const doTransferOutRefund = (
                     data.earliestRefundTime,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await _getGasPrice(provider, systemChainId, network),
+                        gasPrice: gasPrice.amount,
                     },
                 );
             resolve(transferOutRfdTx);
@@ -773,8 +803,18 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
     };
 };
 
-export async function _getGasPrice(provider: JsonRpcProvider, systemChainId: number, network: string): Promise<bigint> {
+type GasPrice = {
+    amount: bigint;
+    usedMaximum: boolean;
+};
+
+export async function _getGasPrice(
+    provider: JsonRpcProvider,
+    systemChainId: number,
+    network: string,
+): Promise<GasPrice> {
     let gasPrice = await getGasPriceFromNode(provider);
+    let useMaxiumGasPrice = false;
     if (!gasPrice) {
         gasPrice = await getGasPriceFromHistory(provider);
     }
@@ -782,13 +822,18 @@ export async function _getGasPrice(provider: JsonRpcProvider, systemChainId: num
     if (gasPrice) {
         if (gasPrice > getMaximumGasPrice(systemChainId, network)) {
             gasPrice = getMaximumGasPrice(systemChainId, network);
+            useMaxiumGasPrice = true;
         }
     } else {
         gasPrice = getDefaultGasPrice(systemChainId, network);
     }
 
-    let ret = addPremium(gasPrice);
-    console.log('get gas price', ret.toString());
+    let gasPriceWithPremium = addPremium(gasPrice);
+    let ret = {
+        amount: gasPriceWithPremium,
+        usedMaximum: useMaxiumGasPrice,
+    };
+    console.log('get gas price', JSON.stringify(ret));
     return ret;
 }
 

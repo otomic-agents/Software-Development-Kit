@@ -8,6 +8,7 @@ export const _transferInConfirmByPrivateKey = (
     network: string,
     rpc: string | undefined,
     sender: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
@@ -24,6 +25,7 @@ export const _transferInConfirmByPrivateKey = (
                 web3Wallet.connect(provider),
                 network,
                 sender,
+                useMaximumGasPriceAtMost,
             );
 
             resolve(transferOutConfirmTx);

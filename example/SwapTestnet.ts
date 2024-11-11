@@ -41,7 +41,13 @@ const doTxOut = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOut');
 
-        const resp = await evm.transferOutByPrivateKey(preBusiness, process.env.WALLET_KEY as string, NETWORK, RPC_BSC);
+        const resp = await evm.transferOutByPrivateKey(
+            preBusiness,
+            process.env.WALLET_KEY as string,
+            NETWORK,
+            RPC_BSC,
+            false,
+        );
         console.log('response tx out', resp);
         resolve();
     });
@@ -71,6 +77,7 @@ const doTxOutCfm = (preBusiness: PreBusiness) =>
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_BSC,
+            false,
         );
         console.log('response tx out confirm', resp);
         resolve();
@@ -112,6 +119,7 @@ const doTxOutRefund = (preBusiness: PreBusiness) =>
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_BSC,
+            false,
         );
         console.log('response tx out refund', resp);
         resolve();

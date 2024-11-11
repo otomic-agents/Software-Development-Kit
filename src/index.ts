@@ -206,7 +206,8 @@ export namespace evm {
         privateKey: string,
         network: string,
         rpc: string | undefined,
-    ) => _transferOutByPrivateKey(preBusiness, privateKey, network, rpc);
+        useMaximumGasPriceAtMost: boolean,
+    ) => _transferOutByPrivateKey(preBusiness, privateKey, network, rpc, useMaximumGasPriceAtMost);
 
     export const transferOutByMetamaskAPI = (
         preBusiness: PreBusiness,
@@ -220,7 +221,8 @@ export namespace evm {
         privateKey: string,
         network: string,
         rpc: string | undefined,
-    ) => _transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc);
+        useMaximumGasPriceAtMost: boolean,
+    ) => _transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc, useMaximumGasPriceAtMost);
 
     export const transferOutConfirmByMetamaskAPI = (
         preBusiness: PreBusiness,
@@ -234,7 +236,8 @@ export namespace evm {
         privateKey: string,
         network: string,
         rpc: string | undefined,
-    ) => _transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc);
+        useMaximumGasPriceAtMost: boolean,
+    ) => _transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc, useMaximumGasPriceAtMost);
 
     export const transferOutRefundByMetamaskAPI = (
         preBusiness: PreBusiness,
@@ -249,7 +252,8 @@ export namespace evm {
         network: string,
         rpc: string | undefined,
         sender: string,
-    ) => _transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender);
+        useMaximumGasPriceAtMost: boolean,
+    ) => _transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender, useMaximumGasPriceAtMost);
 
     export const transferInConfirmByMetamaskAPI = (
         preBusiness: PreBusiness,
@@ -454,10 +458,11 @@ export namespace business {
         privateKey: string,
         network: string,
         rpc: string | undefined,
+        useMaximumGasPriceAtMost: boolean,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
-                return evm.transferOutByPrivateKey(preBusiness, privateKey, network, rpc);
+                return evm.transferOutByPrivateKey(preBusiness, privateKey, network, rpc, useMaximumGasPriceAtMost);
 
             case 'solana':
                 return solana.transferOutByPrivateKey(preBusiness, privateKey, network, rpc);
@@ -474,10 +479,17 @@ export namespace business {
         privateKey: string,
         network: string,
         rpc: string | undefined,
+        useMaximumGasPriceAtMost: boolean,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
-                return evm.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc);
+                return evm.transferOutConfirmByPrivateKey(
+                    preBusiness,
+                    privateKey,
+                    network,
+                    rpc,
+                    useMaximumGasPriceAtMost,
+                );
 
             case 'solana':
                 return solana.transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc);
@@ -495,10 +507,18 @@ export namespace business {
         network: string,
         rpc: string | undefined,
         sender: string,
+        useMaximumGasPriceAtMost: boolean,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id)) {
             case 'evm':
-                return evm.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender);
+                return evm.transferInConfirmByPrivateKey(
+                    preBusiness,
+                    privateKey,
+                    network,
+                    rpc,
+                    sender,
+                    useMaximumGasPriceAtMost,
+                );
 
             case 'solana':
                 return solana.transferInConfirmByPrivateKey(preBusiness, privateKey, network, rpc, sender);
@@ -515,10 +535,17 @@ export namespace business {
         privateKey: string,
         network: string,
         rpc: string | undefined,
+        useMaximumGasPriceAtMost: boolean,
     ) => {
         switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
             case 'evm':
-                return evm.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc);
+                return evm.transferOutRefundByPrivateKey(
+                    preBusiness,
+                    privateKey,
+                    network,
+                    rpc,
+                    useMaximumGasPriceAtMost,
+                );
 
             case 'solana':
                 return solana.transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc);

@@ -814,7 +814,7 @@ export async function _getGasPrice(
     network: string,
 ): Promise<GasPrice> {
     let gasPrice = await getGasPriceFromNode(provider);
-    let useMaxiumGasPrice = false;
+    let useMaximumGasPrice = false;
     if (!gasPrice) {
         gasPrice = await getGasPriceFromHistory(provider);
     }
@@ -822,7 +822,7 @@ export async function _getGasPrice(
     if (gasPrice) {
         if (gasPrice > getMaximumGasPrice(systemChainId, network)) {
             gasPrice = getMaximumGasPrice(systemChainId, network);
-            useMaxiumGasPrice = true;
+            useMaximumGasPrice = true;
         }
     } else {
         gasPrice = getDefaultGasPrice(systemChainId, network);
@@ -831,9 +831,9 @@ export async function _getGasPrice(
     let gasPriceWithPremium = addPremium(gasPrice);
     let ret = {
         amount: gasPriceWithPremium,
-        usedMaximum: useMaxiumGasPrice,
+        usedMaximum: useMaximumGasPrice,
     };
-    console.log('get gas price', JSON.stringify(ret));
+    console.log(`get gas price: ${ret.amount.toString()}, use maximum gas price: ${ret.usedMaximum}`, );
     return ret;
 }
 

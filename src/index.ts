@@ -539,6 +539,8 @@ export namespace business {
             return 'wallet not terminus did owner';
         }
     };
+
+    export const SubmitComplain = submitComplain
 }
 
 export namespace assistive {

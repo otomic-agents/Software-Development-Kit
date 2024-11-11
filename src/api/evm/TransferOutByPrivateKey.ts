@@ -9,6 +9,7 @@ export const _transferOutByPrivateKey = (
     privateKey: string,
     network: string,
     rpc: string | undefined,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ResponseTransferOut>(async (resolve, reject) => {
         try {
@@ -18,7 +19,13 @@ export const _transferOutByPrivateKey = (
             let approveTx: ContractTransactionResponse | undefined = undefined;
             //approve
             if (await _isNeedApprove(preBusiness, web3Wallet.address, rpc, network)) {
-                approveTx = await doApprove(preBusiness, provider, web3Wallet.connect(provider), network);
+                approveTx = await doApprove(
+                    preBusiness,
+                    provider,
+                    web3Wallet.connect(provider),
+                    network,
+                    useMaximumGasPriceAtMost,
+                );
                 // console.log(approveTx)
 
                 while (await _isNeedApprove(preBusiness, web3Wallet.address, rpc, network)) {
@@ -27,7 +34,13 @@ export const _transferOutByPrivateKey = (
             }
 
             //transfer out
-            const transferOutTx = await doTransferOut(preBusiness, provider, web3Wallet.connect(provider), network);
+            const transferOutTx = await doTransferOut(
+                preBusiness,
+                provider,
+                web3Wallet.connect(provider),
+                network,
+                useMaximumGasPriceAtMost,
+            );
             resolve({
                 approve: approveTx,
                 transferOut: transferOutTx,

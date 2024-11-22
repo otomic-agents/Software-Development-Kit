@@ -13,7 +13,9 @@ export const _signQuoteByPrivateKey = (
     amount: string,
     swapToNative: number,
     receivingAddress: string,
-    stepTimeLock: number | undefined,
+    expectedSingleStepTime: number | undefined,
+    tolerantSingleStepTime: number | undefined,
+    earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) =>
@@ -30,7 +32,9 @@ export const _signQuoteByPrivateKey = (
                 dstNativeAmount,
                 swapToNative,
                 receivingAddress,
-                stepTimeLock,
+                expectedSingleStepTime,
+                tolerantSingleStepTime,
+                earliestRefundTime,
                 rpcSrc,
                 rpcDst,
             );

@@ -54,6 +54,8 @@ const swap = async () => {
         0,
         '0x1C55a22A2AD9c2921706306ADFBdBee009987fce',
         undefined,
+        undefined,
+        undefined,
         RPC_BSC,
         RPC_OPT,
     );

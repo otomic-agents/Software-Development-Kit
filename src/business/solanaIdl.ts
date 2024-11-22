@@ -195,7 +195,7 @@ export default {
                 {
                     name: 'uuid',
                     type: {
-                        array: ['u8', 16],
+                        array: ['u8', 32],
                     },
                 },
                 {
@@ -211,30 +211,14 @@ export default {
                     type: 'u64',
                 },
                 {
-                    name: 'lock1',
+                    name: 'lock',
                     type: {
                         defined: 'Lock',
                     },
                 },
                 {
-                    name: 'lock2',
-                    type: {
-                        option: {
-                            defined: 'Lock',
-                        },
-                    },
-                },
-                {
-                    name: 'deadline',
-                    type: 'i64',
-                },
-                {
-                    name: 'refundTime',
-                    type: 'i64',
-                },
-                {
-                    name: 'extraData',
-                    type: 'bytes',
+                    name: 'isOut',
+                    type: 'bool',
                 },
                 {
                     name: 'memo',
@@ -245,6 +229,11 @@ export default {
         {
             name: 'confirm',
             accounts: [
+                {
+                    name: 'payer',
+                    isMut: true,
+                    isSigner: true,
+                },
                 {
                     name: 'from',
                     isMut: true,
@@ -300,7 +289,7 @@ export default {
                 {
                     name: 'uuid',
                     type: {
-                        array: ['u8', 16],
+                        array: ['u8', 32],
                     },
                 },
                 {
@@ -308,6 +297,10 @@ export default {
                     type: {
                         array: ['u8', 32],
                     },
+                },
+                {
+                    name: 'isOut',
+                    type: 'bool',
                 },
             ],
         },
@@ -349,8 +342,12 @@ export default {
                 {
                     name: 'uuid',
                     type: {
-                        array: ['u8', 16],
+                        array: ['u8', 32],
                     },
+                },
+                {
+                    name: 'isOut',
+                    type: 'bool',
                 },
             ],
         },
@@ -434,26 +431,10 @@ export default {
                         type: 'u64',
                     },
                     {
-                        name: 'lock1',
+                        name: 'lock',
                         type: {
                             defined: 'Lock',
                         },
-                    },
-                    {
-                        name: 'lock2',
-                        type: {
-                            option: {
-                                defined: 'Lock',
-                            },
-                        },
-                    },
-                    {
-                        name: 'refundTime',
-                        type: 'i64',
-                    },
-                    {
-                        name: 'extraData',
-                        type: 'bytes',
                     },
                 ],
             },
@@ -472,7 +453,19 @@ export default {
                         },
                     },
                     {
-                        name: 'deadline',
+                        name: 'agreementReachedTime',
+                        type: 'i64',
+                    },
+                    {
+                        name: 'expectedSingleStepTime',
+                        type: 'i64',
+                    },
+                    {
+                        name: 'tolerantSingleStepTime',
+                        type: 'i64',
+                    },
+                    {
+                        name: 'earliestRefundTime',
                         type: 'i64',
                     },
                 ],
@@ -492,41 +485,36 @@ export default {
         },
         {
             code: 6002,
-            name: 'FailedToUnlock',
-            msg: 'failed to unlock',
-        },
-        {
-            code: 6003,
             name: 'InvalidAmount',
             msg: 'invalid amount',
         },
         {
-            code: 6004,
+            code: 6003,
             name: 'InvalidFeeRate',
             msg: 'invalid fee rate',
         },
         {
+            code: 6004,
+            name: 'InvalidSender',
+            msg: 'invalid sender',
+        },
+        {
             code: 6005,
-            name: 'InvalidTimelock',
-            msg: 'invalid timelock',
+            name: 'InvalidRefundTime',
+            msg: 'invalid refund time',
         },
         {
             code: 6006,
-            name: 'InvalidDestination',
-            msg: 'invalid destination',
-        },
-        {
-            code: 6007,
             name: 'DeadlineExceeded',
             msg: 'deadline exceeded',
         },
         {
-            code: 6008,
+            code: 6007,
             name: 'PreimageMismatch',
             msg: 'preimage mismatch',
         },
         {
-            code: 6009,
+            code: 6008,
             name: 'NotRefundable',
             msg: 'not refundable yet',
         },

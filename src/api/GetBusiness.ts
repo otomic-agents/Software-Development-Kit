@@ -1,11 +1,12 @@
-import needle from 'needle';
+import superagent from 'superagent';
 import { Business, BusinessFullData } from '../interface/interface';
 
 export const _getBusiness = (relayUrl: string, hash: string) =>
     new Promise<Business>((resolve, reject) => {
-        needle('post', `${relayUrl}/relay/web/fetch_business`, {
-            business_hash: hash,
-        })
+        superagent
+            .post(`${relayUrl}/relay/web/fetch_business`)
+            // .set('Connection', 'keep-alive')
+            .query({ business_hash: hash })
             .then((resp) => {
                 if (resp.statusCode == 200) {
                     resolve(resp.body.business);
@@ -20,9 +21,11 @@ export const _getBusiness = (relayUrl: string, hash: string) =>
 
 export const _getBusinessFull = (relayUrl: string, hash: string) =>
     new Promise<BusinessFullData>((resolve, reject) => {
-        needle('post', `${relayUrl}/relay/web/fetch_business_hash`, {
-            business_hash: hash,
-        })
+        superagent
+            .post(`${relayUrl}/relay/web/fetch_business_hash`)
+            .query({
+                business_hash: hash,
+            })
             .then((resp) => {
                 if (resp.statusCode == 200) {
                     resolve(resp.body.result);

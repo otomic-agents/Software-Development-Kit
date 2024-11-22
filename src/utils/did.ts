@@ -1,20 +1,15 @@
 import { ethers } from 'ethers';
-import needle from 'needle';
+import superagent from 'superagent';
 
 export const getDidName = (privateKey: string, network: string) =>
     new Promise<string | undefined>((resolve, reject) => {
         const w = new ethers.Wallet(privateKey);
 
-        needle(
-            'get',
-            `https://${network == 'mainnet' ? 'did-support.ursa-services.bttcdn.com' : 'testnet-did-support.ursa-services.bttcdn.com'}/find/owner/${w.address}`,
-            {},
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            },
-        )
+        superagent
+            .get(
+                `https://${network == 'mainnet' ? 'did-support.ursa-services.bttcdn.com' : 'testnet-did-support.ursa-services.bttcdn.com'}/find/owner/${w.address}`,
+            )
+            .set('Content-Type', 'application/json')
             .then((resp) => {
                 if (resp.statusCode == 200 && resp.body.data != undefined && resp.body.data.length > 0) {
                     resolve(resp.body.data[0].name);

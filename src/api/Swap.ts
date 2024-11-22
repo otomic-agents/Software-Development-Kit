@@ -1,4 +1,4 @@
-import needle from 'needle';
+import superagent from 'superagent';
 import { PreBusiness, Quote, SignData } from '../interface/interface';
 
 export const _swap = (quote: Quote, signData: SignData, signed: string, relayUrl: string) =>
@@ -15,7 +15,9 @@ export const _swap = (quote: Quote, signData: SignData, signed: string, relayUrl
             sender: signData.message.requestor,
 
             amount: signData.message.src_amount,
-            step_time_lock: signData.message.step_time_lock,
+            expected_single_step_time: signData.message.expected_single_step_time,
+            tolerant_single_step_time: signData.message.tolerant_single_step_time,
+            earliest_refund_time: signData.message.earliest_refund_time,
             dst_address: signData.message.dst_address,
             dst_amount: signData.message.dst_amount,
             dst_native_amount: signData.message.dst_native_amount,
@@ -24,11 +26,10 @@ export const _swap = (quote: Quote, signData: SignData, signed: string, relayUrl
             user_sign: signed,
         };
 
-        needle('post', `${relayUrl}/relay/web/quote_confirmation`, data, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
+        superagent
+            .post(`${relayUrl}/relay/web/quote_confirmation`)
+            .send(data)
+            .set('Content-Type', 'application/json')
             .then((resp) => {
                 if (resp.statusCode == 200) {
                     resolve(resp.body.pre_business);

@@ -10,7 +10,9 @@ export const _signQuoteEIP712ByMetamaskAPI = (
     amount: string,
     swapToNative: number,
     receivingAddress: string,
-    stepTimeLock: number | undefined,
+    expectedSingleStepTime: number | undefined,
+    tolerantSingleStepTime: number | undefined,
+    earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) =>
@@ -26,7 +28,9 @@ export const _signQuoteEIP712ByMetamaskAPI = (
                 dstNativeAmount,
                 swapToNative,
                 receivingAddress,
-                stepTimeLock,
+                expectedSingleStepTime,
+                tolerantSingleStepTime,
+                earliestRefundTime,
                 rpcSrc,
                 rpcDst,
             );

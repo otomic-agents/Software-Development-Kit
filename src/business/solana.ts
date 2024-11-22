@@ -12,10 +12,10 @@ import { getMint, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, Ac
 import { fetchDigitalAsset } from '@metaplex-foundation/mpl-token-metadata';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { publicKey } from '@metaplex-foundation/umi';
-import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet } from '@coral-xyz/anchor';
+import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet, Provider } from '@coral-xyz/anchor';
 import msgpack5 from 'msgpack5';
 import pako from 'pako';
-import crypto from 'crypto';
+import retry from 'async-retry';
 import idl from './solanaIdl';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { toBs58Address } from '../utils/format';
@@ -23,17 +23,23 @@ import { PreBusiness, Quote } from '../interface/interface';
 import {
     getOtmoicAddressBySystemChainId,
     getFeeRecepientAddressBySystemChainId,
-    getStepTimeLock,
+    getExpectedSingleStepTime,
+    getTolerantSingleStepTime,
+    getDefaultEarliestRefundTime,
     getChainType,
     getNativeTokenDecimals,
     getNativeTokenName,
 } from '../utils/chain';
 import { decimals as evmDecimals, getDefaultRPC as getEvmDefaultRPC } from '../business/evm';
 import { removePrefix0x, isZeroAddress } from '../utils/format';
-
-type Lock = {
+import { generateUuid } from '../utils/data';
+import { sleep } from '../utils/sleep';
+export type Lock = {
     hash: Array<number>;
-    deadline: BN;
+    agreementReachedTime: BN;
+    expectedSingleStepTime: BN;
+    tolerantSingleStepTime: BN;
+    earliestRefundTime: BN;
 };
 
 interface TokensInfo {
@@ -49,6 +55,9 @@ interface Cache {
 const cache: Cache = {
     tokensInfo: {},
 };
+
+const isOut = true;
+const isIn = false;
 
 export const getProvider = (rpc: string): Connection => {
     return new Connection(rpc, 'confirmed');
@@ -81,6 +90,11 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
             reject(err);
         }
     });
+
+export const decimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
+    const rpc = getDefaultRPC(system_chain_id, network);
+    return decimals(system_chain_id, token_address, rpc);
+};
 
 export const symbol = (system_chain_id: number, token_address: string, rpc: string): Promise<string> =>
     new Promise(async (resolve, reject) => {
@@ -128,7 +142,9 @@ export const _getSignDataEIP712 = async (
     dstNativeAmount: string,
     swapToNative: number,
     receivingAddress: string,
-    stepTimeLock: number | undefined,
+    expectedSingleStepTime: number | undefined,
+    tolerantSingleStepTime: number | undefined,
+    earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) => {
@@ -162,6 +178,15 @@ export const _getSignDataEIP712 = async (
         );
     }
 
+    let agreementReachedTime = parseInt(((Date.now() + 1000 * 60 * 1) / 1000).toFixed(0));
+    let defaultExpectedSingleStepTime = getExpectedSingleStepTime(
+        quote.quote_base.bridge.src_chain_id,
+        quote.quote_base.bridge.dst_chain_id,
+    );
+    let defaultTolerantSingleStepTime = getTolerantSingleStepTime(
+        quote.quote_base.bridge.src_chain_id,
+        quote.quote_base.bridge.dst_chain_id,
+    );
     const signMessage = {
         src_chain_id: quote.quote_base.bridge.src_chain_id,
         src_address: quote.quote_base.lp_bridge_address,
@@ -176,11 +201,19 @@ export const _getSignDataEIP712 = async (
 
         requestor: '', //user_address.value,
         lp_id: quote.lp_info.name,
-        step_time_lock:
-            stepTimeLock == undefined
-                ? getStepTimeLock(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.dst_chain_id)
-                : stepTimeLock,
-        agreement_reached_time: parseInt(((Date.now() + 1000 * 60 * 1) / 1000).toFixed(0)),
+        agreement_reached_time: agreementReachedTime,
+        expected_single_step_time:
+            expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
+        tolerant_single_step_time:
+            tolerantSingleStepTime == undefined ? defaultTolerantSingleStepTime : tolerantSingleStepTime,
+        earliest_refund_time:
+            earliestRefundTime == undefined
+                ? getDefaultEarliestRefundTime(
+                      agreementReachedTime,
+                      defaultExpectedSingleStepTime,
+                      defaultTolerantSingleStepTime,
+                  )
+                : earliestRefundTime,
     };
 
     return {
@@ -219,36 +252,43 @@ export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undef
     return new Connection(rpc === undefined ? getDefaultRPC(chainId, network) : rpc, 'confirmed');
 };
 
-export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) =>
-    new Promise<{ tx: Transaction; uuidBack: string }>(async (resolve, reject) => {
+export const _getTransferOutTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: string,
+    pluginProvider?: Provider,
+) =>
+    new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            // setup a dummy provider
-            setProvider(
-                new AnchorProvider(
-                    new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
+            let otmoic: Program;
+            if (pluginProvider == undefined) {
+                // setup a dummy provider
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
+                                ]),
+                            ),
                         ),
+                        {},
                     ),
-                    {},
-                ),
-            );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
-
-            // uuid
-            let uuidBuf: number[] = [];
-            if (uuid) {
-                uuid = removePrefix0x(uuid);
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+                );
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
             } else {
-                uuid = crypto.randomBytes(16).toString('hex');
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
             }
 
             // user
@@ -274,28 +314,40 @@ export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, ne
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
-            let stepTimeLock = preBusiness.swap_asset_information.step_time_lock;
-            let transferOutDeadline = new BN(agreementReachedTime + 1 * stepTimeLock);
-            let refundDeadline = new BN(agreementReachedTime + 7 * stepTimeLock);
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let tolerantSingleStepTime = preBusiness.swap_asset_information.tolerant_single_step_time;
+            let earliestRefundTime = preBusiness.swap_asset_information.earliest_refund_time;
 
             // hash lock
             let hashLock = preBusiness.hashlock_solana;
-            let lockUser: Lock = {
+
+            let lock: Lock = {
                 hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
-                deadline: new BN(agreementReachedTime + 3 * stepTimeLock),
+                agreementReachedTime: new BN(agreementReachedTime),
+                expectedSingleStepTime: new BN(expectedSingleStepTime),
+                tolerantSingleStepTime: new BN(tolerantSingleStepTime),
+                earliestRefundTime: new BN(earliestRefundTime),
             };
 
-            let relayHashLock = preBusiness.relay_hashlock_solana;
-            let lockRelay: Lock = {
-                hash: Array.from(Buffer.from(removePrefix0x(relayHashLock), 'hex')),
-                deadline: new BN(agreementReachedTime + 6 * stepTimeLock),
-            };
+            // uuid
+            let uuid = generateUuid(
+                user,
+                lp,
+                lock.hash,
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+                tolerantSingleStepTime.toString(),
+                earliestRefundTime.toString(),
+                token,
+                preBusiness.swap_asset_information.amount,
+                '0',
+            );
 
             // source ata token account
             let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
 
             // escrow and escrowAta
-            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId);
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
             let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
 
             // adminSettings
@@ -315,7 +367,9 @@ export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, ne
             // memo
             let memo = msgpack5()
                 .encode({
-                    stepTimeLock: stepTimeLock,
+                    expectedSingleStepTime: expectedSingleStepTime,
+                    tolerantSingleStepTime: tolerantSingleStepTime,
+                    earliestRefundTime: earliestRefundTime,
                     agreementReachedTime: agreementReachedTime,
                     dstAddress: preBusiness.swap_asset_information.dst_address,
                     dstChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id,
@@ -327,7 +381,6 @@ export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, ne
                     lpId: preBusiness.swap_asset_information.quote.lp_info.name,
                     userSign: preBusiness.swap_asset_information.user_sign,
                     lpSign: preBusiness.swap_asset_information.lp_sign,
-                    method: '0',
                 })
                 .slice();
 
@@ -336,18 +389,7 @@ export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, ne
             let compressedBuffer = Buffer.from(compressedData);
 
             let tx = await otmoic.methods
-                .prepare(
-                    uuidBuf,
-                    lp,
-                    solAmount,
-                    amount,
-                    lockUser,
-                    lockRelay,
-                    transferOutDeadline,
-                    refundDeadline,
-                    Buffer.from([]),
-                    compressedBuffer,
-                )
+                .prepare(uuid, lp, solAmount, amount, lock, isOut, compressedBuffer)
                 .accounts({
                     payer: user,
                     from: user,
@@ -363,45 +405,54 @@ export const doTransferOut = (preBusiness: PreBusiness, provider: Connection, ne
                 })
                 .transaction();
 
-            resolve({
-                tx,
-                uuidBack: uuid,
-            });
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
+            resolve(tx);
         } catch (err) {
             reject(err);
         }
     });
 
-export const doTransferOutConfirm = (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) =>
-    new Promise<{ tx: Transaction; uuidBack: string }>(async (resolve, reject) => {
+export const _getTransferOutConfirmTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: string,
+    pluginProvider?: Provider,
+) =>
+    new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
+
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            // setup a dummy provider
-            setProvider(
-                new AnchorProvider(
-                    new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
+            let otmoic: Program;
+            if (pluginProvider == undefined) {
+                // setup a dummy provider
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
+                                ]),
+                            ),
                         ),
+                        {},
                     ),
-                    {},
-                ),
-            );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
-
-            // uuid
-            let uuidBuf: number[] = [];
-            if (uuid) {
-                uuid = removePrefix0x(uuid);
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+                );
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
             } else {
-                uuid = crypto.randomBytes(16).toString('hex');
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
             }
 
             // user
@@ -419,6 +470,37 @@ export const doTransferOutConfirm = (preBusiness: PreBusiness, provider: Connect
             let mintTokenAccountInfo = await provider.getAccountInfo(token);
             let tokenProgramId = mintTokenAccountInfo!.owner;
 
+            // agreement reached time and step time lock
+            let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let tolerantSingleStepTime = preBusiness.swap_asset_information.tolerant_single_step_time;
+            let earliestRefundTime = preBusiness.swap_asset_information.earliest_refund_time;
+
+            // hash lock
+            let hashLock = preBusiness.hashlock_solana;
+
+            let lock: Lock = {
+                hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
+                agreementReachedTime: new BN(agreementReachedTime),
+                expectedSingleStepTime: new BN(expectedSingleStepTime),
+                tolerantSingleStepTime: new BN(tolerantSingleStepTime),
+                earliestRefundTime: new BN(earliestRefundTime),
+            };
+
+            // uuid
+            let uuid = generateUuid(
+                user,
+                lp,
+                lock.hash,
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+                tolerantSingleStepTime.toString(),
+                earliestRefundTime.toString(),
+                token,
+                preBusiness.swap_asset_information.amount,
+                '0',
+            );
+
             // hash preimage
             let preimage = Array.from(Buffer.from(removePrefix0x(preBusiness.preimage), 'hex'));
 
@@ -433,12 +515,13 @@ export const doTransferOutConfirm = (preBusiness: PreBusiness, provider: Connect
             let feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId);
 
             // escrow and escrowAta
-            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId);
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
             let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
 
             let tx = await otmoic.methods
-                .confirm(uuidBuf, preimage)
+                .confirm(uuid, preimage, isOut)
                 .accounts({
+                    payer: user,
                     from: user,
                     to: lp,
                     destination: destination,
@@ -452,49 +535,62 @@ export const doTransferOutConfirm = (preBusiness: PreBusiness, provider: Connect
                 })
                 .transaction();
 
-            resolve({
-                tx,
-                uuidBack: uuid,
-            });
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
+            resolve(tx);
         } catch (err) {
             reject(err);
         }
     });
 
-export const doTransferOutRefund = (preBusiness: PreBusiness, provider: Connection, network: string, uuid?: string) =>
-    new Promise<{ tx: Transaction; uuidBack: string }>(async (resolve, reject) => {
+export const _getTransferOutRefundTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: string,
+    pluginProvider?: Provider,
+) =>
+    new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
             // setup a dummy provider
-            setProvider(
-                new AnchorProvider(
-                    new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
+            let otmoic: Program;
+            if (pluginProvider == undefined) {
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
+                                ]),
+                            ),
                         ),
+                        {},
                     ),
-                    {},
-                ),
-            );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
-
-            // uuid
-            let uuidBuf: number[] = [];
-            if (uuid) {
-                uuid = removePrefix0x(uuid);
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+                );
+                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
             } else {
-                uuid = crypto.randomBytes(16).toString('hex');
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
             }
 
             // user
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
+
+            // receiver
+            let lp = new PublicKey(
+                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
+            );
 
             // mint token
             let token = new PublicKey(
@@ -506,12 +602,43 @@ export const doTransferOutRefund = (preBusiness: PreBusiness, provider: Connecti
             // source
             let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
 
+            // agreement reached time and step time lock
+            let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let tolerantSingleStepTime = preBusiness.swap_asset_information.tolerant_single_step_time;
+            let earliestRefundTime = preBusiness.swap_asset_information.earliest_refund_time;
+
+            // hash lock
+            let hashLock = preBusiness.hashlock_solana;
+
+            let lock: Lock = {
+                hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
+                agreementReachedTime: new BN(agreementReachedTime),
+                expectedSingleStepTime: new BN(expectedSingleStepTime),
+                tolerantSingleStepTime: new BN(tolerantSingleStepTime),
+                earliestRefundTime: new BN(earliestRefundTime),
+            };
+
+            // uuid
+            let uuid = generateUuid(
+                user,
+                lp,
+                lock.hash,
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+                tolerantSingleStepTime.toString(),
+                earliestRefundTime.toString(),
+                token,
+                preBusiness.swap_asset_information.amount,
+                '0',
+            );
+
             // escrow and escrowAta
-            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId);
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
             let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
 
             let tx = await otmoic.methods
-                .refund(uuidBuf)
+                .refund(uuid, isOut)
                 .accounts({
                     from: user,
                     source: source,
@@ -522,23 +649,18 @@ export const doTransferOutRefund = (preBusiness: PreBusiness, provider: Connecti
                 })
                 .transaction();
 
-            resolve({
-                tx,
-                uuidBack: uuid,
-            });
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
+            resolve(tx);
         } catch (err) {
             reject(err);
         }
     });
 
-export const doTransferIn = (
-    preBusiness: PreBusiness,
-    provider: Connection,
-    network: string,
-    sender: string,
-    uuid?: string,
-) =>
-    new Promise<{ tx: Transaction; uuidBack: string }>(async (resolve, reject) => {
+export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, network: string, sender: string) =>
+    new Promise<Transaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
 
@@ -558,16 +680,6 @@ export const doTransferIn = (
                 ),
             );
             const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
-
-            // uuid
-            let uuidBuf: number[] = [];
-            if (uuid) {
-                uuid = removePrefix0x(uuid);
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
-            } else {
-                uuid = crypto.randomBytes(16).toString('hex');
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
-            }
 
             // lp
             let lp = new PublicKey(toBs58Address(sender));
@@ -590,22 +702,40 @@ export const doTransferIn = (
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
-            let stepTimeLock = preBusiness.swap_asset_information.step_time_lock;
-            let transferInDeadline = new BN(agreementReachedTime + 2 * stepTimeLock);
-            let refundDeadline = new BN(agreementReachedTime + 7 * stepTimeLock);
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let tolerantSingleStepTime = preBusiness.swap_asset_information.tolerant_single_step_time;
+            let earliestRefundTime = preBusiness.swap_asset_information.earliest_refund_time;
 
             // hash lock
             let hashLock = preBusiness.hashlock_solana;
-            let lockLp: Lock = {
+
+            let lock: Lock = {
                 hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
-                deadline: new BN(agreementReachedTime + 5 * stepTimeLock),
+                agreementReachedTime: new BN(agreementReachedTime),
+                expectedSingleStepTime: new BN(expectedSingleStepTime),
+                tolerantSingleStepTime: new BN(tolerantSingleStepTime),
+                earliestRefundTime: new BN(earliestRefundTime),
             };
+
+            // uuid
+            let uuid = generateUuid(
+                lp,
+                user,
+                lock.hash,
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+                tolerantSingleStepTime.toString(),
+                earliestRefundTime.toString(),
+                token,
+                preBusiness.swap_asset_information.dst_amount,
+                preBusiness.swap_asset_information.dst_native_amount,
+            );
 
             // source ata token account
             let source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
 
             // escrow and escrowAta
-            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId);
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
             let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
 
             // adminSettings
@@ -625,7 +755,9 @@ export const doTransferIn = (
             // memo
             let memo = msgpack5()
                 .encode({
-                    stepTimeLock: stepTimeLock,
+                    expectedSingleStepTime: expectedSingleStepTime,
+                    tolerantSingleStepTime: tolerantSingleStepTime,
+                    earliestRefundTime: earliestRefundTime,
                     agreementReachedTime: agreementReachedTime,
                     srcChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
                     srcTransferId: preBusiness.swap_asset_information.src_transfer_id,
@@ -638,18 +770,7 @@ export const doTransferIn = (
             let compressedBuffer = Buffer.from(compressedData);
 
             let tx = await otmoic.methods
-                .prepare(
-                    uuidBuf,
-                    user,
-                    solAmount,
-                    amount,
-                    lockLp,
-                    null,
-                    transferInDeadline,
-                    refundDeadline,
-                    Buffer.from([]),
-                    compressedBuffer,
-                )
+                .prepare(uuid, user, solAmount, amount, lock, isIn, compressedBuffer)
                 .accounts({
                     payer: lp,
                     from: lp,
@@ -665,10 +786,7 @@ export const doTransferIn = (
                 })
                 .transaction();
 
-            resolve({
-                tx,
-                uuidBack: uuid,
-            });
+            resolve(tx);
         } catch (err) {
             reject(err);
         }
@@ -679,9 +797,9 @@ export const doTransferInConfirm = (
     provider: Connection,
     network: string,
     sender: string,
-    uuid?: string,
+    signer: string,
 ) =>
-    new Promise<{ tx: Transaction; uuidBack: string }>(async (resolve, reject) => {
+    new Promise<Transaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
 
@@ -702,15 +820,8 @@ export const doTransferInConfirm = (
             );
             const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
 
-            // uuid
-            let uuidBuf: number[] = [];
-            if (uuid) {
-                uuid = removePrefix0x(uuid);
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
-            } else {
-                uuid = crypto.randomBytes(16).toString('hex');
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
-            }
+            // signer
+            let signerAccount = new PublicKey(toBs58Address(signer));
 
             // sender
             let lp = new PublicKey(toBs58Address(sender));
@@ -724,6 +835,37 @@ export const doTransferInConfirm = (
             );
             let mintTokenAccountInfo = await provider.getAccountInfo(token);
             let tokenProgramId = mintTokenAccountInfo!.owner;
+
+            // agreement reached time and step time lock
+            let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let tolerantSingleStepTime = preBusiness.swap_asset_information.tolerant_single_step_time;
+            let earliestRefundTime = preBusiness.swap_asset_information.earliest_refund_time;
+
+            // hash lock
+            let hashLock = preBusiness.hashlock_solana;
+
+            let lock: Lock = {
+                hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
+                agreementReachedTime: new BN(agreementReachedTime),
+                expectedSingleStepTime: new BN(expectedSingleStepTime),
+                tolerantSingleStepTime: new BN(tolerantSingleStepTime),
+                earliestRefundTime: new BN(earliestRefundTime),
+            };
+
+            // uuid
+            let uuid = generateUuid(
+                lp,
+                user,
+                lock.hash,
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+                tolerantSingleStepTime.toString(),
+                earliestRefundTime.toString(),
+                token,
+                preBusiness.swap_asset_information.dst_amount,
+                preBusiness.swap_asset_information.dst_native_amount,
+            );
 
             // hash preimage
             let preimage = Array.from(Buffer.from(removePrefix0x(preBusiness.preimage), 'hex'));
@@ -739,12 +881,13 @@ export const doTransferInConfirm = (
             let feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId);
 
             // escrow and escrowAta
-            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId);
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
             let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
 
             let tx = await otmoic.methods
-                .confirm(uuidBuf, preimage)
+                .confirm(uuid, preimage, isIn)
                 .accounts({
+                    payer: signerAccount,
                     from: lp,
                     to: user,
                     destination: destination,
@@ -758,23 +901,14 @@ export const doTransferInConfirm = (
                 })
                 .transaction();
 
-            resolve({
-                tx,
-                uuidBack: uuid,
-            });
+            resolve(tx);
         } catch (err) {
             reject(err);
         }
     });
 
-export const doTransferInRefund = (
-    preBusiness: PreBusiness,
-    provider: Connection,
-    network: string,
-    sender: string,
-    uuid?: string,
-) =>
-    new Promise<{ tx: Transaction; uuidBack: string }>(async (resolve, reject) => {
+export const doTransferInRefund = (preBusiness: PreBusiness, provider: Connection, network: string, sender: string) =>
+    new Promise<Transaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
 
@@ -795,18 +929,11 @@ export const doTransferInRefund = (
             );
             const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
 
-            // uuid
-            let uuidBuf: number[] = [];
-            if (uuid) {
-                uuid = removePrefix0x(uuid);
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
-            } else {
-                uuid = crypto.randomBytes(16).toString('hex');
-                uuidBuf = Array.from(Buffer.from(uuid, 'hex'));
-            }
-
             // lp
             let lp = new PublicKey(toBs58Address(sender));
+
+            // receiver
+            let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.dst_address));
 
             // mint token
             let token = new PublicKey(
@@ -815,15 +942,46 @@ export const doTransferInRefund = (
             let mintTokenAccountInfo = await provider.getAccountInfo(token);
             let tokenProgramId = mintTokenAccountInfo!.owner;
 
+            // agreement reached time and step time lock
+            let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let tolerantSingleStepTime = preBusiness.swap_asset_information.tolerant_single_step_time;
+            let earliestRefundTime = preBusiness.swap_asset_information.earliest_refund_time;
+
+            // hash lock
+            let hashLock = preBusiness.hashlock_solana;
+
+            let lock: Lock = {
+                hash: Array.from(Buffer.from(removePrefix0x(hashLock), 'hex')),
+                agreementReachedTime: new BN(agreementReachedTime),
+                expectedSingleStepTime: new BN(expectedSingleStepTime),
+                tolerantSingleStepTime: new BN(tolerantSingleStepTime),
+                earliestRefundTime: new BN(earliestRefundTime),
+            };
+
+            // uuid
+            let uuid = generateUuid(
+                lp,
+                user,
+                lock.hash,
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+                tolerantSingleStepTime.toString(),
+                earliestRefundTime.toString(),
+                token,
+                preBusiness.swap_asset_information.dst_amount,
+                preBusiness.swap_asset_information.dst_native_amount,
+            );
+
             // source
             let source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
 
             // escrow and escrowAta
-            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuidBuf)], otmoic.programId);
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
             let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
 
             let tx = await otmoic.methods
-                .refund(uuidBuf)
+                .refund(uuid, isIn)
                 .accounts({
                     from: lp,
                     source: source,
@@ -834,10 +992,7 @@ export const doTransferInRefund = (
                 })
                 .transaction();
 
-            resolve({
-                tx,
-                uuidBack: uuid,
-            });
+            resolve(tx);
         } catch (err) {
             reject(err);
         }
@@ -875,12 +1030,41 @@ export const getBalance = async (
     }
 };
 
+const DEFAULT_MICRO_LAMPORTS = 0.002 * LAMPORTS_PER_SOL;
+const PRIORITY_RATE_MULTIPLIER = 1.5; // Adjust this multiplier as needed
+const getCompetitivePriorityFee = async (connection: Connection): Promise<number> => {
+    try {
+        // Get recent prioritization fees
+        const priorityFees = await connection.getRecentPrioritizationFees();
+
+        if (!priorityFees.length) {
+            return DEFAULT_MICRO_LAMPORTS; // fallback to default if no recent fees
+        }
+
+        // sort the fees from high to low
+        const recentFees = priorityFees.map((fee) => fee.prioritizationFee).sort((a, b) => b - a);
+        // get the median fee
+        const medianFee = recentFees[Math.floor(recentFees.length / 2)];
+
+        if (medianFee == 0) {
+            return DEFAULT_MICRO_LAMPORTS;
+        }
+
+        // Apply multiplier to ensure competitiveness
+        return Math.ceil(medianFee * PRIORITY_RATE_MULTIPLIER);
+    } catch (error) {
+        console.error('Error getting competitive priority fee:', error);
+        return DEFAULT_MICRO_LAMPORTS; // fallback to default
+    }
+};
+
 export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
     const latestBlockhash = await provider.getLatestBlockhash('confirmed');
     tx.recentBlockhash = latestBlockhash.blockhash;
 
+    // const microLamports = await getCompetitivePriorityFee(provider);
     const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: 0.0015 * LAMPORTS_PER_SOL,
+        microLamports: DEFAULT_MICRO_LAMPORTS,
     });
     tx.instructions.unshift(addPriorityFee);
 
@@ -891,6 +1075,6 @@ export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx
         skipPreflight: true,
         maxRetries: 10,
     });
-
+    console.log(`not yet confirmed txHash: ${txHash}`);
     return txHash;
 };

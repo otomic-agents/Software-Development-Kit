@@ -1,10 +1,11 @@
 import { Bridge, Relay, assistive } from '../src/index';
 
 // // mainnet relay
-// const RELA_URL = 'https://5b4522f4.mariansopsoraj.myterminus.com';
+// const RELA_URL = 'https://5b4522f4.nathanielight.myterminus.com';
+// const NETWORK = 'mainnet';
 // testnet relay
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
-const NETWORK = 'mainnet';
+const NETWORK = 'testnet';
 const RPCS = {};
 
 const GetBridge = async () => {

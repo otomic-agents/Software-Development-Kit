@@ -57,6 +57,10 @@ export interface SignData {
             name: string;
             type: string;
         }[];
+        EIP712Domain: {
+            name: string;
+            type: string;
+        }[];
     };
     primaryType: string;
     domain: {
@@ -78,8 +82,10 @@ export interface SignData {
 
         requestor: string;
         lp_id: string;
-        step_time_lock: number;
         agreement_reached_time: number;
+        expected_single_step_time: number;
+        tolerant_single_step_time: number;
+        earliest_refund_time: number;
     };
 }
 
@@ -95,8 +101,10 @@ export interface SwapAssetInformation {
     system_fee_dst: number;
     dst_amount_need: string;
     dst_native_amount_need: string;
-    step_time_lock: number;
     agreement_reached_time: number;
+    expected_single_step_time: number;
+    tolerant_single_step_time: number;
+    earliest_refund_time: number;
     quote: Quote;
     append_information: string;
     did: string;
@@ -142,10 +150,6 @@ export interface PreBusiness {
     locked: boolean;
     lock_message: string;
     preimage: string;
-    relay_hashlock_evm: string;
-    relay_hashlock_xrp: string;
-    relay_hashlock_near: string;
-    relay_hashlock_solana: string;
     timestamp: number;
     is_kyc: boolean;
     same_did: boolean;

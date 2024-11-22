@@ -1,9 +1,10 @@
-import needle from 'needle';
+import superagent from 'superagent';
 import { Bridge } from '../interface/interface';
 
 export const _getBridge = (relayUrl: string) =>
     new Promise<Bridge[]>((resolve, reject) => {
-        needle('post', `${relayUrl}/relay/web/fetch_bridge`, {})
+        superagent
+            .post(`${relayUrl}/relay/web/fetch_bridge`)
             .then((resp) => {
                 if (resp.statusCode == 200) {
                     if (resp.body.code == 200) {

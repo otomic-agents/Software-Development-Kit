@@ -7,14 +7,14 @@ const RPC_SOLANA = 'https://api.devnet.solana.com';
 const RPC_BSC = 'https://data-seed-prebsc-2-s3.bnbchain.org:8545';
 
 const bridge: Bridge = {
-    bridge_id: 2,
+    bridge_id: 3,
     src_chain_id: 501,
     dst_chain_id: 9006,
     src_token: '0xd691ced994b9c641cf8f80b5f4dbdd80f0fd86af1b8604a702151fa7e46b7232',
-    dst_token: '0xaCDA8BF66C2CADAc9e99Aa1aa75743F536E71094',
+    dst_token: '0xacda8bf66c2cadac9e99aa1aa75743f536e71094',
     bridge_name: undefined,
 };
-const amount = '15';
+const amount = '13';
 
 const relay = new Relay(RELA_URL);
 
@@ -38,17 +38,17 @@ const Ask = () =>
     });
 
 const doTxOut = (preBusiness: PreBusiness) =>
-    new Promise<string>(async (resolve, reject) => {
+    new Promise<void>(async (resolve, reject) => {
         console.log('doTxOut');
 
-        const { txHash, uuid } = await solana.transferOutByPrivateKey(
+        const txHash = await solana.transferOutByPrivateKey(
             preBusiness,
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_SOLANA,
         );
         console.log('response tx out', txHash);
-        resolve(uuid);
+        resolve();
     });
 
 const waitTxIn = (preBusiness: PreBusiness) =>
@@ -71,7 +71,7 @@ const waitTxIn = (preBusiness: PreBusiness) =>
         resolve();
     });
 
-const doTxOutCfm = (preBusiness: PreBusiness, uuid: string) =>
+const doTxOutCfm = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutCfm');
 
@@ -80,7 +80,6 @@ const doTxOutCfm = (preBusiness: PreBusiness, uuid: string) =>
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_SOLANA,
-            uuid,
         );
         console.log('response tx out confirm', txHash);
         resolve();
@@ -105,7 +104,7 @@ const waitTxInCfm = (preBusiness: PreBusiness) =>
         resolve();
     });
 
-const doTxRefund = (preBusiness: PreBusiness, uuid: string) =>
+const doTxRefund = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutRefund');
 
@@ -114,13 +113,32 @@ const doTxRefund = (preBusiness: PreBusiness, uuid: string) =>
             process.env.WALLET_KEY as string,
             NETWORK,
             RPC_SOLANA,
-            uuid,
         );
         console.log('response tx out refund', txHash);
         resolve();
     });
 
+const waitTxInRefund = (preBusiness: PreBusiness) =>
+    new Promise<void>(async (resolve, reject) => {
+        console.log('waitTxInRefund');
+
+        let succeed = false;
+
+        while (succeed == false) {
+            try {
+                const resp = await relay.getBusiness(preBusiness.hash);
+                console.log(Date.now(), resp.step);
+                succeed = resp.step >= 7;
+            } catch (e) {
+                console.log(e);
+            }
+            await utils.Sleep(1000);
+        }
+        resolve();
+    });
+
 const swap = async () => {
+    console.log('start solana swap on testnet');
     const quote = await Ask();
     const signData: { signData: SignData; signed: string } = await solana.signQuoteByPrivateKey(
         NETWORK,
@@ -129,6 +147,8 @@ const swap = async () => {
         amount,
         0,
         '0x50724411eb1817822e2590a43a8F0859FCc6fCD5',
+        undefined,
+        undefined,
         undefined,
         RPC_SOLANA,
         RPC_BSC,
@@ -142,11 +162,14 @@ const swap = async () => {
     console.log('business', business);
 
     if (business.locked == true) {
-        let uuid = await doTxOut(business);
+        await doTxOut(business);
         await waitTxIn(business);
 
-        await doTxOutCfm(business, uuid);
+        await doTxOutCfm(business);
         await waitTxInCfm(business);
+
+        console.log('swap success');
+        process.exit(0);
     }
 };
 
@@ -160,6 +183,8 @@ const refund = async () => {
         0,
         '0x50724411eb1817822e2590a43a8F0859FCc6fCD5',
         undefined,
+        undefined,
+        undefined,
         RPC_SOLANA,
         RPC_BSC,
     );
@@ -172,10 +197,14 @@ const refund = async () => {
     console.log('business', business);
 
     if (business.locked == true) {
-        let uuid = await doTxOut(business);
+        await doTxOut(business);
         await waitTxIn(business);
 
-        await doTxRefund(business, uuid);
+        await doTxRefund(business);
+        await waitTxInRefund(business);
+
+        console.log('refund success');
+        process.exit(0);
     }
 };
 

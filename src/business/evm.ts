@@ -1,4 +1,4 @@
-import { Contract, ContractTransactionResponse, JsonRpcProvider, Wallet, ethers } from 'ethers';
+import { Contract, ContractTransaction, ContractTransactionResponse, JsonRpcProvider, Wallet, ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
 
 import ABI from './evmABI';
@@ -7,7 +7,9 @@ import {
     getChainId,
     getChainType,
     getOtmoicAddressBySystemChainId,
-    getStepTimeLock,
+    getExpectedSingleStepTime,
+    getTolerantSingleStepTime,
+    getDefaultEarliestRefundTime,
     getDefaultGasPrice,
     getMaximumGasPrice,
     getNativeTokenDecimals,
@@ -79,6 +81,11 @@ export const decimals = (system_chain_id: number, token_address: string, rpc: st
         }
     });
 
+export const decimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
+    const rpc = getDefaultRPC(system_chain_id, network);
+    return decimals(system_chain_id, token_address, rpc);
+};
+
 export const symbol = (system_chain_id: number, token_address: string, rpc: string) =>
     new Promise<string>(async (resolve, reject) => {
         try {
@@ -126,7 +133,9 @@ export const _getSignDataEIP712 = async (
     dstNativeAmount: string,
     swapToNative: number,
     receivingAddress: string,
-    stepTimeLock: number | undefined,
+    expectedSingleStepTime: number | undefined,
+    tolerantSingleStepTime: number | undefined,
+    earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) => {
@@ -166,6 +175,15 @@ export const _getSignDataEIP712 = async (
         );
     }
 
+    let agreementReachedTime = parseInt(((Date.now() + 1000 * 60 * 1) / 1000).toFixed(0));
+    let defaultExpectedSingleStepTime = getExpectedSingleStepTime(
+        quote.quote_base.bridge.src_chain_id,
+        quote.quote_base.bridge.dst_chain_id,
+    );
+    let defaultTolerantSingleStepTime = getTolerantSingleStepTime(
+        quote.quote_base.bridge.src_chain_id,
+        quote.quote_base.bridge.dst_chain_id,
+    );
     const signMessage = {
         src_chain_id: quote.quote_base.bridge.src_chain_id,
         src_address: quote.quote_base.lp_bridge_address,
@@ -180,15 +198,28 @@ export const _getSignDataEIP712 = async (
 
         requestor: '', //user_address.value,
         lp_id: quote.lp_info.name,
-        step_time_lock:
-            stepTimeLock == undefined
-                ? getStepTimeLock(quote.quote_base.bridge.src_chain_id, quote.quote_base.bridge.dst_chain_id)
-                : stepTimeLock,
-        agreement_reached_time: parseInt(((Date.now() + 1000 * 60 * 1) / 1000).toFixed(0)),
+        agreement_reached_time: agreementReachedTime,
+        expected_single_step_time:
+            expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
+        tolerant_single_step_time:
+            tolerantSingleStepTime == undefined ? defaultTolerantSingleStepTime : tolerantSingleStepTime,
+        earliest_refund_time:
+            earliestRefundTime == undefined
+                ? getDefaultEarliestRefundTime(
+                      agreementReachedTime,
+                      defaultExpectedSingleStepTime,
+                      defaultTolerantSingleStepTime,
+                  )
+                : earliestRefundTime,
     };
 
     const typedData = {
         types: {
+            EIP712Domain: [
+                { name: 'name', type: 'string' },
+                { name: 'version', type: 'string' },
+                { name: 'chainId', type: 'uint256' },
+            ],
             Message: [
                 { name: 'src_chain_id', type: 'uint256' },
                 { name: 'src_address', type: 'string' },
@@ -201,8 +232,10 @@ export const _getSignDataEIP712 = async (
                 { name: 'dst_native_amount', type: 'string' },
                 { name: 'requestor', type: 'string' },
                 { name: 'lp_id', type: 'string' },
-                { name: 'step_time_lock', type: 'uint256' },
                 { name: 'agreement_reached_time', type: 'uint256' },
+                { name: 'expected_single_step_time', type: 'uint256' },
+                { name: 'tolerant_single_step_time', type: 'uint256' },
+                { name: 'earliest_refund_time', type: 'uint256' },
             ],
         },
         primaryType: 'Message',
@@ -228,7 +261,7 @@ export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undef
     );
 };
 
-export const isNeedApprove = (
+export const _isNeedApprove = (
     preBusiness: PreBusiness,
     user_wallet: string,
     rpc: string | undefined,
@@ -262,12 +295,18 @@ export const doApprove = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
             const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token;
             const amount = preBusiness.swap_asset_information.amount;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider).connect(
                 wallet == undefined ? await provider.getSigner() : wallet,
@@ -276,12 +315,29 @@ export const doApprove = (
             const approveTx = await erc20
                 .getFunction('approve')
                 .send(getOtmoicAddressBySystemChainId(systemChainId, network), amount, {
-                    gasPrice: await getGasPrice(provider, systemChainId, network),
+                    gasPrice: gasPrice.amount,
                 });
-            await approveTx.wait();
             resolve(approveTx);
         } catch (err) {
             reject(err);
+        }
+    });
+
+export const _getApproveTransfer = (preBusiness: PreBusiness, network: string) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+            const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token;
+            const amount = preBusiness.swap_asset_information.amount;
+
+            const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, undefined);
+            resolve(
+                await erc20
+                    .getFunction('approve')
+                    .populateTransaction(getOtmoicAddressBySystemChainId(systemChainId, network), amount),
+            );
+        } catch (error) {
+            reject(error);
         }
     });
 
@@ -290,10 +346,16 @@ export const doTransferOut = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -301,6 +363,7 @@ export const doTransferOut = (
                 provider,
             ).connect(wallet == undefined ? await provider.getSigner() : wallet);
             const data = getTransferOutData(preBusiness);
+            console.log(`transfer out data`, data);
 
             let transferOutTx: ContractTransactionResponse;
             if (isZeroAddress(data.token)) {
@@ -312,8 +375,9 @@ export const doTransferOut = (
                         data.token,
                         data.amount,
                         data.hashlock,
-                        data.relayHashlock,
-                        data.stepTimelock,
+                        data.expectedSingleStepTime,
+                        data.tolerantSingleStepTime,
+                        data.earliestRefundTime,
                         data.dstChainId,
                         data.dstAddress,
                         data.bidId,
@@ -326,7 +390,7 @@ export const doTransferOut = (
                         data.userSign,
                         data.lpSign,
                         {
-                            gasPrice: await getGasPrice(provider, systemChainId, network),
+                            gasPrice: gasPrice.amount,
                             value: data.amount,
                         },
                     );
@@ -339,8 +403,9 @@ export const doTransferOut = (
                         data.token,
                         data.amount,
                         data.hashlock,
-                        data.relayHashlock,
-                        data.stepTimelock,
+                        data.expectedSingleStepTime,
+                        data.tolerantSingleStepTime,
+                        data.earliestRefundTime,
                         data.dstChainId,
                         data.dstAddress,
                         data.bidId,
@@ -353,14 +418,82 @@ export const doTransferOut = (
                         data.userSign,
                         data.lpSign,
                         {
-                            gasPrice: await getGasPrice(provider, systemChainId, network),
+                            gasPrice: gasPrice.amount,
                         },
                     );
             }
-            await transferOutTx.wait();
             resolve(transferOutTx);
         } catch (err) {
             reject(err);
+        }
+    });
+
+export const _getTransferOutTransfer = (preBusiness: PreBusiness, network: string) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic);
+            const data = getTransferOutData(preBusiness);
+            console.log('tx datda', data);
+
+            let tx: ContractTransaction;
+            if (isZeroAddress(data.token)) {
+                tx = await otmoic
+                    .getFunction('transferOut')
+                    .populateTransaction(
+                        data.sender,
+                        data.bridge,
+                        data.token,
+                        data.amount,
+                        data.hashlock,
+                        data.expectedSingleStepTime,
+                        data.tolerantSingleStepTime,
+                        data.earliestRefundTime,
+                        data.dstChainId,
+                        data.dstAddress,
+                        data.bidId,
+                        data.tokenDst,
+                        data.amountDst,
+                        data.nativeAmountDst,
+                        data.agreementReachedTime,
+                        data.requestor,
+                        data.lpId,
+                        data.userSign,
+                        data.lpSign,
+                        {
+                            value: data.amount,
+                        },
+                    );
+            } else {
+                tx = await otmoic
+                    .getFunction('transferOut')
+                    .populateTransaction(
+                        data.sender,
+                        data.bridge,
+                        data.token,
+                        data.amount,
+                        data.hashlock,
+                        data.expectedSingleStepTime,
+                        data.tolerantSingleStepTime,
+                        data.earliestRefundTime,
+                        data.dstChainId,
+                        data.dstAddress,
+                        data.bidId,
+                        data.tokenDst,
+                        data.amountDst,
+                        data.nativeAmountDst,
+                        data.agreementReachedTime,
+                        data.requestor,
+                        data.lpId,
+                        data.userSign,
+                        data.lpSign,
+                    );
+            }
+
+            resolve(tx);
+        } catch (error) {
+            reject(error);
         }
     });
 
@@ -369,10 +502,16 @@ export const doTransferOutConfirm = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -389,16 +528,43 @@ export const doTransferOutConfirm = (
                     data.tokenAmount,
                     data.ethAmount,
                     data.hashlock,
-                    data.relayHashlock,
-                    data.stepTimelock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
                     data.preimage,
-                    '0x0000000000000000000000000000000000000000000000000000000000000000',
                     data.agreementReachedTime,
                     {
-                        gasPrice: await getGasPrice(provider, systemChainId, network),
+                        gasPrice: gasPrice.amount,
                     },
                 );
-            await transferOutCfmTx.wait();
+            resolve(transferOutCfmTx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getTransferOutConfirmTransfer = (preBusiness: PreBusiness, network: string) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic);
+            const data = getTransferOutConfirmData(preBusiness);
+            const transferOutCfmTx = await otmoic
+                .getFunction('confirmTransferOut')
+                .populateTransaction(
+                    data.sender,
+                    data.receiver,
+                    data.token,
+                    data.tokenAmount,
+                    data.ethAmount,
+                    data.hashlock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
+                    data.preimage,
+                    data.agreementReachedTime,
+                );
             resolve(transferOutCfmTx);
         } catch (err) {
             reject(err);
@@ -411,10 +577,16 @@ export const doTransferInConfirm = (
     wallet: Wallet | undefined,
     network: string,
     sender: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -431,14 +603,43 @@ export const doTransferInConfirm = (
                     data.amount,
                     data.nativeAmount,
                     data.hashlock,
-                    data.stepTimeLock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
                     data.preimage,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await getGasPrice(provider, systemChainId, network),
+                        gasPrice: gasPrice.amount,
                     },
                 );
-            await transferInCfmTx.wait();
+            resolve(transferInCfmTx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getTransferInConfirmTransfer = (preBusiness: PreBusiness, network: string, sender: string) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
+
+            const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic);
+            const data = getTransferInConfirmData(preBusiness, sender);
+            const transferInCfmTx = await otmoic
+                .getFunction('confirmTransferIn')
+                .populateTransaction(
+                    data.sender,
+                    data.receiver,
+                    data.token,
+                    data.amount,
+                    data.nativeAmount,
+                    data.hashlock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
+                    data.preimage,
+                    data.agreementReachedTime,
+                );
             resolve(transferInCfmTx);
         } catch (err) {
             reject(err);
@@ -450,10 +651,16 @@ export const doTransferOutRefund = (
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
     network: string,
+    useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
 
             const otmoic = new ethers.Contract(
                 getOtmoicAddressBySystemChainId(systemChainId, network),
@@ -470,14 +677,41 @@ export const doTransferOutRefund = (
                     data.tokenAmount,
                     data.ethAmount,
                     data.hashlock,
-                    data.relayHashlock,
-                    data.stepTimelock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
                     data.agreementReachedTime,
                     {
-                        gasPrice: await getGasPrice(provider, systemChainId, network),
+                        gasPrice: gasPrice.amount,
                     },
                 );
-            await transferOutRfdTx.wait();
+            resolve(transferOutRfdTx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getTransferOutRefundTransfer = (preBusiness: PreBusiness, network: string) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            const otmoic = new ethers.Contract(getOtmoicAddressBySystemChainId(systemChainId, network), ABI.otmoic);
+            const data = getTransferOutConfirmData(preBusiness);
+            const transferOutRfdTx = await otmoic
+                .getFunction('refundTransferOut')
+                .populateTransaction(
+                    data.sender,
+                    data.receiver,
+                    data.token,
+                    data.tokenAmount,
+                    data.ethAmount,
+                    data.hashlock,
+                    data.expectedSingleStepTime,
+                    data.tolerantSingleStepTime,
+                    data.earliestRefundTime,
+                    data.agreementReachedTime,
+                );
             resolve(transferOutRfdTx);
         } catch (err) {
             reject(err);
@@ -516,7 +750,7 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
         verifyingContract:
             network == 'mainnet'
                 ? '0xE924F7f68D1dcd004720e107F62c6303aF271ed3'
-                : '0xe69257d83b2c50b2d7496348d053d76c744753e4',
+                : '0xd9d91A805e074932E3E6FeD399A814207106A69E',
     };
 
     const complaintType = {
@@ -532,7 +766,9 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
             { name: 'dstNativeAmount', type: 'string' },
             { name: 'requestor', type: 'string' },
             { name: 'lpId', type: 'string' },
-            { name: 'stepTimeLock', type: 'uint64' },
+            { name: 'expectedSingleStepTime', type: 'uint64' },
+            { name: 'tolerantSingleStepTime', type: 'uint64' },
+            { name: 'earliestRefundTime', type: 'uint64' },
             { name: 'agreementReachedTime', type: 'uint64' },
             { name: 'userSign', type: 'string' },
             { name: 'lpSign', type: 'string' },
@@ -551,8 +787,10 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
         dstNativeAmount: preBusiness.swap_asset_information.dst_native_amount,
         requestor: preBusiness.swap_asset_information.sender,
         lpId: preBusiness.swap_asset_information.quote.lp_info.name,
-        stepTimeLock: preBusiness.swap_asset_information.step_time_lock,
         agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
+        expectedSingleStepTime: preBusiness.swap_asset_information.expected_single_step_time,
+        tolerantSingleStepTime: preBusiness.swap_asset_information.tolerant_single_step_time,
+        earliestRefundTime: preBusiness.swap_asset_information.earliest_refund_time,
         userSign: preBusiness.swap_asset_information.user_sign,
         lpSign: preBusiness.swap_asset_information.lp_sign,
     };
@@ -565,8 +803,18 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: st
     };
 };
 
-async function getGasPrice(provider: JsonRpcProvider, systemChainId: number, network: string): Promise<bigint> {
+type GasPrice = {
+    amount: bigint;
+    usedMaximum: boolean;
+};
+
+export async function _getGasPrice(
+    provider: JsonRpcProvider,
+    systemChainId: number,
+    network: string,
+): Promise<GasPrice> {
     let gasPrice = await getGasPriceFromNode(provider);
+    let useMaximumGasPrice = false;
     if (!gasPrice) {
         gasPrice = await getGasPriceFromHistory(provider);
     }
@@ -574,14 +822,30 @@ async function getGasPrice(provider: JsonRpcProvider, systemChainId: number, net
     if (gasPrice) {
         if (gasPrice > getMaximumGasPrice(systemChainId, network)) {
             gasPrice = getMaximumGasPrice(systemChainId, network);
+            useMaximumGasPrice = true;
         }
     } else {
         gasPrice = getDefaultGasPrice(systemChainId, network);
     }
 
-    let ret = addPremium(gasPrice);
-    console.log('get gas price', ret.toString());
+    let gasPriceWithPremium = addPremium(gasPrice);
+    let ret = {
+        amount: gasPriceWithPremium,
+        usedMaximum: useMaximumGasPrice,
+    };
+    console.log(`get gas price: ${ret.amount.toString()}, use maximum gas price: ${ret.usedMaximum}`, );
     return ret;
+}
+
+export async function _getOnChainGasPrice(systemChainId: number, network: string): Promise<bigint> {
+    const provider = getProvider(getDefaultRPC(systemChainId, network));
+
+    let gasPrice = await getGasPriceFromNode(provider);
+    if (!gasPrice) {
+        gasPrice = await getGasPriceFromHistory(provider);
+    }
+
+    return gasPrice || BigInt(0);
 }
 
 async function getGasPriceFromHistory(provider: JsonRpcProvider): Promise<bigint | undefined> {

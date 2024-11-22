@@ -1,5 +1,5 @@
 import { Connection, Keypair } from '@solana/web3.js';
-import { doTransferOut, getJsonRpcProvider, ensureSendingTx } from '../../business/solana';
+import { _getTransferOutTransaction, getJsonRpcProvider, ensureSendingTx } from '../../business/solana';
 import { PreBusiness } from '../../interface/interface';
 import { removePrefix0x } from '../../utils/format';
 import { ResponseSolana } from '../../interface/api';
@@ -9,7 +9,6 @@ export const _transferOutByPrivateKey = (
     privateKey: string,
     network: string,
     rpc: string | undefined,
-    uuid?: string,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {
         try {
@@ -18,14 +17,11 @@ export const _transferOutByPrivateKey = (
             const provider: Connection = getJsonRpcProvider(preBusiness, rpc, network);
 
             //transfer out
-            let { tx, uuidBack } = await doTransferOut(preBusiness, provider, network, uuid);
+            let tx = await _getTransferOutTransaction(preBusiness, provider, network);
 
             let txHash = await ensureSendingTx(provider, keypair, tx);
 
-            resolve({
-                txHash,
-                uuid: uuidBack,
-            });
+            resolve({ txHash });
         } catch (err) {
             reject(err);
         }

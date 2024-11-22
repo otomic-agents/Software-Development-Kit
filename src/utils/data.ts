@@ -1,4 +1,6 @@
 import { ethers } from 'ethers';
+import { web3 } from '@coral-xyz/anchor';
+import { keccak_256 } from '@noble/hashes/sha3';
 import { PreBusiness } from '../interface/interface';
 
 export const jsonParser = (src: string) => {
@@ -14,8 +16,9 @@ export const getTransferOutData = (preBusiness: PreBusiness) => {
         token: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token, //adrress
         amount: preBusiness.swap_asset_information.amount, //uint256
         hashlock: ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32'], [preBusiness.preimage])), //bytes32
-        relayHashlock: preBusiness.relay_hashlock_evm,
-        stepTimelock: preBusiness.swap_asset_information.step_time_lock, //uint64
+        expectedSingleStepTime: preBusiness.swap_asset_information.expected_single_step_time, //uint64
+        tolerantSingleStepTime: preBusiness.swap_asset_information.tolerant_single_step_time, //uint64
+        earliestRefundTime: preBusiness.swap_asset_information.earliest_refund_time, //uint64
         dstChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id, //uint64
         dstAddress: preBusiness.swap_asset_information.dst_address, //uint256
         bidId: preBusiness.hash, //uint64
@@ -38,8 +41,9 @@ export const getTransferOutConfirmData = (preBusiness: PreBusiness) => {
         tokenAmount: preBusiness.swap_asset_information.amount,
         ethAmount: 0,
         hashlock: ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32'], [preBusiness.preimage])),
-        relayHashlock: preBusiness.relay_hashlock_evm,
-        stepTimelock: preBusiness.swap_asset_information.step_time_lock,
+        expectedSingleStepTime: preBusiness.swap_asset_information.expected_single_step_time, //uint64
+        tolerantSingleStepTime: preBusiness.swap_asset_information.tolerant_single_step_time, //uint64
+        earliestRefundTime: preBusiness.swap_asset_information.earliest_refund_time, //uint64
         preimage: preBusiness.preimage,
         agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
     };
@@ -66,7 +70,36 @@ export const getTransferInConfirmData = (preBusiness: PreBusiness, sender: strin
         nativeAmount: preBusiness.swap_asset_information.dst_native_amount,
         hashlock: ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32'], [preBusiness.preimage])),
         preimage: preBusiness.preimage,
-        stepTimeLock: preBusiness.swap_asset_information.step_time_lock,
+        expectedSingleStepTime: preBusiness.swap_asset_information.expected_single_step_time, //uint64
+        tolerantSingleStepTime: preBusiness.swap_asset_information.tolerant_single_step_time, //uint64
+        earliestRefundTime: preBusiness.swap_asset_information.earliest_refund_time, //uint64
         agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
     };
 };
+
+export function generateUuid(
+    sender: web3.PublicKey,
+    receiver: web3.PublicKey,
+    hashlock: number[],
+    agreementReachedTime: string,
+    expectedSingleStepTime: string,
+    tolerantSingleStepTime: string,
+    earliestRefundTime: string,
+    token: web3.PublicKey,
+    tokenAmount: string,
+    ethAmount: string,
+): number[] {
+    let data = Buffer.concat([
+        sender.toBuffer(),
+        receiver.toBuffer(),
+        Buffer.from(hashlock),
+        Buffer.from(agreementReachedTime),
+        Buffer.from(expectedSingleStepTime),
+        Buffer.from(tolerantSingleStepTime),
+        Buffer.from(earliestRefundTime),
+        token.toBuffer(),
+        Buffer.from(tokenAmount),
+        Buffer.from(ethAmount),
+    ]);
+    return Array.from(keccak_256(data));
+}

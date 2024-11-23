@@ -1,11 +1,12 @@
 import { decimals, getDefaultRPC } from '../../src/business/solana';
+import { NetworkType } from '../../src/interface/interface';
 
 const getDecimals = async () => {
-    let system_chain_id = 501;
-    let rpc = getDefaultRPC(system_chain_id, 'mainnet');
-    let token_address = 'CWE8jPTUYhdCTZYWPTe1o5DFqfdjzWKc9WKz6rSjQUdG';
+    let systemChainId = 501;
+    let rpc = getDefaultRPC(systemChainId, NetworkType.MAINNET);
+    let tokenAddress = 'CWE8jPTUYhdCTZYWPTe1o5DFqfdjzWKc9WKz6rSjQUdG';
 
-    let decimalsValue = await decimals(system_chain_id, token_address, rpc);
+    let decimalsValue = await decimals(systemChainId, tokenAddress, rpc);
     console.log('decimals', decimalsValue);
 };
 

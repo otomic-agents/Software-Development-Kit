@@ -2,7 +2,7 @@ import { Contract, ContractTransaction, ContractTransactionResponse, JsonRpcProv
 import BigNumber from 'bignumber.js';
 
 import ABI from './evmABI';
-import { PreBusiness, Quote } from '../interface/interface';
+import { PreBusiness, Quote, NetworkType, ChainId } from '../interface/interface';
 import {
     getChainId,
     getChainType,
@@ -47,78 +47,77 @@ export const getProvider = (rpc: string): JsonRpcProvider => {
     return provider;
 };
 
-export const getCache = (system_chain_id: number, token_address: string, rpc: string) => {
-    if (cache.tokens[system_chain_id] == undefined) cache.tokens[system_chain_id] = {};
-    if (cache.tokens[system_chain_id][token_address] == undefined)
-        cache.tokens[system_chain_id][token_address] = new ethers.Contract(token_address, ABI.erc20, getProvider(rpc));
-    return cache.tokens[system_chain_id][token_address];
+export const getCache = (systemChainId: ChainId, tokenAddress: string, rpc: string) => {
+    if (cache.tokens[systemChainId] == undefined) cache.tokens[systemChainId] = {};
+    if (cache.tokens[systemChainId][tokenAddress] == undefined)
+        cache.tokens[systemChainId][tokenAddress] = new ethers.Contract(tokenAddress, ABI.erc20, getProvider(rpc));
+    return cache.tokens[systemChainId][tokenAddress];
 };
 
-export const checkTokenInfoBoxExist = (system_chain_id: number, token_address: string) => {
-    if (cache.tokensInfo[system_chain_id] == undefined) cache.tokensInfo[system_chain_id] = {};
-    if (cache.tokensInfo[system_chain_id][token_address] == undefined)
-        cache.tokensInfo[system_chain_id][token_address] = {};
+export const checkTokenInfoBoxExist = (systemChainId: ChainId, tokenAddress: string) => {
+    if (cache.tokensInfo[systemChainId] == undefined) cache.tokensInfo[systemChainId] = {};
+    if (cache.tokensInfo[systemChainId][tokenAddress] == undefined) cache.tokensInfo[systemChainId][tokenAddress] = {};
 };
 
-export const decimals = (system_chain_id: number, token_address: string, rpc: string) =>
-    new Promise(async (resolve, reject) => {
+export const decimals = (systemChainId: ChainId, tokenAddress: string, rpc: string) =>
+    new Promise<number>(async (resolve, reject) => {
         try {
-            checkTokenInfoBoxExist(system_chain_id, token_address);
-            if (cache.tokensInfo[system_chain_id][token_address].decimals == undefined) {
-                if (isZeroAddress(token_address)) {
-                    cache.tokensInfo[system_chain_id][token_address].decimals = getNativeTokenDecimals(system_chain_id);
+            checkTokenInfoBoxExist(systemChainId, tokenAddress);
+            if (cache.tokensInfo[systemChainId][tokenAddress].decimals == undefined) {
+                if (isZeroAddress(tokenAddress)) {
+                    cache.tokensInfo[systemChainId][tokenAddress].decimals = getNativeTokenDecimals(systemChainId);
                 } else {
-                    cache.tokensInfo[system_chain_id][token_address].decimals = await getCache(
-                        system_chain_id,
-                        token_address,
+                    cache.tokensInfo[systemChainId][tokenAddress].decimals = await getCache(
+                        systemChainId,
+                        tokenAddress,
                         rpc,
                     ).decimals();
                 }
             }
-            resolve(cache.tokensInfo[system_chain_id][token_address].decimals);
+            resolve(cache.tokensInfo[systemChainId][tokenAddress].decimals);
         } catch (err) {
             reject(err);
         }
     });
 
-export const decimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
-    const rpc = getDefaultRPC(system_chain_id, network);
-    return decimals(system_chain_id, token_address, rpc);
+export const decimalsDefaultRpc = (systemChainId: ChainId, tokenAddress: string, network: NetworkType) => {
+    const rpc = getDefaultRPC(systemChainId, network);
+    return decimals(systemChainId, tokenAddress, rpc);
 };
 
-export const symbol = (system_chain_id: number, token_address: string, rpc: string) =>
+export const symbol = (systemChainId: ChainId, tokenAddress: string, rpc: string) =>
     new Promise<string>(async (resolve, reject) => {
         try {
-            checkTokenInfoBoxExist(system_chain_id, token_address);
-            if (cache.tokensInfo[system_chain_id][token_address].symbol == undefined) {
-                if (isZeroAddress(token_address)) {
-                    cache.tokensInfo[system_chain_id][token_address].symbol = getNativeTokenName(system_chain_id);
+            checkTokenInfoBoxExist(systemChainId, tokenAddress);
+            if (cache.tokensInfo[systemChainId][tokenAddress].symbol == undefined) {
+                if (isZeroAddress(tokenAddress)) {
+                    cache.tokensInfo[systemChainId][tokenAddress].symbol = getNativeTokenName(systemChainId);
                 } else {
-                    cache.tokensInfo[system_chain_id][token_address].symbol = await getCache(
-                        system_chain_id,
-                        token_address,
+                    cache.tokensInfo[systemChainId][tokenAddress].symbol = await getCache(
+                        systemChainId,
+                        tokenAddress,
                         rpc,
                     ).symbol();
                 }
             }
-            resolve(cache.tokensInfo[system_chain_id][token_address].symbol);
+            resolve(cache.tokensInfo[systemChainId][tokenAddress].symbol);
         } catch (err) {
             reject(err);
         }
     });
 
-export const getDefaultRPC = (system_chain_id: number, network: string) => {
-    const isMainnet = network == 'mainnet';
-    switch (system_chain_id) {
-        case 9000:
+export const getDefaultRPC = (systemChainId: ChainId, network: NetworkType) => {
+    const isMainnet = network == NetworkType.MAINNET;
+    switch (systemChainId) {
+        case ChainId.AVAX:
             return isMainnet ? 'https://rpc.ankr.com/avalanche' : 'https://rpc.ankr.com/avalanche_fuji';
-        case 9006:
+        case ChainId.BSC:
             return isMainnet ? 'https://bsc-dataseed.bnbchain.org' : 'https://bsc-testnet.public.blastapi.io';
-        case 60:
+        case ChainId.ETH:
             return isMainnet ? 'https://rpc.ankr.com/eth' : 'https://ethereum-sepolia-rpc.publicnode.com';
-        case 966:
+        case ChainId.POLYGON:
             return isMainnet ? 'https://polygon-bor-rpc.publicnode.com' : 'https://polygon-mumbai-pokt.nodies.app';
-        case 614:
+        case ChainId.OPT:
             return isMainnet ? 'https://mainnet.optimism.io' : 'https://sepolia.optimism.io';
         default:
             throw new Error('not found rpc node');
@@ -127,7 +126,7 @@ export const getDefaultRPC = (system_chain_id: number, network: string) => {
 
 export const _getSignDataEIP712 = async (
     quote: Quote,
-    network: string,
+    network: NetworkType,
     amount: string,
     dstAmount: string,
     dstNativeAmount: string,
@@ -246,7 +245,7 @@ export const _getSignDataEIP712 = async (
     return typedData;
 };
 
-export const getJsonRpcProvider = (preBusiness: PreBusiness, rpc: string | undefined, network: string) => {
+export const getJsonRpcProvider = (preBusiness: PreBusiness, rpc: string | undefined, network: NetworkType) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
     return new ethers.JsonRpcProvider(
         rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc,
@@ -254,7 +253,7 @@ export const getJsonRpcProvider = (preBusiness: PreBusiness, rpc: string | undef
     );
 };
 
-export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undefined, network: string) => {
+export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undefined, network: NetworkType) => {
     return new ethers.JsonRpcProvider(
         rpc == undefined ? getDefaultRPC(chainId, network) : rpc,
         getChainId(chainId, network),
@@ -265,7 +264,7 @@ export const _isNeedApprove = (
     preBusiness: PreBusiness,
     user_wallet: string,
     rpc: string | undefined,
-    network: string,
+    network: NetworkType,
 ) =>
     new Promise<Boolean>(async (resolve, reject) => {
         try {
@@ -294,7 +293,7 @@ export const doApprove = (
     preBusiness: PreBusiness,
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
-    network: string,
+    network: NetworkType,
     useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
@@ -323,7 +322,7 @@ export const doApprove = (
         }
     });
 
-export const _getApproveTransfer = (preBusiness: PreBusiness, network: string) =>
+export const _getApproveTransfer = (preBusiness: PreBusiness, network: NetworkType) =>
     new Promise<ContractTransaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
@@ -345,7 +344,7 @@ export const doTransferOut = (
     preBusiness: PreBusiness,
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
-    network: string,
+    network: NetworkType,
     useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
@@ -428,7 +427,7 @@ export const doTransferOut = (
         }
     });
 
-export const _getTransferOutTransfer = (preBusiness: PreBusiness, network: string) =>
+export const _getTransferOutTransfer = (preBusiness: PreBusiness, network: NetworkType) =>
     new Promise<ContractTransaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
@@ -501,7 +500,7 @@ export const doTransferOutConfirm = (
     preBusiness: PreBusiness,
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
-    network: string,
+    network: NetworkType,
     useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
@@ -543,7 +542,7 @@ export const doTransferOutConfirm = (
         }
     });
 
-export const _getTransferOutConfirmTransfer = (preBusiness: PreBusiness, network: string) =>
+export const _getTransferOutConfirmTransfer = (preBusiness: PreBusiness, network: NetworkType) =>
     new Promise<ContractTransaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
@@ -575,7 +574,7 @@ export const doTransferInConfirm = (
     preBusiness: PreBusiness,
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
-    network: string,
+    network: NetworkType,
     sender: string,
     useMaximumGasPriceAtMost: boolean,
 ) =>
@@ -618,7 +617,7 @@ export const doTransferInConfirm = (
         }
     });
 
-export const _getTransferInConfirmTransfer = (preBusiness: PreBusiness, network: string, sender: string) =>
+export const _getTransferInConfirmTransfer = (preBusiness: PreBusiness, network: NetworkType, sender: string) =>
     new Promise<ContractTransaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
@@ -650,7 +649,7 @@ export const doTransferOutRefund = (
     preBusiness: PreBusiness,
     provider: JsonRpcProvider,
     wallet: Wallet | undefined,
-    network: string,
+    network: NetworkType,
     useMaximumGasPriceAtMost: boolean,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
@@ -691,7 +690,7 @@ export const doTransferOutRefund = (
         }
     });
 
-export const _getTransferOutRefundTransfer = (preBusiness: PreBusiness, network: string) =>
+export const _getTransferOutRefundTransfer = (preBusiness: PreBusiness, network: NetworkType) =>
     new Promise<ContractTransaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
@@ -719,7 +718,7 @@ export const _getTransferOutRefundTransfer = (preBusiness: PreBusiness, network:
     });
 
 export const getBalance = async (
-    network: string,
+    network: NetworkType,
     systemChainId: number,
     token: string,
     address: string,
@@ -742,13 +741,13 @@ export const getBalance = async (
     }
 };
 
-export const _getComplainSignData = async (preBusiness: PreBusiness, network: string) => {
+export const _getComplainSignData = async (preBusiness: PreBusiness, network: NetworkType) => {
     const eip712Domain = {
         name: 'Otmoic Reputation',
         version: '1',
-        chainId: network == 'mainnet' ? 10 : 11155420,
+        chainId: network == NetworkType.MAINNET ? 10 : 11155420,
         verifyingContract:
-            network == 'mainnet'
+            network == NetworkType.MAINNET
                 ? '0xE924F7f68D1dcd004720e107F62c6303aF271ed3'
                 : '0xd9d91A805e074932E3E6FeD399A814207106A69E',
     };
@@ -811,7 +810,7 @@ type GasPrice = {
 export async function _getGasPrice(
     provider: JsonRpcProvider,
     systemChainId: number,
-    network: string,
+    network: NetworkType,
 ): Promise<GasPrice> {
     let gasPrice = await getGasPriceFromNode(provider);
     let useMaximumGasPrice = false;
@@ -833,11 +832,11 @@ export async function _getGasPrice(
         amount: gasPriceWithPremium,
         usedMaximum: useMaximumGasPrice,
     };
-    console.log(`get gas price: ${ret.amount.toString()}, use maximum gas price: ${ret.usedMaximum}`, );
+    console.log(`get gas price: ${ret.amount.toString()}, use maximum gas price: ${ret.usedMaximum}`);
     return ret;
 }
 
-export async function _getOnChainGasPrice(systemChainId: number, network: string): Promise<bigint> {
+export async function _getOnChainGasPrice(systemChainId: number, network: NetworkType): Promise<bigint> {
     const provider = getProvider(getDefaultRPC(systemChainId, network));
 
     let gasPrice = await getGasPriceFromNode(provider);

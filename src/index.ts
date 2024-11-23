@@ -26,9 +26,23 @@ import { ResponseTransferOut } from './interface/api';
 export { ResponseTransferOut };
 import { ResponseSolana } from './interface/api';
 export { ResponseSolana };
+import { GetBusinessOptions } from './interface/interface';
+export { GetBusinessOptions };
+import { DstAmountSet } from './interface/interface';
+export { DstAmountSet };
+import { ChainId } from './interface/interface';
+export { ChainId };
+import { NetworkType } from './interface/interface';
+export { NetworkType };
 
-import { getChainName, getChainType, getNativeTokenName, getTokenAddress } from './utils/chain';
-import { getChainId, getNativeTokenDecimals } from './utils/chain';
+import {
+    getChainName,
+    getChainType,
+    getNativeTokenName,
+    getTokenAddress,
+    getChainId,
+    getNativeTokenDecimals,
+} from './utils/chain';
 import { sleep } from './utils/sleep';
 import { translateBridge } from './api/TranslateBridge';
 import {
@@ -64,8 +78,6 @@ import { _getBridge } from './api/GetBridge';
 import { QuoteManager } from './api/Quote';
 import { mathReceived } from './utils/math';
 import { getBalance } from './api/GetBalance';
-import { getBalance as getBalanceEVM } from './business/evm';
-import { getBalance as getBalanceSOLANA } from './business/solana';
 
 import {
     _getSignDataEIP712 as _getSignDataSolana,
@@ -92,32 +104,60 @@ import { Connection } from '@solana/web3.js';
 import { Provider } from '@coral-xyz/anchor';
 
 export namespace utils {
-    export const GetChainName = getChainName;
-    export const GetNativeTokenName = getNativeTokenName;
-    export const GetChainId = getChainId;
-    export const GetNativeTokenDecimals = getNativeTokenDecimals;
-    export const Sleep = sleep;
-    export const MathReceived = mathReceived;
-    export const GetChainType = getChainType;
-    export const GetTokenAddress = getTokenAddress;
-    export const EvmDecimals = _evmDecimals;
-    export const EvmDecimalsDefaultRpc = _evmDecimalsDefaultRpc;
-    export const SolanaDecimals = _solanaDecimals;
-    export const SolanaDecimalsDefaultRpc = _solanaDecimalsDefaultRpc;
-    export const Decimals = (system_chain_id: number, token_address: string, rpc: string) => {
-        if (system_chain_id == 501) {
-            return SolanaDecimals(system_chain_id, token_address, rpc);
-        } else {
-            return EvmDecimals(system_chain_id, token_address, rpc);
-        }
-    };
-    export const DecimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
-        if (system_chain_id == 501) {
-            return SolanaDecimalsDefaultRpc(system_chain_id, token_address, network);
-        } else {
-            return EvmDecimalsDefaultRpc(system_chain_id, token_address, network);
-        }
-    };
+    export namespace utils {
+        export const GetChainName = (systemChainId: ChainId): string => {
+            return getChainName(systemChainId);
+        };
+
+        export const GetNativeTokenName = (systemChainId: ChainId): string => {
+            return getNativeTokenName(systemChainId);
+        };
+
+        export const GetChainId = (systemChainId: ChainId, network: NetworkType): number | undefined => {
+            return getChainId(systemChainId, network);
+        };
+
+        export const GetNativeTokenDecimals = (systemChainId: ChainId): number => {
+            return getNativeTokenDecimals(systemChainId);
+        };
+
+        export const GetTokenDecimals = (
+            systemChainId: ChainId,
+            tokenAddress: string,
+            network: NetworkType,
+            rpc: string | undefined,
+        ): Promise<number> => {
+            if (systemChainId == 501) {
+                if (rpc) {
+                    return _solanaDecimals(systemChainId, tokenAddress, rpc);
+                } else {
+                    return _solanaDecimalsDefaultRpc(systemChainId, tokenAddress, network);
+                }
+            } else {
+                if (rpc) {
+                    return _evmDecimals(systemChainId, tokenAddress, rpc);
+                } else {
+                    return _evmDecimalsDefaultRpc(systemChainId, tokenAddress, network);
+                }
+            }
+        };
+
+        export const GetChainType = (systemChainId: ChainId): string => {
+            return getChainType(systemChainId);
+        };
+
+        export const MathReceived = (quote: Quote, amount: string, swapToNative: number): DstAmountSet => {
+            return mathReceived(quote, amount, swapToNative);
+        };
+
+        export const GetTokenAddress = (contractAddress: string, systemChainId: ChainId): string => {
+            return getTokenAddress(contractAddress, systemChainId);
+        };
+
+        export const Sleep = (ms: number): Promise<void> => {
+            return sleep(ms);
+        };
+    }
 }
 
 export namespace evm {
@@ -146,7 +186,7 @@ export namespace evm {
     export const getOnChainGasPrice = _getOnChainGasPrice;
 
     export const signQuoteEIP712ByPrivateKey = (
-        network: string,
+        network: NetworkType,
         quote: Quote,
         privateKey: string,
         amount: string,
@@ -173,7 +213,7 @@ export namespace evm {
         );
 
     export const signQuoteEIP712ByMetamaskAPI = (
-        network: string,
+        network: NetworkType,
         quote: Quote,
         metamaskAPI: any,
         sender: string,
@@ -204,7 +244,7 @@ export namespace evm {
     export const transferOutByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         useMaximumGasPriceAtMost: boolean,
     ) => _transferOutByPrivateKey(preBusiness, privateKey, network, rpc, useMaximumGasPriceAtMost);
@@ -212,14 +252,14 @@ export namespace evm {
     export const transferOutByMetamaskAPI = (
         preBusiness: PreBusiness,
         metamaskAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutByMetamaskAPI(preBusiness, metamaskAPI, network, rpc);
 
     export const transferOutConfirmByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         useMaximumGasPriceAtMost: boolean,
     ) => _transferOutConfirmByPrivateKey(preBusiness, privateKey, network, rpc, useMaximumGasPriceAtMost);
@@ -227,14 +267,14 @@ export namespace evm {
     export const transferOutConfirmByMetamaskAPI = (
         preBusiness: PreBusiness,
         metamaskAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutConfirmByMetamaskAPI(preBusiness, metamaskAPI, network, rpc);
 
     export const transferOutRefundByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         useMaximumGasPriceAtMost: boolean,
     ) => _transferOutRefundByPrivateKey(preBusiness, privateKey, network, rpc, useMaximumGasPriceAtMost);
@@ -242,14 +282,14 @@ export namespace evm {
     export const transferOutRefundByMetamaskAPI = (
         preBusiness: PreBusiness,
         metamaskAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutRefundByMetamaskAPI(preBusiness, metamaskAPI, network, rpc);
 
     export const transferInConfirmByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         sender: string,
         useMaximumGasPriceAtMost: boolean,
@@ -258,7 +298,7 @@ export namespace evm {
     export const transferInConfirmByMetamaskAPI = (
         preBusiness: PreBusiness,
         metamaskAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         sender: string,
     ) => _transferInConfirmByMetamaskAPI(preBusiness, metamaskAPI, network, rpc, sender);
@@ -268,7 +308,7 @@ export namespace solana {
     export const getSignData = _getSignDataSolana;
     export const getSignPreamble = _getSignPreambleEIP712;
     export const signQuoteByPrivateKey = (
-        network: string,
+        network: NetworkType,
         quote: Quote,
         privateKey: string,
         amount: string,
@@ -295,7 +335,7 @@ export namespace solana {
         );
 
     export const signQuoteByWalletPlugin = (
-        network: string,
+        network: NetworkType,
         quote: Quote,
         phantomAPI: any,
         sender: string,
@@ -326,70 +366,70 @@ export namespace solana {
     export const transferOutByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
     export const transferOutByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutByWalletPlugin(preBusiness, phantomAPI, network, rpc);
 
     export const transferOutConfirmByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
     export const getTransferOutTransaction = (
         preBusiness: PreBusiness,
         provider: Connection | undefined,
-        network: string,
+        network: NetworkType,
         pluginProvider?: Provider,
     ) => _getTransferOutTransaction(preBusiness, provider, network, pluginProvider);
 
     export const getTransferOutRefundTransaction = (
         preBusiness: PreBusiness,
         provider: Connection | undefined,
-        network: string,
+        network: NetworkType,
         pluginProvider?: Provider,
     ) => _getTransferOutRefundTransaction(preBusiness, provider, network, pluginProvider);
 
     export const transferOutConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc);
 
     export const getTransferOutConfirmTransaction = (
         preBusiness: PreBusiness,
         provider: Connection | undefined,
-        network: string,
+        network: NetworkType,
         pluginProvider?: Provider,
     ) => _getTransferOutConfirmTransaction(preBusiness, provider, network, pluginProvider);
 
     export const transferOutRefundByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutRefundSolanaByPrivateKey(preBusiness, privateKey, network, rpc);
 
     export const transferOutRefundByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
     ) => _transferOutRefundByWalletPlugin(preBusiness, phantomAPI, network, rpc);
 
     export const transferInConfirmByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         sender: string,
     ) => _transferInConfirmSolanaByPrivateKey(preBusiness, privateKey, network, rpc, sender);
@@ -397,7 +437,7 @@ export namespace solana {
     export const transferInConfirmByWalletPlugin = (
         preBusiness: PreBusiness,
         phantomAPI: any,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         sender: string,
     ) => _transferInConfirmByWalletPlugin(preBusiness, phantomAPI, network, rpc, sender);
@@ -405,7 +445,7 @@ export namespace solana {
 
 export namespace business {
     export const signQuoteByPrivateKey = (
-        network: string,
+        network: NetworkType,
         quote: Quote,
         privateKey: string,
         amount: string,
@@ -456,7 +496,7 @@ export namespace business {
     export const transferOutByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         useMaximumGasPriceAtMost: boolean,
     ) => {
@@ -477,7 +517,7 @@ export namespace business {
     export const transferOutConfirmByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         useMaximumGasPriceAtMost: boolean,
     ) => {
@@ -504,7 +544,7 @@ export namespace business {
     export const transferInConfirmByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         sender: string,
         useMaximumGasPriceAtMost: boolean,
@@ -533,7 +573,7 @@ export namespace business {
     export const transferOutRefundByPrivateKey = (
         preBusiness: PreBusiness,
         privateKey: string,
-        network: string,
+        network: NetworkType,
         rpc: string | undefined,
         useMaximumGasPriceAtMost: boolean,
     ) => {
@@ -557,7 +597,7 @@ export namespace business {
         }
     };
 
-    export const complainByPrivateKey = async (preBusiness: PreBusiness, privateKey: string, network: string) => {
+    export const complainByPrivateKey = async (preBusiness: PreBusiness, privateKey: string, network: NetworkType) => {
         const name = await getDidName(privateKey, network);
         if (name != undefined) {
             const signed = await evm.signComplainEIP712ByPrivateKey(preBusiness, privateKey, network);
@@ -567,20 +607,32 @@ export namespace business {
         }
     };
 
-    export const SubmitComplain = submitComplain
+    export const SubmitComplain = submitComplain;
 }
 
 export namespace assistive {
-    export const TranslateBridge = translateBridge;
-    export const GetBalance = getBalance;
-    export const GetBalanceEVM = getBalanceEVM;
-    export const GetBalanceSOLANA = getBalanceSOLANA;
+    export const TranslateBridge = (
+        bridges: Bridge[],
+        network: NetworkType,
+        rpcs: Record<string, string>,
+    ): Promise<TranslatedBridge[]> => {
+        return translateBridge(bridges, network, rpcs);
+    };
+
+    export const GetBalance = (
+        bridge: Bridge,
+        address: string,
+        network: NetworkType,
+        rpc: string | undefined,
+    ): Promise<string> => {
+        return getBalance(bridge, address, network, rpc);
+    };
 }
 
 export class Relay {
     relayUrl: string;
 
-    network: string = 'mainnet';
+    network: NetworkType = NetworkType.MAINNET;
 
     quoteManager: QuoteManager = new QuoteManager();
 
@@ -603,9 +655,13 @@ export class Relay {
 
     getHistory = (address: string): Promise<BusinessFullData[]> => _getHistory(this.relayUrl, address);
 
-    getBusiness = (hash: string): Promise<Business> => _getBusiness(this.relayUrl, hash);
-
-    getBusinessFull = (hash: string): Promise<BusinessFullData> => _getBusinessFull(this.relayUrl, hash);
+    getBusiness = (hash: string, options: GetBusinessOptions = {}): Promise<Business | BusinessFullData> => {
+        if (options.detailed) {
+            return _getBusinessFull(this.relayUrl, hash);
+        } else {
+            return _getBusiness(this.relayUrl, hash);
+        }
+    };
 }
 
 export namespace Otmoic {

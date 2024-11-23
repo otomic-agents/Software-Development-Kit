@@ -2,14 +2,14 @@ import { Keypair } from '@solana/web3.js';
 import { decodeUTF8 } from 'tweetnacl-util';
 import * as nacl from 'tweetnacl';
 import { _getSignDataEIP712, _getSignPreambleEIP712 } from '../../business/solana';
-import { Quote } from '../../interface/interface';
+import { Quote, NetworkType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 import { removePrefix0x } from '../../utils/format';
 
 export const _signQuoteByPrivateKey = (
     quote: Quote,
     privateKey: string,
-    network: string,
+    network: NetworkType,
     amount: string,
     swapToNative: number,
     receivingAddress: string,

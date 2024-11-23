@@ -1,8 +1,9 @@
 import { PreBusiness, evm } from '../src';
 import { Bridge, Relay, Quote, SignData } from '../src/index';
+import { NetworkType } from '../src/interface/interface';
 
 const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud';
-const NETWORK = 'mainnet';
+const NETWORK = NetworkType.MAINNET;
 const RPC_BSC = undefined;
 const RPC_OPT = 'https://optimism.llamarpc.com';
 

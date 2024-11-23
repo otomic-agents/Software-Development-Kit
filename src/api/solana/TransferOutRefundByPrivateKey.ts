@@ -1,13 +1,13 @@
 import { Connection, Keypair } from '@solana/web3.js';
 import { _getTransferOutRefundTransaction, getJsonRpcProvider, ensureSendingTx } from '../../business/solana';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { removePrefix0x } from '../../utils/format';
 import { ResponseSolana } from '../../interface/api';
 
 export const _transferOutRefundByPrivateKey = (
     preBusiness: PreBusiness,
     privateKey: string,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
     uuid?: string,
 ) =>

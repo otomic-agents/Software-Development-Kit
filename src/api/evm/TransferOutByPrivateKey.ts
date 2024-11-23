@@ -1,4 +1,4 @@
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { doApprove, doTransferOut, getJsonRpcProvider, _isNeedApprove } from '../../business/evm';
 import { ContractTransactionResponse, JsonRpcProvider, ethers } from 'ethers';
 import { ResponseTransferOut } from '../../interface/api';
@@ -7,7 +7,7 @@ import { sleep } from '../../utils/sleep';
 export const _transferOutByPrivateKey = (
     preBusiness: PreBusiness,
     privateKey: string,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
     useMaximumGasPriceAtMost: boolean,
 ) =>

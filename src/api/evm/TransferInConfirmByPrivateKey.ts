@@ -1,11 +1,11 @@
 import { ContractTransactionResponse, ethers, JsonRpcProvider } from 'ethers';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { doTransferInConfirm, getJsonRpcProviderByChainId } from '../../business/evm';
 
 export const _transferInConfirmByPrivateKey = (
     preBusiness: PreBusiness,
     privateKey: string,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
     sender: string,
     useMaximumGasPriceAtMost: boolean,

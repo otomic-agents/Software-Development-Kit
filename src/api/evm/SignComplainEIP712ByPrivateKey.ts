@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 import { _getComplainSignData } from '../../business/evm';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 
-export const _signComplainEIP712ByPrivateKey = (preBusiness: PreBusiness, privateKey: string, network: string) =>
+export const _signComplainEIP712ByPrivateKey = (preBusiness: PreBusiness, privateKey: string, network: NetworkType) =>
     new Promise<{ signData: any; signed: string }>(async (resolve, reject) => {
         try {
             const signData = await _getComplainSignData(preBusiness, network);

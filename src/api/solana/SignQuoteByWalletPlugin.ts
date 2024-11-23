@@ -1,13 +1,13 @@
 import { decodeUTF8 } from 'tweetnacl-util';
 import { _getSignDataEIP712, _getSignPreambleEIP712 } from '../../business/solana';
-import { Quote } from '../../interface/interface';
+import { Quote, NetworkType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 
 export const _signQuoteByWalletPlugin = (
     quote: Quote,
     phantomAPI: any,
     sender: string,
-    network: string,
+    network: NetworkType,
     amount: string,
     swapToNative: number,
     receivingAddress: string,

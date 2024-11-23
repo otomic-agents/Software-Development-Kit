@@ -177,3 +177,28 @@ export interface BusinessFullData {
     event_transfer_out_refund: any;
     event_transfer_in_refund: any;
 }
+
+export interface GetBusinessOptions {
+    detailed?: boolean;
+}
+
+export interface DstAmountSet {
+    dstAmount: string;
+    dstNativeAmount: string;
+}
+
+export enum ChainId {
+    AVAX = 9000,
+    BSC = 9006,
+    ETH = 60,
+    POLYGON = 966,
+    OPT = 614,
+    SOLANA = 501,
+    NEAR = 397,
+    XRP = 144,
+}
+
+export enum NetworkType {
+    MAINNET = 'mainnet',
+    TESTNET = 'testnet',
+}

@@ -19,7 +19,7 @@ import retry from 'async-retry';
 import idl from './solanaIdl';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { toBs58Address } from '../utils/format';
-import { PreBusiness, Quote } from '../interface/interface';
+import { PreBusiness, Quote, NetworkType, ChainId } from '../interface/interface';
 import {
     getOtmoicAddressBySystemChainId,
     getFeeRecepientAddressBySystemChainId,
@@ -63,70 +63,69 @@ export const getProvider = (rpc: string): Connection => {
     return new Connection(rpc, 'confirmed');
 };
 
-export const checkTokenInfoBoxExist = (system_chain_id: number, token_address: string) => {
-    if (cache.tokensInfo[system_chain_id] == undefined) cache.tokensInfo[system_chain_id] = {};
-    if (cache.tokensInfo[system_chain_id][token_address] == undefined)
-        cache.tokensInfo[system_chain_id][token_address] = {};
+export const checkTokenInfoBoxExist = (systemChainId: ChainId, tokenAddress: string) => {
+    if (cache.tokensInfo[systemChainId] == undefined) cache.tokensInfo[systemChainId] = {};
+    if (cache.tokensInfo[systemChainId][tokenAddress] == undefined) cache.tokensInfo[systemChainId][tokenAddress] = {};
 };
 
-export const decimals = (system_chain_id: number, token_address: string, rpc: string) =>
-    new Promise(async (resolve, reject) => {
+export const decimals = (systemChainId: ChainId, tokenAddress: string, rpc: string) =>
+    new Promise<number>(async (resolve, reject) => {
         try {
-            checkTokenInfoBoxExist(system_chain_id, token_address);
-            if (cache.tokensInfo[system_chain_id][token_address].decimals == undefined) {
-                if (isZeroAddress(token_address)) {
-                    cache.tokensInfo[system_chain_id][token_address].decimals = getNativeTokenDecimals(system_chain_id);
+            checkTokenInfoBoxExist(systemChainId, tokenAddress);
+            if (cache.tokensInfo[systemChainId][tokenAddress].decimals == undefined) {
+                if (isZeroAddress(tokenAddress)) {
+                    cache.tokensInfo[systemChainId][tokenAddress].decimals = getNativeTokenDecimals(systemChainId);
                 } else {
-                    let mintToken = new PublicKey(toBs58Address(token_address));
+                    let mintToken = new PublicKey(toBs58Address(tokenAddress));
                     let connection = getProvider(rpc);
                     let mintTokenAccountInfo = await connection.getAccountInfo(mintToken);
                     let tokenProgramId = mintTokenAccountInfo?.owner;
                     let mintInfo = await getMint(connection, mintToken, 'confirmed', tokenProgramId);
-                    cache.tokensInfo[system_chain_id][token_address].decimals = mintInfo.decimals;
+                    cache.tokensInfo[systemChainId][tokenAddress].decimals = mintInfo.decimals;
                 }
             }
-            resolve(cache.tokensInfo[system_chain_id][token_address].decimals);
+            resolve(cache.tokensInfo[systemChainId][tokenAddress].decimals);
         } catch (err) {
             reject(err);
         }
     });
 
-export const decimalsDefaultRpc = (system_chain_id: number, token_address: string, network: string) => {
-    const rpc = getDefaultRPC(system_chain_id, network);
-    return decimals(system_chain_id, token_address, rpc);
+export const decimalsDefaultRpc = (systemChainId: ChainId, tokenAddress: string, network: NetworkType) => {
+    const rpc = getDefaultRPC(systemChainId, network);
+    return decimals(systemChainId, tokenAddress, rpc);
 };
 
-export const symbol = (system_chain_id: number, token_address: string, rpc: string): Promise<string> =>
+export const symbol = (systemChainId: ChainId, tokenAddress: string, rpc: string): Promise<string> =>
     new Promise(async (resolve, reject) => {
         try {
-            checkTokenInfoBoxExist(system_chain_id, token_address);
-            if (cache.tokensInfo[system_chain_id][token_address].symbol == undefined) {
-                if (isZeroAddress(token_address)) {
-                    cache.tokensInfo[system_chain_id][token_address].symbol = getNativeTokenName(system_chain_id);
+            checkTokenInfoBoxExist(systemChainId, tokenAddress);
+            if (cache.tokensInfo[systemChainId][tokenAddress].symbol == undefined) {
+                if (isZeroAddress(tokenAddress)) {
+                    cache.tokensInfo[systemChainId][tokenAddress].symbol = getNativeTokenName(systemChainId);
                 } else {
-                    let mintToken = new PublicKey(toBs58Address(token_address));
+                    let mintToken = new PublicKey(toBs58Address(tokenAddress));
                     try {
                         const umi = createUmi(rpc);
                         let asset = await fetchDigitalAsset(umi, publicKey(mintToken.toBase58()));
                         if (asset && asset.metadata) {
-                            cache.tokensInfo[system_chain_id][token_address].symbol = asset.metadata.symbol;
+                            cache.tokensInfo[systemChainId][tokenAddress].symbol = asset.metadata.symbol;
                         }
                     } catch (err) {
                         if ((err as any).name === 'AccountNotFoundError') {
-                            cache.tokensInfo[system_chain_id][token_address].symbol = undefined;
+                            cache.tokensInfo[systemChainId][tokenAddress].symbol = undefined;
                         }
                     }
                 }
             }
-            resolve(cache.tokensInfo[system_chain_id][token_address].symbol);
+            resolve(cache.tokensInfo[systemChainId][tokenAddress].symbol);
         } catch (err) {
             reject(err);
         }
     });
 
-export const getDefaultRPC = (system_chain_id: number, network: string) => {
-    const isMainnet = network === 'mainnet';
-    switch (system_chain_id) {
+export const getDefaultRPC = (systemChainId: ChainId, network: NetworkType) => {
+    const isMainnet = network === NetworkType.MAINNET;
+    switch (systemChainId) {
         case 501:
             return isMainnet ? 'https://api.mainnet-beta.solana.com' : 'https://api.devnet.solana.com';
         default:
@@ -136,7 +135,7 @@ export const getDefaultRPC = (system_chain_id: number, network: string) => {
 
 export const _getSignDataEIP712 = async (
     quote: Quote,
-    network: string,
+    network: NetworkType,
     amount: string,
     dstAmount: string,
     dstNativeAmount: string,
@@ -243,19 +242,19 @@ export const _getSignPreambleEIP712 = (contractAddress: PublicKey, signerPubkeys
     return messagePreamble;
 };
 
-export const getJsonRpcProvider = (preBusiness: PreBusiness, rpc: string | undefined, network: string) => {
+export const getJsonRpcProvider = (preBusiness: PreBusiness, rpc: string | undefined, network: NetworkType) => {
     const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
     return new Connection(rpc === undefined ? getDefaultRPC(systemChainId, network) : rpc, 'confirmed');
 };
 
-export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undefined, network: string) => {
+export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undefined, network: NetworkType) => {
     return new Connection(rpc === undefined ? getDefaultRPC(chainId, network) : rpc, 'confirmed');
 };
 
 export const _getTransferOutTransaction = (
     preBusiness: PreBusiness,
     provider: Connection | undefined,
-    network: string,
+    network: NetworkType,
     pluginProvider?: Provider,
 ) =>
     new Promise<Transaction>(async (resolve, reject) => {
@@ -418,7 +417,7 @@ export const _getTransferOutTransaction = (
 export const _getTransferOutConfirmTransaction = (
     preBusiness: PreBusiness,
     provider: Connection | undefined,
-    network: string,
+    network: NetworkType,
     pluginProvider?: Provider,
 ) =>
     new Promise<Transaction>(async (resolve, reject) => {
@@ -548,7 +547,7 @@ export const _getTransferOutConfirmTransaction = (
 export const _getTransferOutRefundTransaction = (
     preBusiness: PreBusiness,
     provider: Connection | undefined,
-    network: string,
+    network: NetworkType,
     pluginProvider?: Provider,
 ) =>
     new Promise<Transaction>(async (resolve, reject) => {
@@ -659,7 +658,7 @@ export const _getTransferOutRefundTransaction = (
         }
     });
 
-export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, network: string, sender: string) =>
+export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, network: NetworkType, sender: string) =>
     new Promise<Transaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
@@ -795,7 +794,7 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
 export const doTransferInConfirm = (
     preBusiness: PreBusiness,
     provider: Connection,
-    network: string,
+    network: NetworkType,
     sender: string,
     signer: string,
 ) =>
@@ -907,7 +906,12 @@ export const doTransferInConfirm = (
         }
     });
 
-export const doTransferInRefund = (preBusiness: PreBusiness, provider: Connection, network: string, sender: string) =>
+export const doTransferInRefund = (
+    preBusiness: PreBusiness,
+    provider: Connection,
+    network: NetworkType,
+    sender: string,
+) =>
     new Promise<Transaction>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
@@ -999,7 +1003,7 @@ export const doTransferInRefund = (preBusiness: PreBusiness, provider: Connectio
     });
 
 export const getBalance = async (
-    network: string,
+    network: NetworkType,
     systemChainId: number,
     token: string,
     address: string,

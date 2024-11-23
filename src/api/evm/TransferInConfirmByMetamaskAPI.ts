@@ -1,11 +1,11 @@
 import { ContractTransactionResponse, ethers } from 'ethers';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { doTransferInConfirm } from '../../business/evm';
 
 export const _transferInConfirmByMetamaskAPI = (
     preBusiness: PreBusiness,
     metamaskAPI: any,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
     sender: string,
 ) =>

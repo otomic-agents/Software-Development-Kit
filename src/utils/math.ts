@@ -1,5 +1,5 @@
 import Bignumber from 'bignumber.js';
-import { Quote } from '../interface/interface';
+import { Quote, ChainId } from '../interface/interface';
 
 export const convertMinimumUnits = (amount: any, decimals: any) =>
     new Bignumber(amount).times(new Bignumber(10).pow(decimals)).toFixed(0);
@@ -45,21 +45,21 @@ export const mathReceived = (quote: Quote, amount: string, swapToNative: number)
     };
 };
 
-export const convertNativeMinimumUnits = (system_chain_id: number, amount: any): string => {
-    switch (system_chain_id) {
-        case 9000:
+export const convertNativeMinimumUnits = (systemChainId: ChainId, amount: any): string => {
+    switch (systemChainId) {
+        case ChainId.AVAX:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 9006:
+        case ChainId.BSC:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 60:
+        case ChainId.ETH:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 966:
+        case ChainId.POLYGON:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 614:
+        case ChainId.OPT:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 501:
+        case ChainId.SOLANA:
             return new Bignumber(amount).times(new Bignumber(10).pow(9)).toFixed(0);
         default:
-            throw new Error(`not support chain for now: ${system_chain_id}`);
+            throw new Error(`not support chain for now: ${systemChainId}`);
     }
 };

@@ -1,12 +1,12 @@
 import { _getSignDataEIP712 } from '../../business/evm';
-import { Quote, SignData } from '../../interface/interface';
+import { Quote, SignData, NetworkType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 
 export const _signQuoteEIP712ByMetamaskAPI = (
     quote: Quote,
     metamaskAPI: any,
     sender: string,
-    network: string,
+    network: NetworkType,
     amount: string,
     swapToNative: number,
     receivingAddress: string,

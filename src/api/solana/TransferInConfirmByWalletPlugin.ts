@@ -1,12 +1,12 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { doTransferInConfirm, getJsonRpcProviderByChainId } from '../../business/solana';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { ResponseSolana } from '../../interface/api';
 
 export const _transferInConfirmByWalletPlugin = (
     preBusiness: PreBusiness,
     phantomAPI: any,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
     sender: string,
 ) =>

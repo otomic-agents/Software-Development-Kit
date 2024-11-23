@@ -1,13 +1,13 @@
 import { Connection, Keypair } from '@solana/web3.js';
 import { doTransferInConfirm, getJsonRpcProviderByChainId, ensureSendingTx } from '../../business/solana';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { removePrefix0x } from '../../utils/format';
 import { ResponseSolana } from '../../interface/api';
 
 export const _transferInConfirmByPrivateKey = (
     preBusiness: PreBusiness,
     privateKey: string,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
     sender: string,
 ) =>

@@ -1,111 +1,108 @@
 import { toBs58Address } from './format';
+import { ChainId, NetworkType } from '../interface/interface';
 
-export const getNativeTokenName = (systemChainId: number): string => {
+export const getNativeTokenName = (systemChainId: ChainId): string => {
     switch (systemChainId) {
-        case 9000:
+        case ChainId.AVAX:
             return 'AVAX';
-        case 9006:
+        case ChainId.BSC:
             return 'BNB';
-        case 60:
+        case ChainId.ETH:
             return 'ETH';
-        case 966:
+        case ChainId.POLYGON:
             return 'MATIC';
-        case 614:
+        case ChainId.OPT:
             return 'ETH';
-        case 501:
+        case ChainId.SOLANA:
             return 'SOL';
-        case 397:
+        case ChainId.NEAR:
             return 'NEAR';
-        case 144:
+        case ChainId.XRP:
             return 'XRP';
         default:
             throw new Error(`not support chainId: ${systemChainId}`);
     }
 };
 
-export const getNativeTokenDecimals = (systemChainId: number): number => {
+export const getNativeTokenDecimals = (systemChainId: ChainId): number => {
     switch (systemChainId) {
-        case 9000:
+        case ChainId.AVAX:
+        case ChainId.BSC:
+        case ChainId.ETH:
+        case ChainId.POLYGON:
+        case ChainId.OPT:
             return 18;
-        case 9006:
-            return 18;
-        case 60:
-            return 18;
-        case 966:
-            return 18;
-        case 614:
-            return 18;
-        case 501:
+        case ChainId.SOLANA:
             return 9;
-        case 397:
+        case ChainId.NEAR:
             return 24;
-        case 144:
+        case ChainId.XRP:
             return 6;
         default:
             throw new Error(`not support chainId: ${systemChainId}`);
     }
 };
 
-export const getChainName = (systemChainId: number): string => {
+export const getChainName = (systemChainId: ChainId): string => {
     switch (systemChainId) {
-        case 9000:
+        case ChainId.AVAX:
             return 'AVAX';
-        case 9006:
+        case ChainId.BSC:
             return 'BSC';
-        case 60:
+        case ChainId.ETH:
             return 'ETH';
-        case 614:
+        case ChainId.OPT:
             return 'OPT';
-        case 966:
+        case ChainId.POLYGON:
             return 'Polygon';
-        case 397:
+        case ChainId.NEAR:
             return 'NEAR';
-        case 144:
+        case ChainId.XRP:
             return 'XRP';
-        case 501:
+        case ChainId.SOLANA:
             return 'Solana';
         default:
             throw new Error(`not support chainId: ${systemChainId}`);
     }
 };
 
-export const getChainId = (systemChainId: number, network: string) => {
-    const isMainnet = network == 'mainnet';
+export const getChainId = (systemChainId: ChainId, network: NetworkType): number => {
+    const isMainnet = network === NetworkType.MAINNET;
     switch (systemChainId) {
-        case 9006:
+        case ChainId.BSC:
             return isMainnet ? 56 : 97;
-        case 9000:
+        case ChainId.AVAX:
             return isMainnet ? 43114 : 43113;
-        case 966:
+        case ChainId.POLYGON:
             return isMainnet ? 137 : 80001;
-        case 60:
+        case ChainId.ETH:
             return isMainnet ? 1 : 11155111;
-        case 614:
+        case ChainId.OPT:
             return isMainnet ? 10 : 11155420;
         default:
-            break;
+            throw new Error(`not support chainId: ${systemChainId}`);
     }
 };
 
-export const getExpectedSingleStepTime = (systemChainIdSrc: number, systemChainIdDst: number): number => {
+export const getExpectedSingleStepTime = (systemChainIdSrc: ChainId, systemChainIdDst: ChainId): number => {
     let srcTimeLock = 0;
     switch (systemChainIdSrc) {
-        case 9000:
+        case ChainId.AVAX:
             srcTimeLock = 2 * 60;
             break;
-        case 9006:
+        case ChainId.BSC:
             srcTimeLock = 1 * 60;
             break;
-        case 614:
+        case ChainId.OPT:
             srcTimeLock = 1 * 60;
             break;
-        case 60:
+        case ChainId.ETH:
             srcTimeLock = 4 * 60;
             break;
-        case 966:
+        case ChainId.POLYGON:
             srcTimeLock = 1 * 60;
             break;
-        case 501:
+        case ChainId.SOLANA:
             srcTimeLock = 1 * 60;
             break;
         default:
@@ -114,22 +111,22 @@ export const getExpectedSingleStepTime = (systemChainIdSrc: number, systemChainI
 
     let dstTimeLock = 0;
     switch (systemChainIdDst) {
-        case 9000:
+        case ChainId.AVAX:
             dstTimeLock = 2 * 60;
             break;
-        case 9006:
+        case ChainId.BSC:
             dstTimeLock = 2 * 60;
             break;
-        case 614:
+        case ChainId.OPT:
             dstTimeLock = 1 * 60;
             break;
-        case 60:
+        case ChainId.ETH:
             dstTimeLock = 4 * 60;
             break;
-        case 966:
+        case ChainId.POLYGON:
             dstTimeLock = 1 * 60;
             break;
-        case 501:
+        case ChainId.SOLANA:
             srcTimeLock = 1 * 60;
             break;
         default:
@@ -143,25 +140,25 @@ export const getExpectedSingleStepTime = (systemChainIdSrc: number, systemChainI
     }
 };
 
-export const getTolerantSingleStepTime = (systemChainIdSrc: number, systemChainIdDst: number): number => {
+export const getTolerantSingleStepTime = (systemChainIdSrc: ChainId, systemChainIdDst: ChainId): number => {
     let srcTimeLock = 0;
     switch (systemChainIdSrc) {
-        case 9000:
+        case ChainId.AVAX:
             srcTimeLock = 4 * 60;
             break;
-        case 9006:
+        case ChainId.BSC:
             srcTimeLock = 2 * 60;
             break;
-        case 614:
+        case ChainId.OPT:
             srcTimeLock = 2 * 60;
             break;
-        case 60:
+        case ChainId.ETH:
             srcTimeLock = 8 * 60;
             break;
-        case 966:
+        case ChainId.POLYGON:
             srcTimeLock = 2 * 60;
             break;
-        case 501:
+        case ChainId.SOLANA:
             srcTimeLock = 2 * 60;
             break;
         default:
@@ -170,22 +167,22 @@ export const getTolerantSingleStepTime = (systemChainIdSrc: number, systemChainI
 
     let dstTimeLock = 0;
     switch (systemChainIdDst) {
-        case 9000:
+        case ChainId.AVAX:
             dstTimeLock = 4 * 60;
             break;
-        case 9006:
+        case ChainId.BSC:
             dstTimeLock = 4 * 60;
             break;
-        case 614:
+        case ChainId.OPT:
             dstTimeLock = 2 * 60;
             break;
-        case 60:
+        case ChainId.ETH:
             dstTimeLock = 8 * 60;
             break;
-        case 966:
+        case ChainId.POLYGON:
             dstTimeLock = 2 * 60;
             break;
-        case 501:
+        case ChainId.SOLANA:
             srcTimeLock = 2 * 60;
             break;
         default:
@@ -207,29 +204,29 @@ export const getDefaultEarliestRefundTime = (
     return agreementReachedTime + 3 * expectedSingleStepTime + 3 * tolerantSingleStepTime + 1;
 };
 
-export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: string): string => {
-    const isMainnet = network == 'mainnet';
+export const getOtmoicAddressBySystemChainId = (systemChainId: ChainId, network: NetworkType): string => {
+    const isMainnet = network == NetworkType.MAINNET;
 
     switch (systemChainId) {
-        case 9000:
+        case ChainId.AVAX:
             return isMainnet ? '' : '';
-        case 9006:
+        case ChainId.BSC:
             return isMainnet
                 ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84'
                 : '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84';
-        case 60:
+        case ChainId.ETH:
             return isMainnet ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84' : '';
-        case 966:
+        case ChainId.POLYGON:
             return isMainnet ? '' : '';
-        case 614:
+        case ChainId.OPT:
             return isMainnet
                 ? '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84'
                 : '0x6F12FED6Cd5BeBFA3351c447f7873B76178B1b84';
-        case 397:
+        case ChainId.NEAR:
             return isMainnet ? 'obridge.near' : 'otv1.saidev.testnet';
-        case 144:
+        case ChainId.XRP:
             return isMainnet ? '' : 'wss://s.altnet.rippletest.net:51233';
-        case 501:
+        case ChainId.SOLANA:
             return isMainnet
                 ? 'FAqaHQHgBFFX8fJB6fQUqNdc8zABV5pGVRdCt7fLLYVo'
                 : 'FAqaHQHgBFFX8fJB6fQUqNdc8zABV5pGVRdCt7fLLYVo';
@@ -238,11 +235,11 @@ export const getOtmoicAddressBySystemChainId = (systemChainId: number, network: 
     }
 };
 
-export const getFeeRecepientAddressBySystemChainId = (systemChainId: number, network: string): string => {
-    const isMainnet = network == 'mainnet';
+export const getFeeRecepientAddressBySystemChainId = (systemChainId: ChainId, network: NetworkType): string => {
+    const isMainnet = network == NetworkType.MAINNET;
 
     switch (systemChainId) {
-        case 501:
+        case ChainId.SOLANA:
             return isMainnet
                 ? 'Gexuvyazbb48d5U6voRna5ef1SLPRUNLiwavqEx8otgy'
                 : '8os21rmBjg63xMWuRK4vza3DxZ69AoQD6SffBBmnrpiQ';
@@ -251,19 +248,19 @@ export const getFeeRecepientAddressBySystemChainId = (systemChainId: number, net
     }
 };
 
-export const getChainType = (systemChainId: number): string => {
+export const getChainType = (systemChainId: ChainId): string => {
     switch (systemChainId) {
-        case 9000:
-        case 9006:
-        case 60:
-        case 966:
-        case 614:
+        case ChainId.AVAX:
+        case ChainId.BSC:
+        case ChainId.ETH:
+        case ChainId.POLYGON:
+        case ChainId.OPT:
             return 'evm';
-        case 397:
+        case ChainId.NEAR:
             return 'near';
-        case 144:
+        case ChainId.XRP:
             return 'xrp';
-        case 501:
+        case ChainId.SOLANA:
             return 'solana';
 
         default:
@@ -271,23 +268,23 @@ export const getChainType = (systemChainId: number): string => {
     }
 };
 
-export const getDefaultGasPrice = (systemChainId: number, network: string): bigint => {
-    const isMainnet = network == 'mainnet';
+export const getDefaultGasPrice = (systemChainId: ChainId, network: NetworkType): bigint => {
+    const isMainnet = network == NetworkType.MAINNET;
 
     // 1 gwei
     switch (systemChainId) {
-        case 9000:
+        case ChainId.AVAX:
             return isMainnet ? BigInt(1000000000) : BigInt(1000000000);
-        case 9006:
+        case ChainId.BSC:
             return isMainnet ? BigInt(1000000000) : BigInt(1000000000);
-        case 60:
+        case ChainId.ETH:
             return isMainnet ? BigInt(1000000000) : BigInt(1000000000);
-        case 966:
+        case ChainId.POLYGON:
             return isMainnet ? BigInt(1000000000) : BigInt(1000000000);
-        case 614:
+        case ChainId.OPT:
             // op is much lower than others
             return isMainnet ? BigInt(1000000) : BigInt(1000000);
-        case 501:
+        case ChainId.SOLANA:
             // in micro lamports
             return isMainnet ? BigInt(1) : BigInt(1);
         default:
@@ -295,23 +292,23 @@ export const getDefaultGasPrice = (systemChainId: number, network: string): bigi
     }
 };
 
-export const getMaximumGasPrice = (systemChainId: number, network: string): bigint => {
-    const isMainnet = network == 'mainnet';
+export const getMaximumGasPrice = (systemChainId: ChainId, network: NetworkType): bigint => {
+    const isMainnet = network == NetworkType.MAINNET;
 
     // 500 Gwei
     switch (systemChainId) {
-        case 9000:
+        case ChainId.AVAX:
             return isMainnet ? BigInt(5000000000) : BigInt(5000000000);
-        case 9006:
+        case ChainId.BSC:
             return isMainnet ? BigInt(5000000000) : BigInt(5000000000);
-        case 60:
+        case ChainId.ETH:
             return isMainnet ? BigInt(5000000000) : BigInt(5000000000);
-        case 966:
+        case ChainId.POLYGON:
             return isMainnet ? BigInt(5000000000) : BigInt(5000000000);
-        case 614:
+        case ChainId.OPT:
             // op is much lower than others
             return isMainnet ? BigInt(50000000) : BigInt(50000000);
-        case 501:
+        case ChainId.SOLANA:
             // in micro lamports
             return isMainnet ? BigInt(5000000) : BigInt(5000000);
         default:
@@ -319,8 +316,8 @@ export const getMaximumGasPrice = (systemChainId: number, network: string): bigi
     }
 };
 
-export const getTokenAddress = (contractAddress: string, systemChainId: number) => {
-    if (systemChainId == 501) {
+export const getTokenAddress = (contractAddress: string, systemChainId: ChainId) => {
+    if (systemChainId == ChainId.SOLANA) {
         if (contractAddress.startsWith('0x')) {
             return toBs58Address(contractAddress);
         } else {

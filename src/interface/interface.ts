@@ -1,3 +1,5 @@
+import { TypedDataField, TypedDataDomain } from 'ethers';
+
 export interface Bridge {
     bridge_id: number;
     src_chain_id: number;
@@ -201,4 +203,43 @@ export enum ChainId {
 export enum NetworkType {
     MAINNET = 'mainnet',
     TESTNET = 'testnet',
+}
+
+export interface ComplaintValue {
+    srcChainId: number;
+    srcAddress: string;
+    srcToken: string;
+    dstChainId: number;
+    dstAddress: string;
+    dstToken: string;
+    srcAmount: string;
+    dstAmount: string;
+    dstNativeAmount: string;
+    requestor: string;
+    lpId: string;
+    expectedSingleStepTime: number;
+    tolerantSingleStepTime: number;
+    earliestRefundTime: number;
+    agreementReachedTime: number;
+    userSign: string;
+    lpSign: string;
+}
+
+export interface ComplainSignData {
+    types: Record<string, TypedDataField[]>;
+    primaryType: string;
+    domain: TypedDataDomain;
+    message: ComplaintValue;
+}
+
+export interface ComplainSignedData {
+    signData: ComplainSignData;
+    signed: string;
+}
+
+export interface SignComplainEIP712Option {
+    getSignDataOnly?: boolean;
+    type?: 'privateKey' | 'termiPass';
+    privateKey?: string;
+    termiPassAPI?: any;
 }

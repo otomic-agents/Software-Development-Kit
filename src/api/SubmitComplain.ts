@@ -1,25 +1,5 @@
 import superagent from 'superagent';
-import { NetworkType } from '../interface/interface';
-
-export interface ComplaintValue {
-    srcChainId: string;
-    srcAddress: string;
-    srcToken: string;
-    dstChainId: string;
-    dstAddress: string;
-    dstToken: string;
-    srcAmount: string;
-    dstAmount: string;
-    dstNativeAmount: string;
-    requestor: string;
-    lpId: string;
-    expectedSingleStepTime: string;
-    tolerantSingleStepTime: string;
-    earliestRefundTime: string;
-    agreementReachedTime: string;
-    userSign: string;
-    lpSign: string;
-}
+import { NetworkType, ComplaintValue } from '../interface/interface';
 
 export const submitComplain = (network: NetworkType, value: ComplaintValue, signed: string, name: string) =>
     new Promise<boolean | string>(async (resolve, reject) => {

@@ -2,7 +2,7 @@ import { Contract, ContractTransaction, ContractTransactionResponse, JsonRpcProv
 import BigNumber from 'bignumber.js';
 
 import ABI from './evmABI';
-import { PreBusiness, Quote, NetworkType, ChainId } from '../interface/interface';
+import { PreBusiness, Quote, NetworkType, ChainId, ComplainSignData, ComplaintValue } from '../interface/interface';
 import {
     getChainId,
     getChainType,
@@ -741,7 +741,7 @@ export const getBalance = async (
     }
 };
 
-export const _getComplainSignData = async (preBusiness: PreBusiness, network: NetworkType) => {
+export const _getComplainSignData = (preBusiness: PreBusiness, network: NetworkType): ComplainSignData => {
     const eip712Domain = {
         name: 'Otmoic Reputation',
         version: '1',
@@ -774,7 +774,7 @@ export const _getComplainSignData = async (preBusiness: PreBusiness, network: Ne
         ],
     };
 
-    const complaintValue = {
+    const complaintValue: ComplaintValue = {
         srcChainId: preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
         srcAddress: toHexAddress(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
         srcToken: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token,

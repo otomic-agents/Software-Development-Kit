@@ -34,6 +34,12 @@ import { ChainId } from './interface/interface';
 export { ChainId };
 import { NetworkType } from './interface/interface';
 export { NetworkType };
+import { ComplainSignData } from './interface/interface';
+export { ComplainSignData };
+import { ComplainSignedData } from './interface/interface';
+export { ComplainSignedData };
+import { SignComplainEIP712Option } from './interface/interface';
+export { SignComplainEIP712Option };
 
 import {
     getChainName,
@@ -105,21 +111,14 @@ import { Provider } from '@coral-xyz/anchor';
 
 export namespace utils {
     export namespace utils {
-        export const GetChainName = (systemChainId: ChainId): string => {
-            return getChainName(systemChainId);
-        };
+        export const GetChainName = (systemChainId: ChainId): string => getChainName(systemChainId);
 
-        export const GetNativeTokenName = (systemChainId: ChainId): string => {
-            return getNativeTokenName(systemChainId);
-        };
+        export const GetNativeTokenName = (systemChainId: ChainId): string => getNativeTokenName(systemChainId);
 
-        export const GetChainId = (systemChainId: ChainId, network: NetworkType): number | undefined => {
-            return getChainId(systemChainId, network);
-        };
+        export const GetChainId = (systemChainId: ChainId, network: NetworkType): number | undefined =>
+            getChainId(systemChainId, network);
 
-        export const GetNativeTokenDecimals = (systemChainId: ChainId): number => {
-            return getNativeTokenDecimals(systemChainId);
-        };
+        export const GetNativeTokenDecimals = (systemChainId: ChainId): number => getNativeTokenDecimals(systemChainId);
 
         export const GetTokenDecimals = (
             systemChainId: ChainId,
@@ -142,31 +141,19 @@ export namespace utils {
             }
         };
 
-        export const GetChainType = (systemChainId: ChainId): string => {
-            return getChainType(systemChainId);
-        };
+        export const GetChainType = (systemChainId: ChainId): string => getChainType(systemChainId);
 
-        export const MathReceived = (quote: Quote, amount: string, swapToNative: number): DstAmountSet => {
-            return mathReceived(quote, amount, swapToNative);
-        };
+        export const MathReceived = (quote: Quote, amount: string, swapToNative: number): DstAmountSet =>
+            mathReceived(quote, amount, swapToNative);
 
-        export const GetTokenAddress = (contractAddress: string, systemChainId: ChainId): string => {
-            return getTokenAddress(contractAddress, systemChainId);
-        };
+        export const GetTokenAddress = (contractAddress: string, systemChainId: ChainId): string =>
+            getTokenAddress(contractAddress, systemChainId);
 
-        export const Sleep = (ms: number): Promise<void> => {
-            return sleep(ms);
-        };
+        export const Sleep = (ms: number): Promise<void> => sleep(ms);
     }
 }
 
 export namespace evm {
-    export const getComplainSignData = _getComplainSignData;
-
-    export const signComplainEIP712ByTermiPass = _signComplainEIP712ByTermiPass;
-
-    export const signComplainEIP712ByPrivateKey = _signComplainEIP712ByPrivateKey;
-
     export const getSignDataEIP712 = _getSignDataEIP712;
 
     export const isNeedApprove = _isNeedApprove;
@@ -597,17 +584,42 @@ export namespace business {
         }
     };
 
-    export const complainByPrivateKey = async (preBusiness: PreBusiness, privateKey: string, network: NetworkType) => {
+    export const complain = async (preBusiness: PreBusiness, privateKey: string, network: NetworkType) => {
         const name = await getDidName(privateKey, network);
         if (name != undefined) {
-            const signed = await evm.signComplainEIP712ByPrivateKey(preBusiness, privateKey, network);
+            const signed = await _signComplainEIP712ByPrivateKey(preBusiness, privateKey, network);
             return await submitComplain(network, signed.signData.message, signed.signed, name);
         } else {
             return 'wallet not terminus did owner';
         }
     };
 
-    export const SubmitComplain = submitComplain;
+    export const signComplainEIP712 = (
+        preBusiness: PreBusiness,
+        network: NetworkType,
+        option: SignComplainEIP712Option,
+    ): Promise<ComplainSignedData | ComplainSignData> => {
+        if (option.getSignDataOnly) {
+            return Promise.resolve(_getComplainSignData(preBusiness, network));
+        } else {
+            switch (option.type) {
+                case 'privateKey':
+                    if (!option.privateKey) {
+                        return Promise.reject('privateKey is required');
+                    }
+                    return _signComplainEIP712ByPrivateKey(preBusiness, option.privateKey, network);
+
+                case 'termiPass':
+                    if (!option.termiPassAPI) {
+                        return Promise.reject('termiPassAPI is required');
+                    }
+                    return _signComplainEIP712ByTermiPass(preBusiness, option.termiPassAPI, network);
+
+                default:
+                    return Promise.reject(`not support type: ${option.type}`);
+            }
+        }
+    };
 }
 
 export namespace assistive {

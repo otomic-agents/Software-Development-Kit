@@ -5,7 +5,7 @@ export const convertMinimumUnits = (amount: any, decimals: any) =>
     new Bignumber(amount).times(new Bignumber(10).pow(decimals)).toFixed(0);
 
 export const convertStandardUnits = (amount: any, decimals: any) =>
-    new Bignumber(amount).div(new Bignumber(10).pow(decimals)).toFixed(8);
+    new Bignumber(amount).div(new Bignumber(10).pow(decimals)).toFixed(8, Bignumber.ROUND_DOWN);
 
 export const mathReceived = (quote: Quote, amount: string, swapToNative: number) => {
     let price = new Bignumber(quote.quote_base.price);
@@ -25,18 +25,18 @@ export const mathReceived = (quote: Quote, amount: string, swapToNative: number)
     }
 
     if (shouldSwapToNative.comparedTo(swapToNativeMax) == 1) {
-        dstAmount = srcAmount.minus(swapToNativeMax).times(price).toFixed(8);
-        dstNativeAmount = new Bignumber(quote.quote_base.native_token_max).toFixed(8);
+        dstAmount = srcAmount.minus(swapToNativeMax).times(price).toFixed(8, Bignumber.ROUND_DOWN);
+        dstNativeAmount = new Bignumber(quote.quote_base.native_token_max).toFixed(8, Bignumber.ROUND_DOWN);
     } else if (shouldSwapToNative.comparedTo(swapToNativeMin) == -1) {
         if (srcAmount.comparedTo(swapToNativeMin) == -1) {
             // not support
         } else {
-            dstAmount = srcAmount.minus(swapToNativeMin).times(price).toFixed(8);
-            dstNativeAmount = new Bignumber(quote.quote_base.native_token_min).toFixed(8);
+            dstAmount = srcAmount.minus(swapToNativeMin).times(price).toFixed(8, Bignumber.ROUND_DOWN);
+            dstNativeAmount = new Bignumber(quote.quote_base.native_token_min).toFixed(8, Bignumber.ROUND_DOWN);
         }
     } else {
-        dstAmount = srcAmount.minus(shouldSwapToNative).times(price).toFixed(8);
-        dstNativeAmount = shouldSwapToNative.times(native_price).toFixed(8);
+        dstAmount = srcAmount.minus(shouldSwapToNative).times(price).toFixed(8, Bignumber.ROUND_DOWN);
+        dstNativeAmount = shouldSwapToNative.times(native_price).toFixed(8, Bignumber.ROUND_DOWN);
     }
 
     return {

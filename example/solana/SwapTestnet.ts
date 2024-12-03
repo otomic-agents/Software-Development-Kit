@@ -1,8 +1,19 @@
-import { PreBusiness, solana, utils } from '../../src';
-import { Bridge, Relay, Quote, SignData } from '../../src/index';
+import {
+    Bridge,
+    Relay,
+    Quote,
+    SwapSignData,
+    PreBusiness,
+    utils,
+    business,
+    NetworkType,
+    Business,
+    ResponseSolana,
+    SwapSignedData,
+} from '../../src/index';
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
-const NETWORK = 'testnet';
+const NETWORK = NetworkType.TESTNET;
 const RPC_SOLANA = 'https://api.devnet.solana.com';
 const RPC_BSC = 'https://data-seed-prebsc-2-s3.bnbchain.org:8545';
 
@@ -41,12 +52,10 @@ const doTxOut = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOut');
 
-        const txHash = await solana.transferOutByPrivateKey(
-            preBusiness,
-            process.env.WALLET_KEY as string,
-            NETWORK,
-            RPC_SOLANA,
-        );
+        const txHash = await business.transferOut(preBusiness, NETWORK, RPC_SOLANA, {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        });
         console.log('response tx out', txHash);
         resolve();
     });
@@ -59,7 +68,7 @@ const waitTxIn = (preBusiness: PreBusiness) =>
 
         while (succeed == false) {
             try {
-                const resp = await relay.getBusiness(preBusiness.hash);
+                const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
                 console.log(Date.now(), resp.step);
                 succeed = resp.step >= 3;
             } catch (e) {
@@ -75,12 +84,10 @@ const doTxOutCfm = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutCfm');
 
-        const { txHash } = await solana.transferOutConfirmByPrivateKey(
-            preBusiness,
-            process.env.WALLET_KEY as string,
-            NETWORK,
-            RPC_SOLANA,
-        );
+        const { txHash } = (await business.transferOutConfirm(preBusiness, NETWORK, RPC_SOLANA, {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        })) as ResponseSolana;
         console.log('response tx out confirm', txHash);
         resolve();
     });
@@ -93,7 +100,7 @@ const waitTxInCfm = (preBusiness: PreBusiness) =>
 
         while (succeed == false) {
             try {
-                const resp = await relay.getBusiness(preBusiness.hash);
+                const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
                 console.log(Date.now(), resp.step);
                 succeed = resp.step >= 5;
             } catch (e) {
@@ -108,12 +115,10 @@ const doTxRefund = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutRefund');
 
-        const { txHash } = await solana.transferOutRefundByPrivateKey(
-            preBusiness,
-            process.env.WALLET_KEY as string,
-            NETWORK,
-            RPC_SOLANA,
-        );
+        const { txHash } = (await business.transferOutRefund(preBusiness, NETWORK, RPC_SOLANA, {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        })) as ResponseSolana;
         console.log('response tx out refund', txHash);
         resolve();
     });
@@ -126,7 +131,7 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
 
         while (succeed == false) {
             try {
-                const resp = await relay.getBusiness(preBusiness.hash);
+                const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
                 console.log(Date.now(), resp.step);
                 succeed = resp.step >= 7;
             } catch (e) {
@@ -140,10 +145,9 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
 const swap = async () => {
     console.log('start solana swap on testnet');
     const quote = await Ask();
-    const signData: { signData: SignData; signed: string } = await solana.signQuoteByPrivateKey(
+    const signData: SwapSignedData = (await business.signQuote(
         NETWORK,
         quote,
-        process.env.WALLET_KEY as string,
         amount,
         0,
         '0x50724411eb1817822e2590a43a8F0859FCc6fCD5',
@@ -152,21 +156,25 @@ const swap = async () => {
         undefined,
         RPC_SOLANA,
         RPC_BSC,
-    );
+        {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        },
+    )) as SwapSignedData;
 
     console.log('signData', signData);
 
     const relay = new Relay(RELA_URL);
-    const business: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
-    console.log('business', business);
+    console.log('preBusiness', preBusiness);
 
-    if (business.locked == true) {
-        await doTxOut(business);
-        await waitTxIn(business);
+    if (preBusiness.locked == true) {
+        await doTxOut(preBusiness);
+        await waitTxIn(preBusiness);
 
-        await doTxOutCfm(business);
-        await waitTxInCfm(business);
+        await doTxOutCfm(preBusiness);
+        await waitTxInCfm(preBusiness);
 
         console.log('swap success');
         process.exit(0);
@@ -175,10 +183,9 @@ const swap = async () => {
 
 const refund = async () => {
     const quote = await Ask();
-    const signData: { signData: SignData; signed: string } = await solana.signQuoteByPrivateKey(
+    const signData: SwapSignedData = (await business.signQuote(
         NETWORK,
         quote,
-        process.env.WALLET_KEY as string,
         amount,
         0,
         '0x50724411eb1817822e2590a43a8F0859FCc6fCD5',
@@ -187,21 +194,25 @@ const refund = async () => {
         undefined,
         RPC_SOLANA,
         RPC_BSC,
-    );
+        {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        },
+    )) as SwapSignedData;
 
     console.log('signData', signData);
 
     const relay = new Relay(RELA_URL);
-    const business: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
-    console.log('business', business);
+    console.log('preBusiness', preBusiness);
 
-    if (business.locked == true) {
-        await doTxOut(business);
-        await waitTxIn(business);
+    if (preBusiness.locked == true) {
+        await doTxOut(preBusiness);
+        await waitTxIn(preBusiness);
 
-        await doTxRefund(business);
-        await waitTxInRefund(business);
+        await doTxRefund(preBusiness);
+        await waitTxInRefund(preBusiness);
 
         console.log('refund success');
         process.exit(0);

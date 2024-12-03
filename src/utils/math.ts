@@ -1,11 +1,11 @@
 import Bignumber from 'bignumber.js';
-import { Quote } from '../interface/interface';
+import { Quote, ChainId } from '../interface/interface';
 
 export const convertMinimumUnits = (amount: any, decimals: any) =>
     new Bignumber(amount).times(new Bignumber(10).pow(decimals)).toFixed(0);
 
 export const convertStandardUnits = (amount: any, decimals: any) =>
-    new Bignumber(amount).div(new Bignumber(10).pow(decimals)).toFixed(8);
+    new Bignumber(amount).div(new Bignumber(10).pow(decimals)).toFixed(8, Bignumber.ROUND_DOWN);
 
 export const mathReceived = (quote: Quote, amount: string, swapToNative: number) => {
     let price = new Bignumber(quote.quote_base.price);
@@ -25,18 +25,18 @@ export const mathReceived = (quote: Quote, amount: string, swapToNative: number)
     }
 
     if (shouldSwapToNative.comparedTo(swapToNativeMax) == 1) {
-        dstAmount = srcAmount.minus(swapToNativeMax).times(price).toFixed(8);
-        dstNativeAmount = new Bignumber(quote.quote_base.native_token_max).toFixed(8);
+        dstAmount = srcAmount.minus(swapToNativeMax).times(price).toFixed(8, Bignumber.ROUND_DOWN);
+        dstNativeAmount = new Bignumber(quote.quote_base.native_token_max).toFixed(8, Bignumber.ROUND_DOWN);
     } else if (shouldSwapToNative.comparedTo(swapToNativeMin) == -1) {
         if (srcAmount.comparedTo(swapToNativeMin) == -1) {
             // not support
         } else {
-            dstAmount = srcAmount.minus(swapToNativeMin).times(price).toFixed(8);
-            dstNativeAmount = new Bignumber(quote.quote_base.native_token_min).toFixed(8);
+            dstAmount = srcAmount.minus(swapToNativeMin).times(price).toFixed(8, Bignumber.ROUND_DOWN);
+            dstNativeAmount = new Bignumber(quote.quote_base.native_token_min).toFixed(8, Bignumber.ROUND_DOWN);
         }
     } else {
-        dstAmount = srcAmount.minus(shouldSwapToNative).times(price).toFixed(8);
-        dstNativeAmount = shouldSwapToNative.times(native_price).toFixed(8);
+        dstAmount = srcAmount.minus(shouldSwapToNative).times(price).toFixed(8, Bignumber.ROUND_DOWN);
+        dstNativeAmount = shouldSwapToNative.times(native_price).toFixed(8, Bignumber.ROUND_DOWN);
     }
 
     return {
@@ -45,21 +45,21 @@ export const mathReceived = (quote: Quote, amount: string, swapToNative: number)
     };
 };
 
-export const convertNativeMinimumUnits = (system_chain_id: number, amount: any): string => {
-    switch (system_chain_id) {
-        case 9000:
+export const convertNativeMinimumUnits = (systemChainId: ChainId, amount: any): string => {
+    switch (systemChainId) {
+        case ChainId.AVAX:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 9006:
+        case ChainId.BSC:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 60:
+        case ChainId.ETH:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 966:
+        case ChainId.POLYGON:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 614:
+        case ChainId.OPT:
             return new Bignumber(amount).times(new Bignumber(10).pow(18)).toFixed(0);
-        case 501:
+        case ChainId.SOLANA:
             return new Bignumber(amount).times(new Bignumber(10).pow(9)).toFixed(0);
         default:
-            throw new Error(`not support chain for now: ${system_chain_id}`);
+            throw new Error(`not support chain for now: ${systemChainId}`);
     }
 };

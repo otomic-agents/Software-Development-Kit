@@ -1,8 +1,7 @@
-import { PreBusiness, evm } from '../src';
-import { Bridge, Relay, Quote, SignData } from '../src/index';
+import { Bridge, Relay, Quote, business, NetworkType, SwapSignedData, PreBusiness } from '../src/index';
 
 const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud';
-const NETWORK = 'mainnet';
+const NETWORK = NetworkType.MAINNET;
 const RPC_BSC = undefined;
 const RPC_OPT = 'https://optimism.llamarpc.com';
 
@@ -46,10 +45,9 @@ const waitTxInCfm = () => new Promise<void>((resolve, reject) => {});
 const swap = async () => {
     const quote = await Ask();
 
-    const signData: { signData: SignData; signed: string } = await evm.signQuoteEIP712ByPrivateKey(
+    const signData: SwapSignedData = (await business.signQuote(
         NETWORK,
         quote,
-        process.env.WALLET_KEY as string,
         '20',
         0,
         '0x1C55a22A2AD9c2921706306ADFBdBee009987fce',
@@ -58,16 +56,20 @@ const swap = async () => {
         undefined,
         RPC_BSC,
         RPC_OPT,
-    );
+        {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        },
+    )) as SwapSignedData;
 
     console.log('signData', signData);
 
     const relay = new Relay(RELA_URL);
-    const business: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
-    console.log('business', business);
+    console.log('preBusiness', preBusiness);
 
-    if (business.locked) {
+    if (preBusiness.locked) {
         await doTxOut();
         await waitTxIn();
         await doTxOutCfm();

@@ -1,12 +1,12 @@
 import { _getSignDataEIP712 } from '../../business/evm';
-import { Quote, SignData } from '../../interface/interface';
+import { Quote, SwapSignData, SwapSignedData, NetworkType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 
 export const _signQuoteEIP712ByMetamaskAPI = (
     quote: Quote,
     metamaskAPI: any,
     sender: string,
-    network: string,
+    network: NetworkType,
     amount: string,
     swapToNative: number,
     receivingAddress: string,
@@ -16,11 +16,11 @@ export const _signQuoteEIP712ByMetamaskAPI = (
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) =>
-    new Promise<{ signData: SignData; signed: string }>(async (resolve, reject) => {
+    new Promise<SwapSignedData>(async (resolve, reject) => {
         try {
             const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
 
-            const signData: SignData = await _getSignDataEIP712(
+            const signData: SwapSignData = await _getSignDataEIP712(
                 quote,
                 network,
                 amount,

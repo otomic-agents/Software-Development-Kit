@@ -1,12 +1,12 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { _getTransferOutRefundTransaction, getJsonRpcProvider } from '../../business/solana';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { ResponseSolana } from '../../interface/api';
 
 export const _transferOutRefundByWalletPlugin = (
     preBusiness: PreBusiness,
     phantomAPI: any,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
 ) =>
     new Promise<ResponseSolana>(async (resolve, reject) => {

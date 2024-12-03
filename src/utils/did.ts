@@ -1,13 +1,14 @@
 import { ethers } from 'ethers';
 import superagent from 'superagent';
+import { NetworkType } from '../interface/interface';
 
-export const getDidName = (privateKey: string, network: string) =>
+export const getDidName = (privateKey: string, network: NetworkType) =>
     new Promise<string | undefined>((resolve, reject) => {
         const w = new ethers.Wallet(privateKey);
 
         superagent
             .get(
-                `https://${network == 'mainnet' ? 'did-support.ursa-services.bttcdn.com' : 'testnet-did-support.ursa-services.bttcdn.com'}/find/owner/${w.address}`,
+                `https://${network == NetworkType.MAINNET ? 'did-support.ursa-services.bttcdn.com' : 'testnet-did-support.ursa-services.bttcdn.com'}/find/owner/${w.address}`,
             )
             .set('Content-Type', 'application/json')
             .then((resp) => {

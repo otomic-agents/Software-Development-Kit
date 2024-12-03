@@ -1,10 +1,10 @@
 import { getDefaultRPC, symbol } from '../business/evm';
 import { getDefaultRPC as getSolanaDefaultRPC, symbol as solanaSymbol } from '../business/solana';
 import { TranslatedBridge } from '../interface/api';
-import { Bridge } from '../interface/interface';
+import { Bridge, NetworkType } from '../interface/interface';
 import { getChainName, getChainType } from '../utils/chain';
 
-export const translateBridge = (bridges: Bridge[], network: string, rpcs: { [key: string]: string }) =>
+export const translateBridge = (bridges: Bridge[], network: NetworkType, rpcs: { [key: string]: string }) =>
     new Promise<TranslatedBridge[]>(async (resolve, reject) => {
         try {
             const translatedBridges: TranslatedBridge[] = [];

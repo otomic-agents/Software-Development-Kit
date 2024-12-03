@@ -1,8 +1,18 @@
-import { PreBusiness, evm, utils } from '../src';
-import { Bridge, Relay, Quote, SignData } from '../src/index';
+import {
+    Bridge,
+    Relay,
+    Quote,
+    SwapSignedData,
+    PreBusiness,
+    evm,
+    utils,
+    business,
+    NetworkType,
+    Business,
+} from '../src/index';
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
-const NETWORK = 'testnet';
+const NETWORK = NetworkType.TESTNET;
 const RPC_BSC = 'https://bsc-testnet-rpc.publicnode.com';
 const RPC_SOLANA = 'https://api.devnet.solana.com';
 
@@ -41,13 +51,11 @@ const doTxOut = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOut');
 
-        const resp = await evm.transferOutByPrivateKey(
-            preBusiness,
-            process.env.WALLET_KEY as string,
-            NETWORK,
-            RPC_BSC,
-            false,
-        );
+        const resp = await business.transferOut(preBusiness, NETWORK, RPC_BSC, {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+            useMaximumGasPriceAtMost: false,
+        });
         console.log('response tx out', resp);
         resolve();
     });
@@ -59,7 +67,7 @@ const waitTxIn = (preBusiness: PreBusiness) =>
         let succeed = false;
 
         while (succeed == false) {
-            const resp = await relay.getBusiness(preBusiness.hash);
+            const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
             succeed = resp.step >= 3;
             console.log('waitTxIn', resp.step);
             await utils.Sleep(1000);
@@ -72,13 +80,11 @@ const doTxOutCfm = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutCfm');
 
-        const resp = await evm.transferOutConfirmByPrivateKey(
-            preBusiness,
-            process.env.WALLET_KEY as string,
-            NETWORK,
-            RPC_BSC,
-            false,
-        );
+        const resp = await business.transferOutConfirm(preBusiness, NETWORK, RPC_BSC, {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+            useMaximumGasPriceAtMost: false,
+        });
         console.log('response tx out confirm', resp);
         resolve();
     });
@@ -90,7 +96,7 @@ const waitTxInCfm = (preBusiness: PreBusiness) =>
         let succeed = false;
 
         while (succeed == false) {
-            const resp = await relay.getBusiness(preBusiness.hash);
+            const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
             succeed = resp.step >= 5;
             console.log('waitCfmIn', resp.step);
             await utils.Sleep(1000);
@@ -114,13 +120,11 @@ const doTxOutRefund = (preBusiness: PreBusiness) =>
             );
         }
 
-        const resp = await evm.transferOutRefundByPrivateKey(
-            preBusiness,
-            process.env.WALLET_KEY as string,
-            NETWORK,
-            RPC_BSC,
-            false,
-        );
+        const resp = await business.transferOutRefund(preBusiness, NETWORK, RPC_BSC, {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+            useMaximumGasPriceAtMost: false,
+        });
         console.log('response tx out refund', resp);
         resolve();
     });
@@ -132,7 +136,7 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
         let succeed = false;
 
         while (succeed == false) {
-            const resp = await relay.getBusiness(preBusiness.hash);
+            const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
             succeed = resp.step >= 7;
             console.log('waitCfmRefund', resp.step);
             await utils.Sleep(1000);
@@ -144,10 +148,9 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
 const swap = async () => {
     const quote = await Ask();
 
-    const signData: { signData: SignData; signed: string } = await evm.signQuoteEIP712ByPrivateKey(
+    const signData: SwapSignedData = (await business.signQuote(
         NETWORK,
         quote,
-        process.env.WALLET_KEY as string,
         amount,
         0,
         '0xfee69ce6840ffcc48af425d5827e8dbcb1a9afd688ef206ee3da5c9ef23503dc',
@@ -156,20 +159,24 @@ const swap = async () => {
         undefined,
         RPC_BSC,
         RPC_SOLANA,
-    );
+        {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        },
+    )) as SwapSignedData;
 
     console.log('signData', signData);
 
     const relay = new Relay(RELA_URL);
-    const business: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
-    console.log('business', business);
+    console.log('preBusiness', preBusiness);
 
-    if (business.locked == true) {
-        await doTxOut(business);
-        await waitTxIn(business);
-        await doTxOutCfm(business);
-        await waitTxInCfm(business);
+    if (preBusiness.locked == true) {
+        await doTxOut(preBusiness);
+        await waitTxIn(preBusiness);
+        await doTxOutCfm(preBusiness);
+        await waitTxInCfm(preBusiness);
         console.log('swap success');
         process.exit(0);
     }
@@ -177,10 +184,9 @@ const swap = async () => {
 
 const refund = async () => {
     const quote = await Ask();
-    const signData: { signData: SignData; signed: string } = await evm.signQuoteEIP712ByPrivateKey(
+    const signData: SwapSignedData = (await business.signQuote(
         NETWORK,
         quote,
-        process.env.WALLET_KEY as string,
         amount,
         0,
         '0xfee69ce6840ffcc48af425d5827e8dbcb1a9afd688ef206ee3da5c9ef23503dc',
@@ -189,21 +195,25 @@ const refund = async () => {
         undefined,
         RPC_BSC,
         RPC_SOLANA,
-    );
+        {
+            type: 'privateKey',
+            privateKey: process.env.WALLET_KEY as string,
+        },
+    )) as SwapSignedData;
 
     console.log('signData', signData);
 
     const relay = new Relay(RELA_URL);
-    const business: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
-    console.log('business', business);
+    console.log('preBusiness', preBusiness);
 
-    if (business.locked == true) {
-        await doTxOut(business);
-        await waitTxIn(business);
+    if (preBusiness.locked == true) {
+        await doTxOut(preBusiness);
+        await waitTxIn(preBusiness);
 
-        await doTxOutRefund(business);
-        await waitTxInRefund(business);
+        await doTxOutRefund(preBusiness);
+        await waitTxInRefund(preBusiness);
         console.log('refund success');
         process.exit(0);
     }

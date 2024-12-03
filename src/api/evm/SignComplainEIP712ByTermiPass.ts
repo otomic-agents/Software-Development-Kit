@@ -1,10 +1,14 @@
 import { _getComplainSignData } from '../../business/evm';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType, ComplainSignedData } from '../../interface/interface';
 
-export const _signComplainEIP712ByTermiPass = (preBusiness: PreBusiness, termiPassAPI: any, network: string) =>
+export const _signComplainEIP712ByTermiPass = (
+    preBusiness: PreBusiness,
+    termiPassAPI: any,
+    network: NetworkType,
+): Promise<ComplainSignedData> =>
     new Promise<{ signData: any; signed: string }>(async (resolve, reject) => {
         try {
-            const signData = await _getComplainSignData(preBusiness, network);
+            const signData = _getComplainSignData(preBusiness, network);
 
             const signed = await termiPassAPI.signTypeData(
                 signData.domain,

@@ -1,3 +1,7 @@
+import { Connection } from '@solana/web3.js';
+import { Provider } from '@coral-xyz/anchor';
+import { TypedDataField, TypedDataDomain } from 'ethers';
+
 export interface Bridge {
     bridge_id: number;
     src_chain_id: number;
@@ -51,8 +55,8 @@ export interface AskIF {
     amount: string;
 }
 
-export interface SignData {
-    types: {
+export interface SwapSignData {
+    types?: {
         Message: {
             name: string;
             type: string;
@@ -62,8 +66,8 @@ export interface SignData {
             type: string;
         }[];
     };
-    primaryType: string;
-    domain: {
+    primaryType?: string;
+    domain?: {
         name: string;
         version: string;
         chainId: number | undefined;
@@ -87,6 +91,20 @@ export interface SignData {
         tolerant_single_step_time: number;
         earliest_refund_time: number;
     };
+}
+
+export interface SwapSignedData {
+    signData: SwapSignData;
+    signed: string;
+}
+
+export interface SignSwapOption {
+    getSignDataOnly?: boolean;
+    type?: 'privateKey' | 'metamaskAPI' | 'phantomAPI';
+    privateKey?: string;
+    metamaskAPI?: any;
+    phantomAPI?: any;
+    sender?: string;
 }
 
 export interface SwapAssetInformation {
@@ -176,4 +194,84 @@ export interface BusinessFullData {
     event_transfer_in_confirm: any;
     event_transfer_out_refund: any;
     event_transfer_in_refund: any;
+}
+
+export interface GetBusinessOptions {
+    detailed?: boolean;
+}
+
+export interface DstAmountSet {
+    dstAmount: string;
+    dstNativeAmount: string;
+}
+
+export enum ChainId {
+    AVAX = 9000,
+    BSC = 9006,
+    ETH = 60,
+    POLYGON = 966,
+    OPT = 614,
+    SOLANA = 501,
+    NEAR = 397,
+    XRP = 144,
+}
+
+export enum NetworkType {
+    MAINNET = 'mainnet',
+    TESTNET = 'testnet',
+}
+
+export interface ComplaintValue {
+    srcChainId: number;
+    srcAddress: string;
+    srcToken: string;
+    dstChainId: number;
+    dstAddress: string;
+    dstToken: string;
+    srcAmount: string;
+    dstAmount: string;
+    dstNativeAmount: string;
+    requestor: string;
+    lpId: string;
+    expectedSingleStepTime: number;
+    tolerantSingleStepTime: number;
+    earliestRefundTime: number;
+    agreementReachedTime: number;
+    userSign: string;
+    lpSign: string;
+}
+
+export interface ComplainSignData {
+    types: Record<string, TypedDataField[]>;
+    primaryType: string;
+    domain: TypedDataDomain;
+    message: ComplaintValue;
+}
+
+export interface ComplainSignedData {
+    signData: ComplainSignData;
+    signed: string;
+}
+
+export interface SignComplainEIP712Option {
+    getSignDataOnly?: boolean;
+    type?: 'privateKey' | 'termiPass';
+    privateKey?: string;
+    termiPassAPI?: any;
+}
+
+export interface SwapTransactionOption {
+    getTxDataOnly?: boolean;
+    type?: 'privateKey' | 'metamaskAPI' | 'phantomAPI';
+    privateKey?: string;
+    metamaskAPI?: any;
+    phantomAPI?: any;
+    useMaximumGasPriceAtMost?: boolean;
+    provider?: Connection;
+    pluginProvider?: Provider;
+}
+
+export interface GasPrice {
+    amount: bigint;
+    usedMaximum: boolean;
 }

@@ -1,9 +1,9 @@
 import { getBalance as getBalanceEVM } from '../business/evm';
 import { getBalance as getBalanceSOLANA } from '../business/solana';
-import { Bridge } from '../interface/interface';
+import { Bridge, NetworkType } from '../interface/interface';
 import { getChainType } from '../utils/chain';
 
-export const getBalance = (bridge: Bridge, address: string, network: string, rpc: string | undefined) =>
+export const getBalance = (bridge: Bridge, address: string, network: NetworkType, rpc: string | undefined) =>
     new Promise<string>(async (resolve, reject) => {
         try {
             switch (getChainType(bridge.src_chain_id)) {

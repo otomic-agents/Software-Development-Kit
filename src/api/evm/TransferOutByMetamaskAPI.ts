@@ -1,12 +1,12 @@
 import { ContractTransactionResponse, ethers } from 'ethers';
-import { PreBusiness } from '../../interface/interface';
+import { PreBusiness, NetworkType } from '../../interface/interface';
 import { ResponseTransferOut } from '../../interface/api';
 import { doApprove, doTransferOut, getJsonRpcProvider, _isNeedApprove } from '../../business/evm';
 
 export const _transferOutByMetamaskAPI = (
     preBusiness: PreBusiness,
     metamaskAPI: any,
-    network: string,
+    network: NetworkType,
     rpc: string | undefined,
 ) =>
     new Promise<ResponseTransferOut>(async (resolve, reject) => {

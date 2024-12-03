@@ -335,7 +335,7 @@ export namespace business {
                 } else {
                     switch (option.type) {
                         case 'privateKey':
-                            if (!option.privateKey || !option.useMaximumGasPriceAtMost) {
+                            if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
                                 return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
                             }
                             return _transferOutByPrivateKey(
@@ -399,7 +399,7 @@ export namespace business {
                 } else {
                     switch (option.type) {
                         case 'privateKey':
-                            if (!option.privateKey || !option.useMaximumGasPriceAtMost) {
+                            if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
                                 return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
                             }
                             return _transferOutConfirmByPrivateKey(
@@ -469,7 +469,7 @@ export namespace business {
                 } else {
                     switch (option.type) {
                         case 'privateKey':
-                            if (!option.privateKey || !option.useMaximumGasPriceAtMost) {
+                            if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
                                 return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
                             }
                             return _transferInConfirmByPrivateKey(
@@ -552,7 +552,7 @@ export namespace business {
                 } else {
                     switch (option.type) {
                         case 'privateKey':
-                            if (!option.privateKey || !option.useMaximumGasPriceAtMost) {
+                            if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
                                 return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
                             }
                             return _transferOutRefundByPrivateKey(

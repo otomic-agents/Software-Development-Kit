@@ -19,7 +19,7 @@ import retry from 'async-retry';
 import idl from './solanaIdl';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { toBs58Address } from '../utils/format';
-import { PreBusiness, Quote, NetworkType, ChainId } from '../interface/interface';
+import { PreBusiness, Quote, NetworkType, ChainId, SwapSignData } from '../interface/interface';
 import {
     getOtmoicAddressBySystemChainId,
     getFeeRecepientAddressBySystemChainId,
@@ -146,7 +146,7 @@ export const _getSignDataEIP712 = async (
     earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
-) => {
+): Promise<SwapSignData> => {
     let srcDecimals: any;
     if (getChainType(quote.quote_base.bridge.src_chain_id) === 'solana') {
         srcDecimals = await decimals(

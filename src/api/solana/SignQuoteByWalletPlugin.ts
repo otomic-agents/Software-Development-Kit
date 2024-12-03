@@ -1,6 +1,6 @@
 import { decodeUTF8 } from 'tweetnacl-util';
 import { _getSignDataEIP712, _getSignPreambleEIP712 } from '../../business/solana';
-import { Quote, NetworkType } from '../../interface/interface';
+import { Quote, NetworkType, SwapSignedData } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 
 export const _signQuoteByWalletPlugin = (
@@ -17,7 +17,7 @@ export const _signQuoteByWalletPlugin = (
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) =>
-    new Promise<{ signData: any; signed: string }>(async (resolve, reject) => {
+    new Promise<SwapSignedData>(async (resolve, reject) => {
         try {
             const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
 

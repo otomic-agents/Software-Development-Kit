@@ -1,7 +1,7 @@
 import superagent from 'superagent';
-import { PreBusiness, Quote, SignData } from '../interface/interface';
+import { PreBusiness, Quote, SwapSignData } from '../interface/interface';
 
-export const _swap = (quote: Quote, signData: SignData, signed: string, relayUrl: string) =>
+export const _swap = (quote: Quote, signData: SwapSignData, signed: string, relayUrl: string) =>
     new Promise<PreBusiness>((resolve, reject) => {
         const data = {
             quote: quote,

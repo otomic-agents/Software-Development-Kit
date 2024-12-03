@@ -2,7 +2,16 @@ import { Contract, ContractTransaction, ContractTransactionResponse, JsonRpcProv
 import BigNumber from 'bignumber.js';
 
 import ABI from './evmABI';
-import { PreBusiness, Quote, NetworkType, ChainId, ComplainSignData, ComplaintValue } from '../interface/interface';
+import {
+    PreBusiness,
+    Quote,
+    NetworkType,
+    ChainId,
+    ComplainSignData,
+    ComplaintValue,
+    SwapSignData,
+    GasPrice,
+} from '../interface/interface';
 import {
     getChainId,
     getChainType,
@@ -137,7 +146,7 @@ export const _getSignDataEIP712 = async (
     earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
-) => {
+): Promise<SwapSignData> => {
     const domain = {
         name: 'OtmoicSwap',
         version: '1',
@@ -262,11 +271,11 @@ export const getJsonRpcProviderByChainId = (chainId: number, rpc: string | undef
 
 export const _isNeedApprove = (
     preBusiness: PreBusiness,
-    user_wallet: string,
+    userWallet: string,
     rpc: string | undefined,
     network: NetworkType,
 ) =>
-    new Promise<Boolean>(async (resolve, reject) => {
+    new Promise<boolean>(async (resolve, reject) => {
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
             const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token;
@@ -282,7 +291,7 @@ export const _isNeedApprove = (
                 systemChainId,
                 tokenAddress,
                 rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc,
-            ).allowance(user_wallet, getOtmoicAddressBySystemChainId(systemChainId, network));
+            ).allowance(userWallet, getOtmoicAddressBySystemChainId(systemChainId, network));
             resolve(new BigNumber(amount).comparedTo(allowance.toString()) == 1);
         } catch (err) {
             reject(err);
@@ -719,7 +728,7 @@ export const _getTransferOutRefundTransfer = (preBusiness: PreBusiness, network:
 
 export const getBalance = async (
     network: NetworkType,
-    systemChainId: number,
+    systemChainId: ChainId,
     token: string,
     address: string,
     rpc: string | undefined,
@@ -802,14 +811,9 @@ export const _getComplainSignData = (preBusiness: PreBusiness, network: NetworkT
     };
 };
 
-type GasPrice = {
-    amount: bigint;
-    usedMaximum: boolean;
-};
-
 export async function _getGasPrice(
     provider: JsonRpcProvider,
-    systemChainId: number,
+    systemChainId: ChainId,
     network: NetworkType,
 ): Promise<GasPrice> {
     let gasPrice = await getGasPriceFromNode(provider);
@@ -836,7 +840,7 @@ export async function _getGasPrice(
     return ret;
 }
 
-export async function _getOnChainGasPrice(systemChainId: number, network: NetworkType): Promise<bigint> {
+export async function _getOnChainGasPrice(systemChainId: ChainId, network: NetworkType): Promise<bigint> {
     const provider = getProvider(getDefaultRPC(systemChainId, network));
 
     let gasPrice = await getGasPriceFromNode(provider);

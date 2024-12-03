@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { _getSignDataEIP712 } from '../../business/evm';
-import { Quote, SignData, NetworkType } from '../../interface/interface';
+import { Quote, SwapSignData, SwapSignedData, NetworkType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 
 export const _signQuoteEIP712ByPrivateKey = (
@@ -16,11 +16,11 @@ export const _signQuoteEIP712ByPrivateKey = (
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
 ) =>
-    new Promise<{ signData: SignData; signed: string }>(async (resolve, reject) => {
+    new Promise<SwapSignedData>(async (resolve, reject) => {
         try {
             const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
 
-            const signData: SignData = await _getSignDataEIP712(
+            const signData: SwapSignData = await _getSignDataEIP712(
                 quote,
                 network,
                 amount,
@@ -40,8 +40,8 @@ export const _signQuoteEIP712ByPrivateKey = (
             signData.message.requestor = web3Wallet.address;
 
             const signed = await web3Wallet.signTypedData(
-                signData.domain,
-                { Message: signData.types.Message },
+                signData.domain!,
+                { Message: signData.types!.Message },
                 signData.message,
             );
 

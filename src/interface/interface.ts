@@ -1,3 +1,5 @@
+import { Connection } from '@solana/web3.js';
+import { Provider } from '@coral-xyz/anchor';
 import { TypedDataField, TypedDataDomain } from 'ethers';
 
 export interface Bridge {
@@ -53,8 +55,8 @@ export interface AskIF {
     amount: string;
 }
 
-export interface SignData {
-    types: {
+export interface SwapSignData {
+    types?: {
         Message: {
             name: string;
             type: string;
@@ -64,8 +66,8 @@ export interface SignData {
             type: string;
         }[];
     };
-    primaryType: string;
-    domain: {
+    primaryType?: string;
+    domain?: {
         name: string;
         version: string;
         chainId: number | undefined;
@@ -89,6 +91,20 @@ export interface SignData {
         tolerant_single_step_time: number;
         earliest_refund_time: number;
     };
+}
+
+export interface SwapSignedData {
+    signData: SwapSignData;
+    signed: string;
+}
+
+export interface SignSwapOption {
+    getSignDataOnly?: boolean;
+    type?: 'privateKey' | 'metamaskAPI' | 'phantomAPI';
+    privateKey?: string;
+    metamaskAPI?: any;
+    phantomAPI?: any;
+    sender?: string;
 }
 
 export interface SwapAssetInformation {
@@ -242,4 +258,20 @@ export interface SignComplainEIP712Option {
     type?: 'privateKey' | 'termiPass';
     privateKey?: string;
     termiPassAPI?: any;
+}
+
+export interface SwapTransactionOption {
+    getTxDataOnly?: boolean;
+    type?: 'privateKey' | 'metamaskAPI' | 'phantomAPI';
+    privateKey?: string;
+    metamaskAPI?: any;
+    phantomAPI?: any;
+    useMaximumGasPriceAtMost?: boolean;
+    provider?: Connection;
+    pluginProvider?: Provider;
+}
+
+export interface GasPrice {
+    amount: bigint;
+    usedMaximum: boolean;
 }

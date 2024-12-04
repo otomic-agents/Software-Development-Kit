@@ -694,10 +694,10 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
             let tokenProgramId = mintTokenAccountInfo!.owner;
 
             // amount
-            let amount = new BN(preBusiness.swap_asset_information.dst_amount);
+            let amount = new BN(preBusiness.swap_asset_information.dst_amount_need);
 
             // sol amount
-            let solAmount = new BN(preBusiness.swap_asset_information.dst_native_amount);
+            let solAmount = new BN(preBusiness.swap_asset_information.dst_native_amount_need);
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
@@ -726,8 +726,8 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
                 tolerantSingleStepTime.toString(),
                 earliestRefundTime.toString(),
                 token,
-                preBusiness.swap_asset_information.dst_amount,
-                preBusiness.swap_asset_information.dst_native_amount,
+                preBusiness.swap_asset_information.dst_amount_need,
+                preBusiness.swap_asset_information.dst_native_amount_need,
             );
 
             // source ata token account
@@ -862,8 +862,8 @@ export const doTransferInConfirm = (
                 tolerantSingleStepTime.toString(),
                 earliestRefundTime.toString(),
                 token,
-                preBusiness.swap_asset_information.dst_amount,
-                preBusiness.swap_asset_information.dst_native_amount,
+                preBusiness.swap_asset_information.dst_amount_need,
+                preBusiness.swap_asset_information.dst_native_amount_need,
             );
 
             // hash preimage
@@ -973,8 +973,8 @@ export const doTransferInRefund = (
                 tolerantSingleStepTime.toString(),
                 earliestRefundTime.toString(),
                 token,
-                preBusiness.swap_asset_information.dst_amount,
-                preBusiness.swap_asset_information.dst_native_amount,
+                preBusiness.swap_asset_information.dst_amount_need,
+                preBusiness.swap_asset_information.dst_native_amount_need,
             );
 
             // source

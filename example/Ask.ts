@@ -1,4 +1,4 @@
-import { Bridge, Relay, Quote } from '../src/index';
+import Otmoic, { Bridge, Quote } from '../src/index';
 
 const RELA_URL = 'https://5b4522f4.nathanielight.myterminus.com';
 
@@ -12,7 +12,7 @@ const bridge: Bridge = {
 };
 
 const Ask = async () => {
-    const relay = new Relay(RELA_URL);
+    const relay = new Otmoic.Relay(RELA_URL);
 
     relay.ask(
         {

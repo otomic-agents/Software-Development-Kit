@@ -1,4 +1,4 @@
-import { Bridge, Relay, Quote, business, NetworkType, SwapSignedData, PreBusiness } from '../src/index';
+import Otmoic, { Bridge, NetworkType, Quote, SwapSignedData, PreBusiness } from '../src/index';
 
 const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud';
 const NETWORK = NetworkType.MAINNET;
@@ -16,7 +16,7 @@ const bridge: Bridge = {
 
 const Ask = () =>
     new Promise<Quote>((resolve, reject) => {
-        const relay = new Relay(RELA_URL);
+        const relay = new Otmoic.Relay(RELA_URL);
 
         relay.ask(
             {
@@ -45,7 +45,7 @@ const waitTxInCfm = () => new Promise<void>((resolve, reject) => {});
 const swap = async () => {
     const quote = await Ask();
 
-    const signData: SwapSignedData = (await business.signQuote(
+    const signData: SwapSignedData = (await Otmoic.business.signQuote(
         NETWORK,
         quote,
         '20',
@@ -64,7 +64,7 @@ const swap = async () => {
 
     console.log('signData', signData);
 
-    const relay = new Relay(RELA_URL);
+    const relay = new Otmoic.Relay(RELA_URL);
     const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
     console.log('preBusiness', preBusiness);

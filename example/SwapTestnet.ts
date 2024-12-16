@@ -1,15 +1,4 @@
-import {
-    Bridge,
-    Relay,
-    Quote,
-    SwapSignedData,
-    PreBusiness,
-    evm,
-    utils,
-    business,
-    NetworkType,
-    Business,
-} from '../src/index';
+import Otmoic, { Bridge, NetworkType, Quote, SwapSignedData, PreBusiness, Business } from '../src/index';
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
 const NETWORK = NetworkType.TESTNET;
@@ -26,7 +15,7 @@ const bridge: Bridge = {
 };
 const amount = '15';
 
-const relay = new Relay(RELA_URL);
+const relay = new Otmoic.Relay(RELA_URL);
 
 const Ask = () =>
     new Promise<Quote>((resolve, reject) => {
@@ -51,7 +40,7 @@ const doTxOut = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOut');
 
-        const resp = await business.transferOut(preBusiness, NETWORK, RPC_BSC, {
+        const resp = await Otmoic.business.transferOut(preBusiness, NETWORK, RPC_BSC, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
             useMaximumGasPriceAtMost: false,
@@ -70,7 +59,7 @@ const waitTxIn = (preBusiness: PreBusiness) =>
             const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
             succeed = resp.step >= 3;
             console.log('waitTxIn', resp.step);
-            await utils.Sleep(1000);
+            await Otmoic.utils.Sleep(1000);
         }
 
         resolve();
@@ -80,7 +69,7 @@ const doTxOutCfm = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutCfm');
 
-        const resp = await business.transferOutConfirm(preBusiness, NETWORK, RPC_BSC, {
+        const resp = await Otmoic.business.transferOutConfirm(preBusiness, NETWORK, RPC_BSC, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
             useMaximumGasPriceAtMost: false,
@@ -99,7 +88,7 @@ const waitTxInCfm = (preBusiness: PreBusiness) =>
             const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
             succeed = resp.step >= 5;
             console.log('waitCfmIn', resp.step);
-            await utils.Sleep(1000);
+            await Otmoic.utils.Sleep(1000);
         }
 
         resolve();
@@ -111,7 +100,7 @@ const doTxOutRefund = (preBusiness: PreBusiness) =>
 
         let canDo = false;
         while (canDo == false) {
-            await utils.Sleep(1000);
+            await Otmoic.utils.Sleep(1000);
 
             canDo = Date.now() > preBusiness.swap_asset_information.earliest_refund_time * 1000 + 10 * 1000;
 
@@ -120,7 +109,7 @@ const doTxOutRefund = (preBusiness: PreBusiness) =>
             );
         }
 
-        const resp = await business.transferOutRefund(preBusiness, NETWORK, RPC_BSC, {
+        const resp = await Otmoic.business.transferOutRefund(preBusiness, NETWORK, RPC_BSC, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
             useMaximumGasPriceAtMost: false,
@@ -139,7 +128,7 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
             const resp = (await relay.getBusiness(preBusiness.hash)) as Business;
             succeed = resp.step >= 7;
             console.log('waitCfmRefund', resp.step);
-            await utils.Sleep(1000);
+            await Otmoic.utils.Sleep(1000);
         }
 
         resolve();
@@ -148,7 +137,7 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
 const swap = async () => {
     const quote = await Ask();
 
-    const signData: SwapSignedData = (await business.signQuote(
+    const signData: SwapSignedData = (await Otmoic.business.signQuote(
         NETWORK,
         quote,
         amount,
@@ -167,7 +156,7 @@ const swap = async () => {
 
     console.log('signData', signData);
 
-    const relay = new Relay(RELA_URL);
+    const relay = new Otmoic.Relay(RELA_URL);
     const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
     console.log('preBusiness', preBusiness);
@@ -184,7 +173,7 @@ const swap = async () => {
 
 const refund = async () => {
     const quote = await Ask();
-    const signData: SwapSignedData = (await business.signQuote(
+    const signData: SwapSignedData = (await Otmoic.business.signQuote(
         NETWORK,
         quote,
         amount,
@@ -203,7 +192,7 @@ const refund = async () => {
 
     console.log('signData', signData);
 
-    const relay = new Relay(RELA_URL);
+    const relay = new Otmoic.Relay(RELA_URL);
     const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
     console.log('preBusiness', preBusiness);

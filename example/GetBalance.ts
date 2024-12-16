@@ -1,5 +1,4 @@
-import { Bridge, assistive } from '../src';
-import { NetworkType } from '../src/interface/interface';
+import Otmoic, { Bridge, NetworkType } from '../src';
 
 const bridge: Bridge = {
     bridge_id: 6,
@@ -15,7 +14,7 @@ const NETWORK = NetworkType.TESTNET;
 const ADDRESS = 'JA2Wc8SzDtKG9N72X1j6T6wPho7Pa4k4yhiVcZqoHmpf';
 
 const GetBalance = async () => {
-    const balance = await assistive.GetBalance(bridge, ADDRESS, NETWORK, undefined);
+    const balance = await Otmoic.utils.GetBalance(bridge, ADDRESS, NETWORK, undefined);
     console.log('balance', balance);
 };
 

@@ -275,3 +275,9 @@ export interface GasPrice {
     amount: bigint;
     usedMaximum: boolean;
 }
+
+export interface GetBridgesOption {
+    detailed?: boolean;
+    network?: NetworkType;
+    rpcs?: Record<string, string>;
+}

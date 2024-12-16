@@ -1,15 +1,11 @@
-import {
+import Otmoic, {
     Bridge,
-    Relay,
-    Quote,
-    SwapSignData,
-    PreBusiness,
-    utils,
-    business,
     NetworkType,
+    Quote,
+    SwapSignedData,
+    PreBusiness,
     Business,
     ResponseSolana,
-    SwapSignedData,
 } from '../../src/index';
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
@@ -27,7 +23,7 @@ const bridge: Bridge = {
 };
 const amount = '13';
 
-const relay = new Relay(RELA_URL);
+const relay = new Otmoic.Relay(RELA_URL);
 
 const Ask = () =>
     new Promise<Quote>((resolve, reject) => {
@@ -52,7 +48,7 @@ const doTxOut = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOut');
 
-        const txHash = await business.transferOut(preBusiness, NETWORK, RPC_SOLANA, {
+        const txHash = await Otmoic.business.transferOut(preBusiness, NETWORK, RPC_SOLANA, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         });
@@ -74,7 +70,7 @@ const waitTxIn = (preBusiness: PreBusiness) =>
             } catch (e) {
                 console.log(e);
             }
-            await utils.Sleep(1000);
+            await Otmoic.utils.Sleep(1000);
         }
         console.log('waited tx in');
         resolve();
@@ -84,7 +80,7 @@ const doTxOutCfm = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutCfm');
 
-        const { txHash } = (await business.transferOutConfirm(preBusiness, NETWORK, RPC_SOLANA, {
+        const { txHash } = (await Otmoic.business.transferOutConfirm(preBusiness, NETWORK, RPC_SOLANA, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         })) as ResponseSolana;
@@ -106,7 +102,7 @@ const waitTxInCfm = (preBusiness: PreBusiness) =>
             } catch (e) {
                 console.log(e);
             }
-            await utils.Sleep(1000);
+            await Otmoic.utils.Sleep(1000);
         }
         resolve();
     });
@@ -115,7 +111,7 @@ const doTxRefund = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('doTxOutRefund');
 
-        const { txHash } = (await business.transferOutRefund(preBusiness, NETWORK, RPC_SOLANA, {
+        const { txHash } = (await Otmoic.business.transferOutRefund(preBusiness, NETWORK, RPC_SOLANA, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         })) as ResponseSolana;
@@ -137,7 +133,7 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
             } catch (e) {
                 console.log(e);
             }
-            await utils.Sleep(1000);
+            await Otmoic.utils.Sleep(1000);
         }
         resolve();
     });
@@ -145,7 +141,7 @@ const waitTxInRefund = (preBusiness: PreBusiness) =>
 const swap = async () => {
     console.log('start solana swap on testnet');
     const quote = await Ask();
-    const signData: SwapSignedData = (await business.signQuote(
+    const signData: SwapSignedData = (await Otmoic.business.signQuote(
         NETWORK,
         quote,
         amount,
@@ -164,7 +160,7 @@ const swap = async () => {
 
     console.log('signData', signData);
 
-    const relay = new Relay(RELA_URL);
+    const relay = new Otmoic.Relay(RELA_URL);
     const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
     console.log('preBusiness', preBusiness);
@@ -183,7 +179,7 @@ const swap = async () => {
 
 const refund = async () => {
     const quote = await Ask();
-    const signData: SwapSignedData = (await business.signQuote(
+    const signData: SwapSignedData = (await Otmoic.business.signQuote(
         NETWORK,
         quote,
         amount,
@@ -202,7 +198,7 @@ const refund = async () => {
 
     console.log('signData', signData);
 
-    const relay = new Relay(RELA_URL);
+    const relay = new Otmoic.Relay(RELA_URL);
     const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
 
     console.log('preBusiness', preBusiness);

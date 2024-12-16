@@ -7,10 +7,10 @@ export interface ResponseTransferOut {
 }
 
 export interface TranslatedBridge extends Bridge {
-    srcChainName: string;
-    dstChainName: string;
-    srcTokenSymbol: string;
-    dstTokenSymbol: string;
+    src_chain_name: string;
+    dst_chain_name: string;
+    src_token_symbol: string;
+    dst_token_symbol: string;
 }
 
 export interface ResponseSolana {

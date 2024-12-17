@@ -331,3 +331,35 @@ export const getTokenAddress = (contractAddress: string, systemChainId: ChainId)
         }
     }
 };
+
+export const commonTokenDecimals = (systemChainId: ChainId, tokenAddress: string): number | undefined => {
+    const key = `${systemChainId}-${tokenAddress.toLowerCase()}`;
+    switch (key) {
+        // BSC USDT
+        case `${ChainId.BSC}-0x55d398326f99059ff775485246999027b3197955`:
+            return 18;
+        // Solana USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+        case `${ChainId.SOLANA}-0xc6fa7af3bedbad3a3d65f36aabc97431b1bbe4c2d2f6e0e47ca60203452f5d61`:
+            return 6;
+        // Opt OP
+        case `${ChainId.OPT}-0x4200000000000000000000000000000000000042`:
+            return 18;
+        // Opt USDT
+        case `${ChainId.OPT}-0x94b008aa00579c1307b0ef2c499ad98a8ce58e58`:
+            return 6;
+        // ETH USDT
+        case `${ChainId.ETH}-0xdac17f958d2ee523a2206206994597c13d831ec7`:
+            return 6;
+        // Opt WETH
+        case `${ChainId.OPT}-0x4200000000000000000000000000000000000006`:
+            return 18;
+        // BSC WBNB
+        case `${ChainId.BSC}-0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c`:
+            return 18;
+        // Solana USDT: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
+        case `${ChainId.SOLANA}-0xce010e60afedb22717bd63192f54145a3f965a33bb82d2c7029eb2ce1e208264`:
+            return 6;
+        default:
+            return undefined;
+    }
+};

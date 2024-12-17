@@ -29,6 +29,7 @@ import {
     getChainType,
     getNativeTokenDecimals,
     getNativeTokenName,
+    commonTokenDecimals,
 } from '../utils/chain';
 import { decimals as evmDecimals, getDefaultRPC as getEvmDefaultRPC } from '../business/evm';
 import { removePrefix0x, isZeroAddress } from '../utils/format';
@@ -86,6 +87,11 @@ export const decimals = (systemChainId: ChainId, tokenAddress: string, rpc: stri
             }
             resolve(cache.tokensInfo[systemChainId][tokenAddress].decimals);
         } catch (err) {
+            const defaultDecimals = commonTokenDecimals(systemChainId, tokenAddress);
+            if (defaultDecimals) {
+                cache.tokensInfo[systemChainId][tokenAddress].decimals = defaultDecimals;
+                return resolve(defaultDecimals);
+            }
             reject(err);
         }
     });

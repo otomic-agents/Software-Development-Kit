@@ -23,6 +23,7 @@ import {
     getMaximumGasPrice,
     getNativeTokenDecimals,
     getNativeTokenName,
+    commonTokenDecimals,
 } from '../utils/chain';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from '../utils/data';
@@ -85,6 +86,11 @@ export const decimals = (systemChainId: ChainId, tokenAddress: string, rpc: stri
             }
             resolve(cache.tokensInfo[systemChainId][tokenAddress].decimals);
         } catch (err) {
+            const defaultDecimals = commonTokenDecimals(systemChainId, tokenAddress);
+            if (defaultDecimals) {
+                cache.tokensInfo[systemChainId][tokenAddress].decimals = defaultDecimals;
+                return resolve(defaultDecimals);
+            }
             reject(err);
         }
     });

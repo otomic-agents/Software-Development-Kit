@@ -1,8 +1,8 @@
 {
     "name": "otmoic-sdk",
-    "version": "0.0.91",
+    "version": "0.0.92",
     "description": "You can use this SDK to perform cross-chain and exchange on the otmoic platform",
-    "main": "dist/index.js",
+    "main": "dist/src/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "format": "prettier . --write"

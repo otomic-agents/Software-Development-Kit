@@ -29,6 +29,7 @@ export const _swap = (quote: Quote, signData: SwapSignData, signed: string, rela
                     requestor: signData.message.requestor,
                     user_sign: signed,
                 };
+                break;
             case SwapType.SINGLECHAIN:
                 data = {
                     swap_type: swapType.toString(),
@@ -51,6 +52,7 @@ export const _swap = (quote: Quote, signData: SwapSignData, signed: string, rela
                     requestor: signData.message.requestor,
                     user_sign: signed,
                 };
+                break;
         }
 
         superagent

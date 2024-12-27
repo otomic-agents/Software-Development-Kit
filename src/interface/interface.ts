@@ -207,6 +207,7 @@ export interface BusinessFullData {
 
 export interface GetBusinessOptions {
     detailed?: boolean;
+    swapType?: SwapType;
 }
 
 export interface DstAmountSet {

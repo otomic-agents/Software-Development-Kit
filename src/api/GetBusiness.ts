@@ -1,5 +1,5 @@
 import superagent from 'superagent';
-import { Business, BusinessFullData } from '../interface/interface';
+import { Business, BusinessFullData, SwapType } from '../interface/interface';
 
 export const _getBusiness = (relayUrl: string, hash: string) =>
     new Promise<Business>((resolve, reject) => {
@@ -19,10 +19,14 @@ export const _getBusiness = (relayUrl: string, hash: string) =>
             });
     });
 
-export const _getBusinessFull = (relayUrl: string, hash: string) =>
+export const _getBusinessFull = (relayUrl: string, hash: string, swapType: SwapType) =>
     new Promise<BusinessFullData>((resolve, reject) => {
+        let queryUrl =
+            swapType == SwapType.ATOMIC
+                ? `${relayUrl}/relay/web/fetch_business_hash`
+                : `${relayUrl}/relay/web/single_swap/fetch_business_hash`;
         superagent
-            .post(`${relayUrl}/relay/web/fetch_business_hash`)
+            .post(queryUrl)
             .query({
                 business_hash: hash,
             })

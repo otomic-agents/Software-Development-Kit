@@ -847,11 +847,15 @@ export namespace Otmoic {
         swap = (quote: Quote, signData: SwapSignData, signed: string, swapType: SwapType): Promise<PreBusiness> =>
             _swap(quote, signData, signed, this.relayUrl, swapType);
 
-        getHistory = (address: string): Promise<BusinessFullData[]> => _getHistory(this.relayUrl, address);
+        getHistory = (address: string, swapType: SwapType): Promise<BusinessFullData[]> =>
+            _getHistory(this.relayUrl, address, swapType);
 
         getBusiness = (hash: string, options: GetBusinessOptions = {}): Promise<Business | BusinessFullData> => {
             if (options.detailed) {
-                return _getBusinessFull(this.relayUrl, hash);
+                if (!options.swapType) {
+                    return Promise.reject('swapType is required');
+                }
+                return _getBusinessFull(this.relayUrl, hash, options.swapType);
             } else {
                 return _getBusiness(this.relayUrl, hash);
             }

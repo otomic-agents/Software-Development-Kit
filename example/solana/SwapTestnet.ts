@@ -6,6 +6,7 @@ import Otmoic, {
     PreBusiness,
     Business,
     ResponseSolana,
+    SwapType,
 } from '../../src/index';
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
@@ -153,6 +154,7 @@ const swap = async () => {
         RPC_SOLANA,
         RPC_BSC,
         {
+            swapType: SwapType.ATOMIC,
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         },
@@ -161,7 +163,8 @@ const swap = async () => {
     console.log('signData', signData);
 
     const relay = new Otmoic.Relay(RELA_URL);
-    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const swapType = SwapType.ATOMIC;
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed, swapType);
 
     console.log('preBusiness', preBusiness);
 
@@ -191,6 +194,7 @@ const refund = async () => {
         RPC_SOLANA,
         RPC_BSC,
         {
+            swapType: SwapType.ATOMIC,
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         },
@@ -199,7 +203,8 @@ const refund = async () => {
     console.log('signData', signData);
 
     const relay = new Otmoic.Relay(RELA_URL);
-    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const swapType = SwapType.ATOMIC;
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed, swapType);
 
     console.log('preBusiness', preBusiness);
 

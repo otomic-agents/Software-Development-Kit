@@ -1,4 +1,4 @@
-import Otmoic, { Bridge, NetworkType, Quote, SwapSignedData, PreBusiness, Business } from '../src/index';
+import Otmoic, { Bridge, NetworkType, Quote, SwapSignedData, PreBusiness, Business, SwapType } from '../src/index';
 
 const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
 const NETWORK = NetworkType.TESTNET;
@@ -149,6 +149,7 @@ const swap = async () => {
         RPC_BSC,
         RPC_SOLANA,
         {
+            swapType: SwapType.ATOMIC,
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         },
@@ -157,7 +158,7 @@ const swap = async () => {
     console.log('signData', signData);
 
     const relay = new Otmoic.Relay(RELA_URL);
-    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed, SwapType.ATOMIC);
 
     console.log('preBusiness', preBusiness);
 
@@ -185,6 +186,7 @@ const refund = async () => {
         RPC_BSC,
         RPC_SOLANA,
         {
+            swapType: SwapType.ATOMIC,
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         },
@@ -193,7 +195,7 @@ const refund = async () => {
     console.log('signData', signData);
 
     const relay = new Otmoic.Relay(RELA_URL);
-    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed, SwapType.ATOMIC);
 
     console.log('preBusiness', preBusiness);
 

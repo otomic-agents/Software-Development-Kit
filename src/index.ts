@@ -22,6 +22,7 @@ import {
     SwapTransactionOption,
     GetBridgesOption,
     GasPrice,
+    SwapType,
 } from './interface/interface';
 import { TranslatedBridge, ResponseTransferOut, ResponseSolana } from './interface/api';
 
@@ -47,6 +48,9 @@ import {
     _getTransferInConfirmTransfer,
     _getGasPrice,
     _getOnChainGasPrice,
+    _getInitSwap,
+    _getConfirmSwap,
+    _getRefundSwap,
 } from './business/evm';
 import { _signQuoteEIP712ByPrivateKey } from './api/evm/SignQuoteEIP712ByPrivateKey';
 import { _signQuoteEIP712ByMetamaskAPI } from './api/evm/SignQuoteEIP712ByMetamaskAPI';
@@ -61,6 +65,12 @@ import { _transferOutRefundByPrivateKey } from './api/evm/TransferOutRefundByPri
 import { _transferOutRefundByMetamaskAPI } from './api/evm/TransferOutRefundByMetamaskAPI';
 import { _transferInConfirmByPrivateKey } from './api/evm/TransferInConfirmByPrivateKey';
 import { _transferInConfirmByMetamaskAPI } from './api/evm/TransferInConfirmByMetamaskAPI';
+import { _initSwapByPrivateKey } from './api/evm/InitSwapByPrivateKey';
+import { _initSwapByMetamaskAPI } from './api/evm/InitSwapByMetamaskAPI';
+import { _confirmSwapByPrivateKey } from './api/evm/ConfirmSwapByPrivateKey';
+import { _confirmSwapByMetamaskAPI } from './api/evm/ConfirmSwapByMetamaskAPI';
+import { _refundSwapByPrivateKey } from './api/evm/RefundSwapByPrivateKey';
+import { _refundSwapByMetamaskAPI } from './api/evm/RefundSwapByMetamaskAPI';
 import { _getHistory } from './api/GetHistory';
 import { _getBusiness, _getBusinessFull } from './api/GetBusiness';
 import { _getBridge } from './api/GetBridge';
@@ -119,6 +129,7 @@ export {
     TranslatedBridge,
     ResponseTransferOut,
     ResponseSolana,
+    SwapType,
 };
 export namespace Otmoic {
     export namespace utils {
@@ -167,7 +178,8 @@ export namespace Otmoic {
             userWallet: string,
             rpc: string | undefined,
             network: NetworkType,
-        ): Promise<boolean> => _isNeedApprove(preBusiness, userWallet, rpc, network);
+            contractAddress: string,
+        ): Promise<boolean> => _isNeedApprove(preBusiness, userWallet, rpc, network, contractAddress);
 
         export const GetApproveTransfer = (
             preBusiness: PreBusiness,
@@ -211,6 +223,9 @@ export namespace Otmoic {
                 case 'evm':
                     if (option.getSignDataOnly) {
                         const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
+                        if (!option.swapType) {
+                            return Promise.reject('swapType is required');
+                        }
                         return _getSignDataEIP712(
                             quote,
                             network,
@@ -224,12 +239,16 @@ export namespace Otmoic {
                             earliestRefundTime,
                             rpcSrc,
                             rpcDst,
+                            option.swapType,
                         );
                     } else {
                         switch (option.type) {
                             case 'privateKey':
                                 if (!option.privateKey) {
                                     return Promise.reject('privateKey is required');
+                                }
+                                if (!option.swapType) {
+                                    return Promise.reject('swapType is required');
                                 }
                                 return _signQuoteEIP712ByPrivateKey(
                                     quote,
@@ -243,11 +262,15 @@ export namespace Otmoic {
                                     earliestRefundTime,
                                     rpcSrc,
                                     rpcDst,
+                                    option.swapType,
                                 );
 
                             case 'metamaskAPI':
                                 if (!option.metamaskAPI || !option.sender) {
                                     return Promise.reject('metamaskAPI and sender is required');
+                                }
+                                if (!option.swapType) {
+                                    return Promise.reject('swapType is required');
                                 }
                                 return _signQuoteEIP712ByMetamaskAPI(
                                     quote,
@@ -262,6 +285,7 @@ export namespace Otmoic {
                                     earliestRefundTime,
                                     rpcSrc,
                                     rpcDst,
+                                    option.swapType,
                                 );
 
                             default:
@@ -631,6 +655,132 @@ export namespace Otmoic {
             }
         };
 
+        export const initSwap = (
+            preBusiness: PreBusiness,
+            network: NetworkType,
+            rpc: string | undefined,
+            option: SwapTransactionOption,
+        ): Promise<ContractTransaction | ResponseTransferOut | Transaction | ResponseSolana> => {
+            switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+                case 'evm':
+                    if (option.getTxDataOnly) {
+                        return _getInitSwap(preBusiness, network);
+                    } else {
+                        switch (option.type) {
+                            case 'privateKey':
+                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
+                                }
+                                return _initSwapByPrivateKey(
+                                    preBusiness,
+                                    option.privateKey,
+                                    network,
+                                    rpc,
+                                    option.useMaximumGasPriceAtMost,
+                                );
+
+                            case 'metamaskAPI':
+                                if (!option.metamaskAPI) {
+                                    return Promise.reject('metamaskAPI is required');
+                                }
+                                return _initSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+
+                            default:
+                                return Promise.reject(`not support type: ${option.type}`);
+                        }
+                    }
+
+                default:
+                    return Promise.reject(
+                        `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
+                    );
+            }
+        };
+
+        export const confirmSwap = (
+            preBusiness: PreBusiness,
+            network: NetworkType,
+            rpc: string | undefined,
+            option: SwapTransactionOption,
+        ): Promise<ContractTransaction | ResponseTransferOut | Transaction | ResponseSolana> => {
+            switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+                case 'evm':
+                    if (option.getTxDataOnly) {
+                        return _getConfirmSwap(preBusiness, network);
+                    } else {
+                        switch (option.type) {
+                            case 'privateKey':
+                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
+                                }
+                                return _confirmSwapByPrivateKey(
+                                    preBusiness,
+                                    option.privateKey,
+                                    network,
+                                    rpc,
+                                    option.useMaximumGasPriceAtMost,
+                                );
+
+                            case 'metamaskAPI':
+                                if (!option.metamaskAPI) {
+                                    return Promise.reject('metamaskAPI is required');
+                                }
+                                return _confirmSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+
+                            default:
+                                return Promise.reject(`not support type: ${option.type}`);
+                        }
+                    }
+
+                default:
+                    return Promise.reject(
+                        `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
+                    );
+            }
+        };
+
+        export const refundSwap = (
+            preBusiness: PreBusiness,
+            network: NetworkType,
+            rpc: string | undefined,
+            option: SwapTransactionOption,
+        ): Promise<ContractTransaction | ContractTransactionResponse | Transaction | ResponseSolana> => {
+            switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
+                case 'evm':
+                    if (option.getTxDataOnly) {
+                        return _getRefundSwap(preBusiness, network);
+                    } else {
+                        switch (option.type) {
+                            case 'privateKey':
+                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
+                                }
+                                return _refundSwapByPrivateKey(
+                                    preBusiness,
+                                    option.privateKey,
+                                    network,
+                                    rpc,
+                                    option.useMaximumGasPriceAtMost,
+                                );
+
+                            case 'metamaskAPI':
+                                if (!option.metamaskAPI) {
+                                    return Promise.reject('metamaskAPI is required');
+                                }
+                                return _refundSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+
+                            default:
+                                return Promise.reject(`not support type: ${option.type}`);
+                        }
+                    }
+
+                default:
+                    return Promise.reject(
+                        `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
+                    );
+            }
+        };
+
         export const complain = async (
             preBusiness: PreBusiness,
             privateKey: string,
@@ -694,8 +844,8 @@ export namespace Otmoic {
 
         stopAsk = (): void => this.quoteManager.stopAsk();
 
-        swap = (quote: Quote, signData: SwapSignData, signed: string): Promise<PreBusiness> =>
-            _swap(quote, signData, signed, this.relayUrl);
+        swap = (quote: Quote, signData: SwapSignData, signed: string, swapType: SwapType): Promise<PreBusiness> =>
+            _swap(quote, signData, signed, this.relayUrl, swapType);
 
         getHistory = (address: string): Promise<BusinessFullData[]> => _getHistory(this.relayUrl, address);
 

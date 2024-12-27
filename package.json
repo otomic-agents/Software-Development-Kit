@@ -5,6 +5,7 @@
     "main": "dist/src/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "tsc",
         "format": "prettier . --write"
     },
     "author": "otmoic",

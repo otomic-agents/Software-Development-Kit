@@ -133,7 +133,7 @@ export const getDefaultRPC = (systemChainId: ChainId, network: NetworkType) => {
     const isMainnet = network === NetworkType.MAINNET;
     switch (systemChainId) {
         case 501:
-            return isMainnet ? 'https://api.mainnet-beta.solana.com' : 'https://api.devnet.solana.com';
+            return isMainnet ? 'https://solana-rpc.publicnode.com' : 'https://api.devnet.solana.com';
         default:
             throw new Error('not found rpc node');
     }

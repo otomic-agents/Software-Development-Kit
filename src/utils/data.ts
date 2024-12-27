@@ -77,6 +77,37 @@ export const getTransferInConfirmData = (preBusiness: PreBusiness, sender: strin
     };
 };
 
+export const getInitSwapData = (preBusiness: PreBusiness) => {
+    return {
+        sender: preBusiness.swap_asset_information.sender, //address
+        receiver: preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address, //adrress
+        srcToken: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token, //adrress
+        srcAmount: preBusiness.swap_asset_information.amount, //uint256
+        dstToken: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token, //uint256
+        dstAmount: preBusiness.swap_asset_information.dst_amount, //uint256
+        stepTime: preBusiness.swap_asset_information.expected_single_step_time, //uint64
+        agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
+        bidId: preBusiness.hash, //uint64
+        requestor: preBusiness.swap_asset_information.requestor,
+        lpId: preBusiness.swap_asset_information.quote.lp_info.name,
+        userSign: preBusiness.swap_asset_information.user_sign,
+        lpSign: preBusiness.swap_asset_information.lp_sign,
+    };
+};
+
+export const getConfirmAndRefundSwapData = (preBusiness: PreBusiness) => {
+    return {
+        sender: preBusiness.swap_asset_information.sender, //address
+        receiver: preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address, //adrress
+        srcToken: preBusiness.swap_asset_information.quote.quote_base.bridge.src_token, //adrress
+        srcAmount: preBusiness.swap_asset_information.amount, //uint256
+        dstToken: preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token, //uint256
+        dstAmount: preBusiness.swap_asset_information.dst_amount, //uint256
+        stepTime: preBusiness.swap_asset_information.expected_single_step_time, //uint64
+        agreementReachedTime: preBusiness.swap_asset_information.agreement_reached_time,
+    };
+};
+
 export function generateUuid(
     sender: web3.PublicKey,
     receiver: web3.PublicKey,

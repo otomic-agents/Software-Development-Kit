@@ -235,6 +235,31 @@ export const getOtmoicAddressBySystemChainId = (systemChainId: ChainId, network:
     }
 };
 
+export const getOtmoicSwapAddressBySystemChainId = (systemChainId: ChainId, network: NetworkType): string => {
+    const isMainnet = network == NetworkType.MAINNET;
+
+    switch (systemChainId) {
+        case ChainId.AVAX:
+            return isMainnet ? '' : '';
+        case ChainId.BSC:
+            return isMainnet ? '' : '0x22dD71312bC00823634676EEe5B289936E0B54c1';
+        case ChainId.ETH:
+            return isMainnet ? '' : '';
+        case ChainId.POLYGON:
+            return isMainnet ? '' : '';
+        case ChainId.OPT:
+            return isMainnet ? '' : '';
+        case ChainId.NEAR:
+            return isMainnet ? '' : '';
+        case ChainId.XRP:
+            return isMainnet ? '' : '';
+        case ChainId.SOLANA:
+            return isMainnet ? '' : '';
+        default:
+            throw new Error(`no support this chain for now: ${systemChainId}`);
+    }
+};
+
 export const getFeeRecepientAddressBySystemChainId = (systemChainId: ChainId, network: NetworkType): string => {
     const isMainnet = network == NetworkType.MAINNET;
 

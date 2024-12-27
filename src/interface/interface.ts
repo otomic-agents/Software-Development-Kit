@@ -88,8 +88,8 @@ export interface SwapSignData {
         lp_id: string;
         agreement_reached_time: number;
         expected_single_step_time: number;
-        tolerant_single_step_time: number;
-        earliest_refund_time: number;
+        tolerant_single_step_time?: number;
+        earliest_refund_time?: number;
     };
 }
 
@@ -99,6 +99,7 @@ export interface SwapSignedData {
 }
 
 export interface SignSwapOption {
+    swapType?: SwapType;
     getSignDataOnly?: boolean;
     type?: 'privateKey' | 'metamaskAPI' | 'phantomAPI';
     privateKey?: string;
@@ -130,6 +131,7 @@ export interface SwapAssetInformation {
     user_sign: string;
     lp_sign: string;
     src_transfer_id?: string;
+    swap_type: string;
 }
 
 export interface KycInfo {
@@ -183,6 +185,10 @@ export interface Business {
     transfer_in_confirm_id: number;
     transfer_out_refund_id: number;
     transfer_in_refund_id: number;
+    single_swap_step: number;
+    init_swap_id: number;
+    confirm_swap_id: number;
+    refund_swap_id: number;
 }
 
 export interface BusinessFullData {
@@ -194,6 +200,9 @@ export interface BusinessFullData {
     event_transfer_in_confirm: any;
     event_transfer_out_refund: any;
     event_transfer_in_refund: any;
+    event_init_swap: any;
+    event_confirm_swap: any;
+    event_refund_swap: any;
 }
 
 export interface GetBusinessOptions {
@@ -219,6 +228,11 @@ export enum ChainId {
 export enum NetworkType {
     MAINNET = 'mainnet',
     TESTNET = 'testnet',
+}
+
+export enum SwapType {
+    SINGLECHAIN = 'SINGLECHAIN',
+    ATOMIC = 'ATOMIC',
 }
 
 export interface ComplaintValue {

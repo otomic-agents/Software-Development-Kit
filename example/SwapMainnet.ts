@@ -1,4 +1,4 @@
-import Otmoic, { Bridge, NetworkType, Quote, SwapSignedData, PreBusiness } from '../src/index';
+import Otmoic, { Bridge, NetworkType, Quote, SwapSignedData, PreBusiness, SwapType } from '../src/index';
 
 const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud';
 const NETWORK = NetworkType.MAINNET;
@@ -57,6 +57,7 @@ const swap = async () => {
         RPC_BSC,
         RPC_OPT,
         {
+            swapType: SwapType.ATOMIC,
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
         },
@@ -65,7 +66,7 @@ const swap = async () => {
     console.log('signData', signData);
 
     const relay = new Otmoic.Relay(RELA_URL);
-    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed);
+    const preBusiness: PreBusiness = await relay.swap(quote, signData.signData, signData.signed, SwapType.ATOMIC);
 
     console.log('preBusiness', preBusiness);
 

@@ -3,9 +3,9 @@ import {
     Connection,
     Keypair,
     SystemProgram,
-    Transaction,
     ComputeBudgetProgram,
     TransactionInstruction,
+    Transaction,
     LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import { getMint, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout } from '@solana/spl-token';
@@ -1068,23 +1068,96 @@ const getCompetitivePriorityFee = async (connection: Connection): Promise<number
     }
 };
 
-export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
-    const latestBlockhash = await provider.getLatestBlockhash('confirmed');
-    tx.recentBlockhash = latestBlockhash.blockhash;
+// export const ensureSendingTx = async (provider: Connection, keypair: Keypair, tx: Transaction): Promise<string> => {
+//     const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+//     tx.recentBlockhash = latestBlockhash.blockhash;
 
-    // const microLamports = await getCompetitivePriorityFee(provider);
-    const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: DEFAULT_MICRO_LAMPORTS,
-    });
-    tx.instructions.unshift(addPriorityFee);
+//     // const microLamports = await getCompetitivePriorityFee(provider);
+//     const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
+//         microLamports: DEFAULT_MICRO_LAMPORTS,
+//     });
+//     tx.instructions.unshift(addPriorityFee);
 
-    tx.feePayer = keypair.publicKey;
-    tx.sign(keypair);
+//     tx.feePayer = keypair.publicKey;
+//     tx.sign(keypair);
 
-    let txHash = await provider.sendRawTransaction(tx.serialize(), {
-        skipPreflight: true,
-        maxRetries: 10,
-    });
-    console.log(`not yet confirmed txHash: ${txHash}`);
-    return txHash;
+//     let txHash = await provider.sendRawTransaction(tx.serialize());
+//     console.log(`not yet confirmed txHash: ${txHash}`);
+//     return txHash;
+// };
+
+export const ensureSendingTx = async (
+    connection: Connection,
+    signer: Keypair,
+    transaction: Transaction,
+    maxRetries: number = 5,
+    retryDelay: number = 5000, // in milliseconds
+): Promise<string> => {
+    const signatures: string[] = [];
+    let attempt = 0;
+
+    while (attempt <= maxRetries) {
+        try {
+            // Get the latest blockhash
+            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+            transaction.recentBlockhash = blockhash;
+            transaction.lastValidBlockHeight = lastValidBlockHeight;
+
+            // const microLamports = await getCompetitivePriorityFee(provider);
+            const addPriorityFee: TransactionInstruction = ComputeBudgetProgram.setComputeUnitPrice({
+                microLamports: DEFAULT_MICRO_LAMPORTS,
+            });
+            transaction.instructions.unshift(addPriorityFee);
+
+            transaction.feePayer = signer.publicKey;
+            transaction.sign(signer);
+
+            // Send the transaction
+            const txId = await connection.sendRawTransaction(transaction.serialize());
+            signatures.push(txId);
+            console.log(`Transaction sent: ${txId}`);
+
+            // Wait for confirmation
+            const confirmation = await connection.confirmTransaction(
+                {
+                    signature: txId,
+                    blockhash: blockhash,
+                    lastValidBlockHeight: lastValidBlockHeight,
+                },
+                'confirmed',
+            );
+            if (confirmation.value.err == null) {
+                console.log(`Transaction confirmed: ${txId}`);
+                return txId;
+            }
+        } catch (error) {
+            console.error(`Attempt ${attempt} failed:`, error);
+            attempt++;
+        }
+
+        // Check all signatures for confirmation
+        if (signatures.length > 0) {
+            const statuses = await connection.getSignatureStatuses(signatures);
+            for (const [index, status] of statuses.value.entries()) {
+                console.log(`Checking status of signature ${signatures[index]}:`, status);
+                if (
+                    status?.confirmationStatus === 'processed' ||
+                    status?.confirmationStatus === 'confirmed' ||
+                    status?.confirmationStatus === 'finalized'
+                ) {
+                    console.log(`Previously sent transaction confirmed: ${signatures[index]}`);
+                    return signatures[index];
+                }
+            }
+        }
+
+        // Wait before retrying
+        if (attempt < maxRetries) {
+            console.log(`Retrying # ${attempt} in ${retryDelay}ms...`);
+            await sleep(retryDelay);
+        }
+    }
+
+    // If no transaction was confirmed after all retries
+    throw new Error('Transaction failed after maximum retries.');
 };

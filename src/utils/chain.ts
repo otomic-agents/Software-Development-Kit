@@ -242,7 +242,9 @@ export const getOtmoicSwapAddressBySystemChainId = (systemChainId: ChainId, netw
         case ChainId.AVAX:
             return isMainnet ? '' : '';
         case ChainId.BSC:
-            return isMainnet ? '' : '0x22dD71312bC00823634676EEe5B289936E0B54c1';
+            return isMainnet
+                ? '0x22dD71312bC00823634676EEe5B289936E0B54c1'
+                : '0x22dD71312bC00823634676EEe5B289936E0B54c1';
         case ChainId.ETH:
             return isMainnet ? '' : '';
         case ChainId.POLYGON:
@@ -254,7 +256,9 @@ export const getOtmoicSwapAddressBySystemChainId = (systemChainId: ChainId, netw
         case ChainId.XRP:
             return isMainnet ? '' : '';
         case ChainId.SOLANA:
-            return isMainnet ? '' : '';
+            return isMainnet
+                ? 'DnSgZFH2hMgZ7bXmJUdcL8bgB1MgDpVtddNhwzZACTKQ'
+                : 'DnSgZFH2hMgZ7bXmJUdcL8bgB1MgDpVtddNhwzZACTKQ';
         default:
             throw new Error(`no support this chain for now: ${systemChainId}`);
     }

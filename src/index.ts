@@ -84,6 +84,9 @@ import {
     _getTransferOutConfirmTransaction,
     _getTransferOutTransaction,
     _getTransferOutRefundTransaction,
+    _getConfirmSwapTransaction,
+    _getInitSwapTransaction,
+    _getRefundSwapTransaction,
     decimals as _solanaDecimals,
     decimalsDefaultRpc as _solanaDecimalsDefaultRpc,
 } from './business/solana';
@@ -97,6 +100,12 @@ import { _transferOutRefundByPrivateKey as _transferOutRefundSolanaByPrivateKey 
 import { _transferOutRefundByWalletPlugin } from './api/solana/TransferOutRefundByWalletPlugin';
 import { _transferInConfirmByPrivateKey as _transferInConfirmSolanaByPrivateKey } from './api/solana/TransferInConfirmByPrivateKey';
 import { _transferInConfirmByWalletPlugin } from './api/solana/TransferInConfirmByWalletPlugin';
+import { _initSwapByPrivateKey as _initSwapSolanaByPrivateKey } from './api/solana/InitSwapByPrivateKey';
+import { _initSwapByWalletPlugin } from './api/solana/InitSwapByWalletPlugin';
+import { _confirmSwapByPrivateKey as _confirmSwapSolanaByPrivateKey } from './api/solana/ConfirmSwapByPrivateKey';
+import { _confirmSwapByWalletPlugin } from './api/solana/ConfirmSwapByWalletPlugin';
+import { _refundSwapByPrivateKey as _refundSwapSolanaByPrivateKey } from './api/solana/RefundSwapByPrivateKey';
+import { _refundSwapByWalletPlugin } from './api/solana/RefundSwapByWalletPlugin';
 import { submitComplain } from './api/SubmitComplain';
 import { getDidName } from './utils/did';
 import { Transaction } from '@solana/web3.js';
@@ -689,6 +698,27 @@ export namespace Otmoic {
                                 return Promise.reject(`not support type: ${option.type}`);
                         }
                     }
+                case 'solana':
+                    if (option.getTxDataOnly) {
+                        return _getInitSwapTransaction(preBusiness, option.provider, network, option.pluginProvider);
+                    } else {
+                        switch (option.type) {
+                            case 'privateKey':
+                                if (!option.privateKey) {
+                                    return Promise.reject('privateKey is required');
+                                }
+                                return _initSwapSolanaByPrivateKey(preBusiness, option.privateKey, network, rpc);
+
+                            case 'phantomAPI':
+                                if (!option.phantomAPI) {
+                                    return Promise.reject('phantomAPI is required');
+                                }
+                                return _initSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
+
+                            default:
+                                return Promise.reject(`not support type: ${option.type}`);
+                        }
+                    }
 
                 default:
                     return Promise.reject(
@@ -732,6 +762,28 @@ export namespace Otmoic {
                         }
                     }
 
+                case 'solana':
+                    if (option.getTxDataOnly) {
+                        return _getConfirmSwapTransaction(preBusiness, option.provider, network, option.pluginProvider);
+                    } else {
+                        switch (option.type) {
+                            case 'privateKey':
+                                if (!option.privateKey) {
+                                    return Promise.reject('privateKey is required');
+                                }
+                                return _confirmSwapSolanaByPrivateKey(preBusiness, option.privateKey, network, rpc);
+
+                            case 'phantomAPI':
+                                if (!option.phantomAPI) {
+                                    return Promise.reject('phantomAPI is required');
+                                }
+                                return _confirmSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
+
+                            default:
+                                return Promise.reject(`not support type: ${option.type}`);
+                        }
+                    }
+
                 default:
                     return Promise.reject(
                         `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
@@ -768,6 +820,28 @@ export namespace Otmoic {
                                     return Promise.reject('metamaskAPI is required');
                                 }
                                 return _refundSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+
+                            default:
+                                return Promise.reject(`not support type: ${option.type}`);
+                        }
+                    }
+
+                case 'solana':
+                    if (option.getTxDataOnly) {
+                        return _getRefundSwapTransaction(preBusiness, option.provider, network, option.pluginProvider);
+                    } else {
+                        switch (option.type) {
+                            case 'privateKey':
+                                if (!option.privateKey) {
+                                    return Promise.reject('privateKey is required');
+                                }
+                                return _refundSwapSolanaByPrivateKey(preBusiness, option.privateKey, network, rpc);
+
+                            case 'phantomAPI':
+                                if (!option.phantomAPI) {
+                                    return Promise.reject('phantomAPI is required');
+                                }
+                                return _refundSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
 
                             default:
                                 return Promise.reject(`not support type: ${option.type}`);

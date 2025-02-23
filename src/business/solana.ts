@@ -8,7 +8,13 @@ import {
     Transaction,
     LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import { getMint, getAssociatedTokenAddressSync, ASSOCIATED_TOKEN_PROGRAM_ID, AccountLayout } from '@solana/spl-token';
+import {
+    getMint,
+    getAssociatedTokenAddressSync,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    AccountLayout,
+    TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 import { fetchDigitalAsset } from '@metaplex-foundation/mpl-token-metadata';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { publicKey } from '@metaplex-foundation/umi';
@@ -17,11 +23,13 @@ import msgpack5 from 'msgpack5';
 import pako from 'pako';
 import retry from 'async-retry';
 import idl from './solanaIdl';
+import idl_singlechain from './solanaSingleChainIdl';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { toBs58Address } from '../utils/format';
 import { PreBusiness, Quote, NetworkType, ChainId, SwapSignData } from '../interface/interface';
 import {
     getOtmoicAddressBySystemChainId,
+    getOtmoicSwapAddressBySystemChainId,
     getFeeRecepientAddressBySystemChainId,
     getExpectedSingleStepTime,
     getTolerantSingleStepTime,
@@ -33,7 +41,7 @@ import {
 } from '../utils/chain';
 import { decimals as evmDecimals, getDefaultRPC as getEvmDefaultRPC } from '../business/evm';
 import { removePrefix0x, isZeroAddress } from '../utils/format';
-import { generateUuid } from '../utils/data';
+import { generateUuid, generateUuidSwap } from '../utils/data';
 import { sleep } from '../utils/sleep';
 export type Lock = {
     hash: Array<number>;
@@ -304,18 +312,27 @@ export const _getTransferOutTransaction = (
                 toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
             );
 
+            const solOnlyMode = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
             // mint token
-            let token = new PublicKey(
-                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
-            );
-            let mintTokenAccountInfo = await provider.getAccountInfo(token);
-            let tokenProgramId = mintTokenAccountInfo!.owner;
+            let token: PublicKey = ZERO_PUBKEY;
+            let tokenProgramId: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                token = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
+                );
+                let mintTokenAccountInfo = await provider.getAccountInfo(token);
+                tokenProgramId = mintTokenAccountInfo!.owner;
+            }
 
             // amount
-            let amount = new BN(preBusiness.swap_asset_information.amount);
+            let amount = solOnlyMode ? new BN(0) : new BN(preBusiness.swap_asset_information.amount);
 
             // sol amount
-            let solAmount = new BN(0);
+            let solAmount = solOnlyMode ? new BN(preBusiness.swap_asset_information.amount) : new BN(0);
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
@@ -344,16 +361,22 @@ export const _getTransferOutTransaction = (
                 tolerantSingleStepTime.toString(),
                 earliestRefundTime.toString(),
                 token,
-                preBusiness.swap_asset_information.amount,
-                '0',
+                amount.toString(),
+                solAmount.toString(),
             );
 
             // source ata token account
-            let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
+            let source: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
+            }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            }
 
             // adminSettings
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId);
@@ -468,12 +491,21 @@ export const _getTransferOutConfirmTransaction = (
                 toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
             );
 
+            const solOnlyMode = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
             // mint token
-            let token = new PublicKey(
-                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
-            );
-            let mintTokenAccountInfo = await provider.getAccountInfo(token);
-            let tokenProgramId = mintTokenAccountInfo!.owner;
+            let token: PublicKey = ZERO_PUBKEY;
+            let tokenProgramId: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                token = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
+                );
+                let mintTokenAccountInfo = await provider.getAccountInfo(token);
+                tokenProgramId = mintTokenAccountInfo!.owner;
+            }
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
@@ -502,8 +534,8 @@ export const _getTransferOutConfirmTransaction = (
                 tolerantSingleStepTime.toString(),
                 earliestRefundTime.toString(),
                 token,
-                preBusiness.swap_asset_information.amount,
-                '0',
+                solOnlyMode ? '0' : preBusiness.swap_asset_information.amount,
+                solOnlyMode ? preBusiness.swap_asset_information.amount : '0',
             );
 
             // hash preimage
@@ -513,15 +545,24 @@ export const _getTransferOutConfirmTransaction = (
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId);
 
             // destination
-            let destination = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
+            let destination: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                destination = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId!);
+            }
 
             // fee recepient
             let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network));
-            let feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId);
+            let feeDestination: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId!);
+            }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
+            }
 
             let tx = await otmoic.methods
                 .confirm(uuid, preimage, isOut)
@@ -597,15 +638,27 @@ export const _getTransferOutRefundTransaction = (
                 toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
             );
 
+            const solOnlyMode = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
             // mint token
-            let token = new PublicKey(
-                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
-            );
-            let mintTokenAccountInfo = await provider.getAccountInfo(token);
-            let tokenProgramId = mintTokenAccountInfo!.owner;
+            let token: PublicKey = ZERO_PUBKEY;
+            let tokenProgramId: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                token = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
+                );
+                let mintTokenAccountInfo = await provider.getAccountInfo(token);
+                tokenProgramId = mintTokenAccountInfo!.owner;
+            }
 
             // source
-            let source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
+            let source: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
+            }
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
@@ -634,13 +687,16 @@ export const _getTransferOutRefundTransaction = (
                 tolerantSingleStepTime.toString(),
                 earliestRefundTime.toString(),
                 token,
-                preBusiness.swap_asset_information.amount,
-                '0',
+                solOnlyMode ? '0' : preBusiness.swap_asset_information.amount,
+                solOnlyMode ? preBusiness.swap_asset_information.amount : '0',
             );
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            }
 
             let tx = await otmoic.methods
                 .refund(uuid, isOut)
@@ -651,6 +707,514 @@ export const _getTransferOutRefundTransaction = (
                     escrowAta: escrowAta,
                     systemProgram: SystemProgram.programId,
                     tokenProgram: tokenProgramId,
+                })
+                .transaction();
+
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
+            resolve(tx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getInitSwapTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: NetworkType,
+    pluginProvider?: Provider,
+) =>
+    new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let otmoicSwap: Program;
+            if (pluginProvider == undefined) {
+                // setup a dummy provider
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
+                                ]),
+                            ),
+                        ),
+                        {},
+                    ),
+                );
+                otmoicSwap = new Program(
+                    idl_singlechain as Idl,
+                    getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                );
+            } else {
+                otmoicSwap = new Program(
+                    idl_singlechain as Idl,
+                    getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
+            }
+
+            // user
+            let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
+
+            // receiver
+            let lp = new PublicKey(
+                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
+            );
+
+            const isSrcTokenSol = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+                ? true
+                : false;
+            const isDstTokenSol = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
+            // src token
+            let srcToken: PublicKey = ZERO_PUBKEY;
+            if (!isSrcTokenSol) {
+                srcToken = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
+                );
+            }
+
+            // dst token
+            let dstToken: PublicKey = ZERO_PUBKEY;
+            if (!isDstTokenSol) {
+                dstToken = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
+                );
+            }
+
+            // src amount
+            const srcAmount: BN = new BN(preBusiness.swap_asset_information.amount);
+
+            // dst amount
+            const dstAmount: BN = new BN(preBusiness.swap_asset_information.dst_amount);
+
+            // agreement reached time and step time lock
+            let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let lock = {
+                agreementReachedTime: new BN(agreementReachedTime),
+                stepTime: new BN(expectedSingleStepTime),
+            };
+            // uuid
+            const uuid = generateUuidSwap(
+                user,
+                lp,
+                srcToken,
+                srcAmount.toString(),
+                dstToken,
+                dstAmount.toString(),
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+            );
+
+            // source ata token account
+            let source: PublicKey | undefined = undefined;
+            if (!isSrcTokenSol) {
+                source = getAssociatedTokenAddressSync(srcToken, user, true, TOKEN_PROGRAM_ID);
+            }
+
+            // escrow and escrowAta
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoicSwap.programId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!isSrcTokenSol) {
+                escrowAta = getAssociatedTokenAddressSync(srcToken, escrow, true, TOKEN_PROGRAM_ID);
+            }
+
+            // adminSettings
+            let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoicSwap.programId);
+
+            // srcTokenSettings
+            let srcTokenSettings: PublicKey | undefined;
+            [srcTokenSettings] = PublicKey.findProgramAddressSync(
+                [Buffer.from('token'), srcToken.toBytes()],
+                otmoicSwap.programId,
+            );
+            let srcTokenSettingsAccount = await provider.getAccountInfo(srcTokenSettings);
+            if (srcTokenSettingsAccount == null) {
+                srcTokenSettings = undefined;
+            }
+
+            // dstTokenSettings
+            let dstTokenSettings: PublicKey | undefined;
+            [dstTokenSettings] = PublicKey.findProgramAddressSync(
+                [Buffer.from('token'), dstToken.toBytes()],
+                otmoicSwap.programId,
+            );
+            let dstTokenSettingsAccount = await provider.getAccountInfo(dstTokenSettings);
+            if (dstTokenSettingsAccount == null) {
+                dstTokenSettings = undefined;
+            }
+
+            // memo
+            let memo = msgpack5()
+                .encode({
+                    bidId: preBusiness.hash,
+                    requestor: preBusiness.swap_asset_information.requestor,
+                    lpId: preBusiness.swap_asset_information.quote.lp_info.name,
+                    userSign: preBusiness.swap_asset_information.user_sign,
+                    lpSign: preBusiness.swap_asset_information.lp_sign,
+                })
+                .slice();
+
+            let compressedData = pako.deflate(memo, { level: 9 });
+
+            let compressedBuffer = Buffer.from(compressedData);
+
+            let tx = await otmoicSwap.methods
+                .submitSwap(uuid, srcAmount, dstAmount, lock, compressedBuffer)
+                .accounts({
+                    payer: user,
+                    from: user,
+                    to: lp,
+                    srcToken: srcToken,
+                    source: source,
+                    dstToken: dstToken,
+                    escrow: escrow,
+                    escrowAta: escrowAta,
+                    adminSettings: adminSettings,
+                    srcTokenSettings: srcTokenSettings,
+                    dstTokenSettings: dstTokenSettings,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                })
+                .transaction();
+
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
+            resolve(tx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getConfirmSwapTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: NetworkType,
+    pluginProvider?: Provider,
+) =>
+    new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let otmoicSwap: Program;
+            if (pluginProvider == undefined) {
+                // setup a dummy provider
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
+                                ]),
+                            ),
+                        ),
+                        {},
+                    ),
+                );
+                otmoicSwap = new Program(
+                    idl_singlechain as Idl,
+                    getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                );
+            } else {
+                otmoicSwap = new Program(
+                    idl_singlechain as Idl,
+                    getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
+            }
+
+            // user
+            let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
+
+            // receiver
+            let lp = new PublicKey(
+                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
+            );
+
+            const isSrcTokenSol = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+                ? true
+                : false;
+            const isDstTokenSol = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
+            // src token
+            let srcToken: PublicKey = ZERO_PUBKEY;
+            if (!isSrcTokenSol) {
+                srcToken = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
+                );
+            }
+
+            // dst token
+            let dstToken: PublicKey = ZERO_PUBKEY;
+            if (!isDstTokenSol) {
+                dstToken = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
+                );
+            }
+
+            // src amount
+            const srcAmount: BN = new BN(preBusiness.swap_asset_information.amount);
+
+            // dst amount
+            const dstAmount: BN = new BN(preBusiness.swap_asset_information.dst_amount);
+
+            // agreement reached time and step time lock
+            let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let lock = {
+                agreementReachedTime: new BN(agreementReachedTime),
+                stepTime: new BN(expectedSingleStepTime),
+            };
+            // uuid
+            const uuid = generateUuidSwap(
+                user,
+                lp,
+                srcToken,
+                srcAmount.toString(),
+                dstToken,
+                dstAmount.toString(),
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+            );
+
+            // from destination
+            let fromDestination: PublicKey | undefined = undefined;
+            if (!isDstTokenSol) {
+                fromDestination = getAssociatedTokenAddressSync(dstToken, user, true, TOKEN_PROGRAM_ID);
+            }
+
+            // to source
+            let toSource: PublicKey | undefined = undefined;
+            if (!isDstTokenSol) {
+                toSource = getAssociatedTokenAddressSync(dstToken, lp, true, TOKEN_PROGRAM_ID);
+            }
+
+            // toDestination
+            let toDestination: PublicKey | undefined = undefined;
+            if (!isSrcTokenSol) {
+                toDestination = getAssociatedTokenAddressSync(srcToken, lp, true, TOKEN_PROGRAM_ID);
+            }
+
+            let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network));
+            // src fee destination
+            let srcFeeDestination: PublicKey | undefined = undefined;
+            if (!isSrcTokenSol) {
+                srcFeeDestination = getAssociatedTokenAddressSync(srcToken, feeRecepient, true, TOKEN_PROGRAM_ID);
+            }
+
+            // dst fee destination
+            let dstFeeDestination: PublicKey | undefined = undefined;
+            if (!isDstTokenSol) {
+                dstFeeDestination = getAssociatedTokenAddressSync(dstToken, feeRecepient, true, TOKEN_PROGRAM_ID);
+            }
+
+            // escrow and escrowAta
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoicSwap.programId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!isSrcTokenSol) {
+                escrowAta = getAssociatedTokenAddressSync(srcToken, escrow, true, TOKEN_PROGRAM_ID);
+            }
+
+            // adminSettings
+            let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoicSwap.programId);
+
+            // srcTokenSettings
+            let srcTokenSettings: PublicKey | undefined;
+            [srcTokenSettings] = PublicKey.findProgramAddressSync(
+                [Buffer.from('token'), srcToken.toBytes()],
+                otmoicSwap.programId,
+            );
+            let srcTokenSettingsAccount = await provider.getAccountInfo(srcTokenSettings);
+            if (srcTokenSettingsAccount == null) {
+                srcTokenSettings = undefined;
+            }
+
+            // dstTokenSettings
+            let dstTokenSettings: PublicKey | undefined;
+            [dstTokenSettings] = PublicKey.findProgramAddressSync(
+                [Buffer.from('token'), dstToken.toBytes()],
+                otmoicSwap.programId,
+            );
+            let dstTokenSettingsAccount = await provider.getAccountInfo(dstTokenSettings);
+            if (dstTokenSettingsAccount == null) {
+                dstTokenSettings = undefined;
+            }
+
+            let tx = await otmoicSwap.methods
+                .confirmSwap(uuid)
+                .accounts({
+                    payer: lp,
+                    from: user,
+                    fromDestination: fromDestination,
+                    to: lp,
+                    toSource: toSource,
+                    toDestination: toDestination,
+                    escrow: escrow,
+                    escrowAta: escrowAta,
+                    adminSettings: adminSettings,
+                    feeRecepient: feeRecepient,
+                    srcFeeDestination: srcFeeDestination,
+                    dstFeeDestination: dstFeeDestination,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                })
+                .transaction();
+
+            const latestBlockhash = await provider.getLatestBlockhash('confirmed');
+            tx.recentBlockhash = latestBlockhash.blockhash;
+            tx.feePayer = new PublicKey(preBusiness.swap_asset_information.sender);
+
+            resolve(tx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getRefundSwapTransaction = (
+    preBusiness: PreBusiness,
+    provider: Connection | undefined,
+    network: NetworkType,
+    pluginProvider?: Provider,
+) =>
+    new Promise<Transaction>(async (resolve, reject) => {
+        if (provider == undefined) {
+            provider = getJsonRpcProvider(preBusiness, undefined, network);
+        }
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let otmoicSwap: Program;
+            if (pluginProvider == undefined) {
+                // setup a dummy provider
+                setProvider(
+                    new AnchorProvider(
+                        new Connection('http://localhost'),
+                        new AnchorWallet(
+                            Keypair.fromSeed(
+                                Uint8Array.from([
+                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                    1, 1, 1, 1,
+                                ]),
+                            ),
+                        ),
+                        {},
+                    ),
+                );
+                otmoicSwap = new Program(
+                    idl_singlechain as Idl,
+                    getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                );
+            } else {
+                otmoicSwap = new Program(
+                    idl_singlechain as Idl,
+                    getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                    pluginProvider,
+                );
+            }
+
+            // user
+            let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.sender));
+
+            // receiver
+            let lp = new PublicKey(
+                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.lp_bridge_address),
+            );
+
+            const isSrcTokenSol = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token)
+                ? true
+                : false;
+            const isDstTokenSol = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
+            // src token
+            let srcToken: PublicKey = ZERO_PUBKEY;
+            if (!isSrcTokenSol) {
+                srcToken = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
+                );
+            }
+
+            // dst token
+            let dstToken: PublicKey = ZERO_PUBKEY;
+            if (!isDstTokenSol) {
+                dstToken = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
+                );
+            }
+
+            // src amount
+            const srcAmount: BN = new BN(preBusiness.swap_asset_information.amount);
+
+            // dst amount
+            const dstAmount: BN = new BN(preBusiness.swap_asset_information.dst_amount);
+
+            // agreement reached time and step time lock
+            let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
+            let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
+            let lock = {
+                agreementReachedTime: new BN(agreementReachedTime),
+                stepTime: new BN(expectedSingleStepTime),
+            };
+            // uuid
+            const uuid = generateUuidSwap(
+                user,
+                lp,
+                srcToken,
+                srcAmount.toString(),
+                dstToken,
+                dstAmount.toString(),
+                agreementReachedTime.toString(),
+                expectedSingleStepTime.toString(),
+            );
+
+            // from source
+            let fromSource: PublicKey | undefined = undefined;
+            if (!isSrcTokenSol) {
+                fromSource = getAssociatedTokenAddressSync(srcToken, user, true, TOKEN_PROGRAM_ID);
+            }
+
+            // escrow and escrowAta
+            let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoicSwap.programId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!isSrcTokenSol) {
+                escrowAta = getAssociatedTokenAddressSync(srcToken, escrow, true, TOKEN_PROGRAM_ID);
+            }
+
+            let tx = await otmoicSwap.methods
+                .refundSwap(uuid)
+                .accounts({
+                    from: user,
+                    source: fromSource,
+                    escrow: escrow,
+                    escrowAta: escrowAta,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
                 })
                 .transaction();
 
@@ -692,12 +1256,21 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
             // receiver
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.dst_address));
 
+            const solOnlyMode = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
             // mint token
-            let token = new PublicKey(
-                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
-            );
-            let mintTokenAccountInfo = await provider.getAccountInfo(token);
-            let tokenProgramId = mintTokenAccountInfo!.owner;
+            let token: PublicKey = ZERO_PUBKEY;
+            let tokenProgramId: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                token = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
+                );
+                let mintTokenAccountInfo = await provider.getAccountInfo(token);
+                tokenProgramId = mintTokenAccountInfo!.owner;
+            }
 
             // amount
             let amount = new BN(preBusiness.swap_asset_information.dst_amount_need);
@@ -737,11 +1310,17 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
             );
 
             // source ata token account
-            let source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
+            let source: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
+            }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            }
 
             // adminSettings
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId);
@@ -834,12 +1413,21 @@ export const doTransferInConfirm = (
             // receiver
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.dst_address));
 
+            const solOnlyMode = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
             // mint token
-            let token = new PublicKey(
-                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
-            );
-            let mintTokenAccountInfo = await provider.getAccountInfo(token);
-            let tokenProgramId = mintTokenAccountInfo!.owner;
+            let token: PublicKey = ZERO_PUBKEY;
+            let tokenProgramId: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                token = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
+                );
+                let mintTokenAccountInfo = await provider.getAccountInfo(token);
+                tokenProgramId = mintTokenAccountInfo!.owner;
+            }
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
@@ -879,15 +1467,24 @@ export const doTransferInConfirm = (
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId);
 
             // destination
-            let destination = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
+            let destination: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                destination = getAssociatedTokenAddressSync(token, user, true, tokenProgramId!);
+            }
 
             // fee recepient
             let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network));
-            let feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId);
+            let feeDestination: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId!);
+            }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
+            }
 
             let tx = await otmoic.methods
                 .confirm(uuid, preimage, isIn)
@@ -945,12 +1542,21 @@ export const doTransferInRefund = (
             // receiver
             let user = new PublicKey(toBs58Address(preBusiness.swap_asset_information.dst_address));
 
+            const solOnlyMode = isZeroAddress(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token)
+                ? true
+                : false;
+            const ZERO_PUBKEY = new PublicKey(new Uint8Array(32).fill(0));
+
             // mint token
-            let token = new PublicKey(
-                toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
-            );
-            let mintTokenAccountInfo = await provider.getAccountInfo(token);
-            let tokenProgramId = mintTokenAccountInfo!.owner;
+            let token: PublicKey = ZERO_PUBKEY;
+            let tokenProgramId: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                token = new PublicKey(
+                    toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
+                );
+                let mintTokenAccountInfo = await provider.getAccountInfo(token);
+                tokenProgramId = mintTokenAccountInfo!.owner;
+            }
 
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
@@ -984,11 +1590,17 @@ export const doTransferInRefund = (
             );
 
             // source
-            let source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
+            let source: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
+            }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            let escrowAta: PublicKey | undefined = undefined;
+            if (!solOnlyMode) {
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+            }
 
             let tx = await otmoic.methods
                 .refund(uuid, isIn)

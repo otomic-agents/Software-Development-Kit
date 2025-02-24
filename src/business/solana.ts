@@ -426,7 +426,7 @@ export const _getTransferOutTransaction = (
                 .accounts({
                     payer: user,
                     from: user,
-                    mint: token,
+                    mint: solOnlyMode ? null : token,
                     source: source,
                     escrow: escrow,
                     escrowAta: escrowAta,
@@ -1369,7 +1369,7 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
                 .accounts({
                     payer: lp,
                     from: lp,
-                    mint: token,
+                    mint: solOnlyMode ? null : token,
                     source: source,
                     escrow: escrow,
                     escrowAta: escrowAta,

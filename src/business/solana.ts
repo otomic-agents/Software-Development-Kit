@@ -24,6 +24,8 @@ import pako from 'pako';
 import retry from 'async-retry';
 import idl from './solanaIdl';
 import idl_singlechain from './solanaSingleChainIdl';
+import { Obridge } from './obridgeType';
+import { ObridgeSwap } from './obridgeSwapType';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { toBs58Address } from '../utils/format';
 import { PreBusiness, Quote, NetworkType, ChainId, SwapSignData } from '../interface/interface';
@@ -278,7 +280,7 @@ export const _getTransferOutTransaction = (
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            let otmoic: Program;
+            let otmoic: Program<Obridge>;
             if (pluginProvider == undefined) {
                 // setup a dummy provider
                 setProvider(
@@ -295,13 +297,16 @@ export const _getTransferOutTransaction = (
                         {},
                     ),
                 );
-                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                ) as unknown as Program<Obridge>;
             } else {
                 otmoic = new Program(
                     idl as Idl,
                     getOtmoicAddressBySystemChainId(systemChainId, network),
                     pluginProvider,
-                );
+                ) as unknown as Program<Obridge>;
             }
 
             // user
@@ -319,7 +324,7 @@ export const _getTransferOutTransaction = (
 
             // mint token
             let token: PublicKey = ZERO_PUBKEY;
-            let tokenProgramId: PublicKey | undefined = undefined;
+            let tokenProgramId: PublicKey | null = null;
             if (!solOnlyMode) {
                 token = new PublicKey(
                     toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
@@ -366,16 +371,16 @@ export const _getTransferOutTransaction = (
             );
 
             // source ata token account
-            let source: PublicKey | undefined = undefined;
+            let source: PublicKey | null = null;
             if (!solOnlyMode) {
-                source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
+                source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId!);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!solOnlyMode) {
-                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
             }
 
             // adminSettings
@@ -457,7 +462,7 @@ export const _getTransferOutConfirmTransaction = (
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            let otmoic: Program;
+            let otmoic: Program<Obridge>;
             if (pluginProvider == undefined) {
                 // setup a dummy provider
                 setProvider(
@@ -474,13 +479,16 @@ export const _getTransferOutConfirmTransaction = (
                         {},
                     ),
                 );
-                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                ) as unknown as Program<Obridge>;
             } else {
                 otmoic = new Program(
                     idl as Idl,
                     getOtmoicAddressBySystemChainId(systemChainId, network),
                     pluginProvider,
-                );
+                ) as unknown as Program<Obridge>;
             }
 
             // user
@@ -498,7 +506,7 @@ export const _getTransferOutConfirmTransaction = (
 
             // mint token
             let token: PublicKey = ZERO_PUBKEY;
-            let tokenProgramId: PublicKey | undefined = undefined;
+            let tokenProgramId: PublicKey | null = null;
             if (!solOnlyMode) {
                 token = new PublicKey(
                     toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
@@ -545,21 +553,21 @@ export const _getTransferOutConfirmTransaction = (
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId);
 
             // destination
-            let destination: PublicKey | undefined = undefined;
+            let destination: PublicKey | null = null;
             if (!solOnlyMode) {
                 destination = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId!);
             }
 
             // fee recepient
             let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network));
-            let feeDestination: PublicKey | undefined = undefined;
+            let feeDestination: PublicKey | null = null;
             if (!solOnlyMode) {
                 feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId!);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!solOnlyMode) {
                 escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
             }
@@ -605,7 +613,7 @@ export const _getTransferOutRefundTransaction = (
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
             // setup a dummy provider
-            let otmoic: Program;
+            let otmoic: Program<Obridge>;
             if (pluginProvider == undefined) {
                 setProvider(
                     new AnchorProvider(
@@ -621,13 +629,16 @@ export const _getTransferOutRefundTransaction = (
                         {},
                     ),
                 );
-                otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+                otmoic = new Program(
+                    idl as Idl,
+                    getOtmoicAddressBySystemChainId(systemChainId, network),
+                ) as unknown as Program<Obridge>;
             } else {
                 otmoic = new Program(
                     idl as Idl,
                     getOtmoicAddressBySystemChainId(systemChainId, network),
                     pluginProvider,
-                );
+                ) as unknown as Program<Obridge>;
             }
 
             // user
@@ -645,7 +656,7 @@ export const _getTransferOutRefundTransaction = (
 
             // mint token
             let token: PublicKey = ZERO_PUBKEY;
-            let tokenProgramId: PublicKey | undefined = undefined;
+            let tokenProgramId: PublicKey | null = null;
             if (!solOnlyMode) {
                 token = new PublicKey(
                     toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.src_token),
@@ -655,9 +666,9 @@ export const _getTransferOutRefundTransaction = (
             }
 
             // source
-            let source: PublicKey | undefined = undefined;
+            let source: PublicKey | null = null;
             if (!solOnlyMode) {
-                source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId);
+                source = getAssociatedTokenAddressSync(token, user, true, tokenProgramId!);
             }
 
             // agreement reached time and step time lock
@@ -693,9 +704,9 @@ export const _getTransferOutRefundTransaction = (
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!solOnlyMode) {
-                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
             }
 
             let tx = await otmoic.methods
@@ -733,7 +744,7 @@ export const _getInitSwapTransaction = (
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            let otmoicSwap: Program;
+            let otmoicSwap: Program<ObridgeSwap>;
             if (pluginProvider == undefined) {
                 // setup a dummy provider
                 setProvider(
@@ -753,13 +764,13 @@ export const _getInitSwapTransaction = (
                 otmoicSwap = new Program(
                     idl_singlechain as Idl,
                     getOtmoicSwapAddressBySystemChainId(systemChainId, network),
-                );
+                ) as unknown as Program<ObridgeSwap>;
             } else {
                 otmoicSwap = new Program(
                     idl_singlechain as Idl,
                     getOtmoicSwapAddressBySystemChainId(systemChainId, network),
                     pluginProvider,
-                );
+                ) as unknown as Program<ObridgeSwap>;
             }
 
             // user
@@ -820,14 +831,14 @@ export const _getInitSwapTransaction = (
             );
 
             // source ata token account
-            let source: PublicKey | undefined = undefined;
+            let source: PublicKey | null = null;
             if (!isSrcTokenSol) {
                 source = getAssociatedTokenAddressSync(srcToken, user, true, TOKEN_PROGRAM_ID);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoicSwap.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!isSrcTokenSol) {
                 escrowAta = getAssociatedTokenAddressSync(srcToken, escrow, true, TOKEN_PROGRAM_ID);
             }
@@ -836,25 +847,25 @@ export const _getInitSwapTransaction = (
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoicSwap.programId);
 
             // srcTokenSettings
-            let srcTokenSettings: PublicKey | undefined;
+            let srcTokenSettings: PublicKey | null;
             [srcTokenSettings] = PublicKey.findProgramAddressSync(
                 [Buffer.from('token'), srcToken.toBytes()],
                 otmoicSwap.programId,
             );
             let srcTokenSettingsAccount = await provider.getAccountInfo(srcTokenSettings);
             if (srcTokenSettingsAccount == null) {
-                srcTokenSettings = undefined;
+                srcTokenSettings = null;
             }
 
             // dstTokenSettings
-            let dstTokenSettings: PublicKey | undefined;
+            let dstTokenSettings: PublicKey | null;
             [dstTokenSettings] = PublicKey.findProgramAddressSync(
                 [Buffer.from('token'), dstToken.toBytes()],
                 otmoicSwap.programId,
             );
             let dstTokenSettingsAccount = await provider.getAccountInfo(dstTokenSettings);
             if (dstTokenSettingsAccount == null) {
-                dstTokenSettings = undefined;
+                dstTokenSettings = null;
             }
 
             // memo
@@ -878,9 +889,9 @@ export const _getInitSwapTransaction = (
                     payer: user,
                     from: user,
                     to: lp,
-                    srcToken: srcToken,
+                    srcToken: isSrcTokenSol ? null : srcToken,
                     source: source,
-                    dstToken: dstToken,
+                    dstToken: isDstTokenSol ? null : dstToken,
                     escrow: escrow,
                     escrowAta: escrowAta,
                     adminSettings: adminSettings,
@@ -915,7 +926,7 @@ export const _getConfirmSwapTransaction = (
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            let otmoicSwap: Program;
+            let otmoicSwap: Program<ObridgeSwap>;
             if (pluginProvider == undefined) {
                 // setup a dummy provider
                 setProvider(
@@ -935,13 +946,13 @@ export const _getConfirmSwapTransaction = (
                 otmoicSwap = new Program(
                     idl_singlechain as Idl,
                     getOtmoicSwapAddressBySystemChainId(systemChainId, network),
-                );
+                ) as unknown as Program<ObridgeSwap>;
             } else {
                 otmoicSwap = new Program(
                     idl_singlechain as Idl,
                     getOtmoicSwapAddressBySystemChainId(systemChainId, network),
                     pluginProvider,
-                );
+                ) as unknown as Program<ObridgeSwap>;
             }
 
             // user
@@ -985,10 +996,7 @@ export const _getConfirmSwapTransaction = (
             // agreement reached time and step time lock
             let agreementReachedTime = preBusiness.swap_asset_information.agreement_reached_time;
             let expectedSingleStepTime = preBusiness.swap_asset_information.expected_single_step_time;
-            let lock = {
-                agreementReachedTime: new BN(agreementReachedTime),
-                stepTime: new BN(expectedSingleStepTime),
-            };
+
             // uuid
             const uuid = generateUuidSwap(
                 user,
@@ -1002,39 +1010,39 @@ export const _getConfirmSwapTransaction = (
             );
 
             // from destination
-            let fromDestination: PublicKey | undefined = undefined;
+            let fromDestination: PublicKey | null = null;
             if (!isDstTokenSol) {
                 fromDestination = getAssociatedTokenAddressSync(dstToken, user, true, TOKEN_PROGRAM_ID);
             }
 
             // to source
-            let toSource: PublicKey | undefined = undefined;
+            let toSource: PublicKey | null = null;
             if (!isDstTokenSol) {
                 toSource = getAssociatedTokenAddressSync(dstToken, lp, true, TOKEN_PROGRAM_ID);
             }
 
             // toDestination
-            let toDestination: PublicKey | undefined = undefined;
+            let toDestination: PublicKey | null = null;
             if (!isSrcTokenSol) {
                 toDestination = getAssociatedTokenAddressSync(srcToken, lp, true, TOKEN_PROGRAM_ID);
             }
 
             let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network));
             // src fee destination
-            let srcFeeDestination: PublicKey | undefined = undefined;
+            let srcFeeDestination: PublicKey | null = null;
             if (!isSrcTokenSol) {
                 srcFeeDestination = getAssociatedTokenAddressSync(srcToken, feeRecepient, true, TOKEN_PROGRAM_ID);
             }
 
             // dst fee destination
-            let dstFeeDestination: PublicKey | undefined = undefined;
+            let dstFeeDestination: PublicKey | null = null;
             if (!isDstTokenSol) {
                 dstFeeDestination = getAssociatedTokenAddressSync(dstToken, feeRecepient, true, TOKEN_PROGRAM_ID);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoicSwap.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!isSrcTokenSol) {
                 escrowAta = getAssociatedTokenAddressSync(srcToken, escrow, true, TOKEN_PROGRAM_ID);
             }
@@ -1043,25 +1051,25 @@ export const _getConfirmSwapTransaction = (
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoicSwap.programId);
 
             // srcTokenSettings
-            let srcTokenSettings: PublicKey | undefined;
+            let srcTokenSettings: PublicKey | null;
             [srcTokenSettings] = PublicKey.findProgramAddressSync(
                 [Buffer.from('token'), srcToken.toBytes()],
                 otmoicSwap.programId,
             );
             let srcTokenSettingsAccount = await provider.getAccountInfo(srcTokenSettings);
             if (srcTokenSettingsAccount == null) {
-                srcTokenSettings = undefined;
+                srcTokenSettings = null;
             }
 
             // dstTokenSettings
-            let dstTokenSettings: PublicKey | undefined;
+            let dstTokenSettings: PublicKey | null;
             [dstTokenSettings] = PublicKey.findProgramAddressSync(
                 [Buffer.from('token'), dstToken.toBytes()],
                 otmoicSwap.programId,
             );
             let dstTokenSettingsAccount = await provider.getAccountInfo(dstTokenSettings);
             if (dstTokenSettingsAccount == null) {
-                dstTokenSettings = undefined;
+                dstTokenSettings = null;
             }
 
             let tx = await otmoicSwap.methods
@@ -1107,7 +1115,7 @@ export const _getRefundSwapTransaction = (
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            let otmoicSwap: Program;
+            let otmoicSwap: Program<ObridgeSwap>;
             if (pluginProvider == undefined) {
                 // setup a dummy provider
                 setProvider(
@@ -1127,13 +1135,13 @@ export const _getRefundSwapTransaction = (
                 otmoicSwap = new Program(
                     idl_singlechain as Idl,
                     getOtmoicSwapAddressBySystemChainId(systemChainId, network),
-                );
+                ) as unknown as Program<ObridgeSwap>;
             } else {
                 otmoicSwap = new Program(
                     idl_singlechain as Idl,
                     getOtmoicSwapAddressBySystemChainId(systemChainId, network),
                     pluginProvider,
-                );
+                ) as unknown as Program<ObridgeSwap>;
             }
 
             // user
@@ -1194,14 +1202,14 @@ export const _getRefundSwapTransaction = (
             );
 
             // from source
-            let fromSource: PublicKey | undefined = undefined;
+            let fromSource: PublicKey | null = null;
             if (!isSrcTokenSol) {
                 fromSource = getAssociatedTokenAddressSync(srcToken, user, true, TOKEN_PROGRAM_ID);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoicSwap.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!isSrcTokenSol) {
                 escrowAta = getAssociatedTokenAddressSync(srcToken, escrow, true, TOKEN_PROGRAM_ID);
             }
@@ -1248,7 +1256,10 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
                     {},
                 ),
             );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+            const otmoic = new Program(
+                idl as Idl,
+                getOtmoicAddressBySystemChainId(systemChainId, network),
+            ) as unknown as Program<Obridge>;
 
             // lp
             let lp = new PublicKey(toBs58Address(sender));
@@ -1263,7 +1274,7 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
 
             // mint token
             let token: PublicKey = ZERO_PUBKEY;
-            let tokenProgramId: PublicKey | undefined = undefined;
+            let tokenProgramId: PublicKey | null = null;
             if (!solOnlyMode) {
                 token = new PublicKey(
                     toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
@@ -1310,16 +1321,16 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
             );
 
             // source ata token account
-            let source: PublicKey | undefined = undefined;
+            let source: PublicKey | null = null;
             if (!solOnlyMode) {
-                source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
+                source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId!);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!solOnlyMode) {
-                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
             }
 
             // adminSettings
@@ -1402,7 +1413,10 @@ export const doTransferInConfirm = (
                     {},
                 ),
             );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+            const otmoic = new Program(
+                idl as Idl,
+                getOtmoicAddressBySystemChainId(systemChainId, network),
+            ) as unknown as Program<Obridge>;
 
             // signer
             let signerAccount = new PublicKey(toBs58Address(signer));
@@ -1420,7 +1434,7 @@ export const doTransferInConfirm = (
 
             // mint token
             let token: PublicKey = ZERO_PUBKEY;
-            let tokenProgramId: PublicKey | undefined = undefined;
+            let tokenProgramId: PublicKey | null = null;
             if (!solOnlyMode) {
                 token = new PublicKey(
                     toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
@@ -1467,21 +1481,21 @@ export const doTransferInConfirm = (
             let [adminSettings] = PublicKey.findProgramAddressSync([Buffer.from('settings')], otmoic.programId);
 
             // destination
-            let destination: PublicKey | undefined = undefined;
+            let destination: PublicKey | null = null;
             if (!solOnlyMode) {
                 destination = getAssociatedTokenAddressSync(token, user, true, tokenProgramId!);
             }
 
             // fee recepient
             let feeRecepient = new PublicKey(getFeeRecepientAddressBySystemChainId(systemChainId, network));
-            let feeDestination: PublicKey | undefined = undefined;
+            let feeDestination: PublicKey | null = null;
             if (!solOnlyMode) {
                 feeDestination = getAssociatedTokenAddressSync(token, feeRecepient, true, tokenProgramId!);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!solOnlyMode) {
                 escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
             }
@@ -1534,7 +1548,10 @@ export const doTransferInRefund = (
                     {},
                 ),
             );
-            const otmoic = new Program(idl as Idl, getOtmoicAddressBySystemChainId(systemChainId, network));
+            const otmoic = new Program(
+                idl as Idl,
+                getOtmoicAddressBySystemChainId(systemChainId, network),
+            ) as unknown as Program<Obridge>;
 
             // lp
             let lp = new PublicKey(toBs58Address(sender));
@@ -1549,7 +1566,7 @@ export const doTransferInRefund = (
 
             // mint token
             let token: PublicKey = ZERO_PUBKEY;
-            let tokenProgramId: PublicKey | undefined = undefined;
+            let tokenProgramId: PublicKey | null = null;
             if (!solOnlyMode) {
                 token = new PublicKey(
                     toBs58Address(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token),
@@ -1590,16 +1607,16 @@ export const doTransferInRefund = (
             );
 
             // source
-            let source: PublicKey | undefined = undefined;
+            let source: PublicKey | null = null;
             if (!solOnlyMode) {
-                source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId);
+                source = getAssociatedTokenAddressSync(token, lp, true, tokenProgramId!);
             }
 
             // escrow and escrowAta
             let [escrow] = PublicKey.findProgramAddressSync([Buffer.from(uuid)], otmoic.programId);
-            let escrowAta: PublicKey | undefined = undefined;
+            let escrowAta: PublicKey | null = null;
             if (!solOnlyMode) {
-                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId);
+                escrowAta = getAssociatedTokenAddressSync(token, escrow, true, tokenProgramId!);
             }
 
             let tx = await otmoic.methods

@@ -28,7 +28,7 @@ import { Obridge } from './obridgeType';
 import { ObridgeSwap } from './obridgeSwapType';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
 import { toBs58Address } from '../utils/format';
-import { PreBusiness, Quote, NetworkType, ChainId, SwapSignData } from '../interface/interface';
+import { PreBusiness, Quote, NetworkType, ChainId, SwapSignData, SwapType } from '../interface/interface';
 import {
     getOtmoicAddressBySystemChainId,
     getOtmoicSwapAddressBySystemChainId,
@@ -162,6 +162,7 @@ export const _getSignDataEIP712 = async (
     earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
+    swapType: SwapType,
 ): Promise<SwapSignData> => {
     let srcDecimals: any;
     if (getChainType(quote.quote_base.bridge.src_chain_id) === 'solana') {
@@ -202,38 +203,64 @@ export const _getSignDataEIP712 = async (
         quote.quote_base.bridge.src_chain_id,
         quote.quote_base.bridge.dst_chain_id,
     );
-    const signMessage = {
-        src_chain_id: quote.quote_base.bridge.src_chain_id,
-        src_address: quote.quote_base.lp_bridge_address,
-        src_token: quote.quote_base.bridge.src_token,
-        src_amount: convertMinimumUnits(amount, srcDecimals),
 
-        dst_chain_id: quote.quote_base.bridge.dst_chain_id,
-        dst_address: receivingAddress,
-        dst_token: quote.quote_base.bridge.dst_token,
-        dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
-        dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
+    switch (swapType) {
+        case SwapType.ATOMIC:
+            const signMessage = {
+                src_chain_id: quote.quote_base.bridge.src_chain_id,
+                src_address: quote.quote_base.lp_bridge_address,
+                src_token: quote.quote_base.bridge.src_token,
+                src_amount: convertMinimumUnits(amount, srcDecimals),
 
-        requestor: '', //user_address.value,
-        lp_id: quote.lp_info.name,
-        agreement_reached_time: agreementReachedTime,
-        expected_single_step_time:
-            expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
-        tolerant_single_step_time:
-            tolerantSingleStepTime == undefined ? defaultTolerantSingleStepTime : tolerantSingleStepTime,
-        earliest_refund_time:
-            earliestRefundTime == undefined
-                ? getDefaultEarliestRefundTime(
-                      agreementReachedTime,
-                      defaultExpectedSingleStepTime,
-                      defaultTolerantSingleStepTime,
-                  )
-                : earliestRefundTime,
-    };
+                dst_chain_id: quote.quote_base.bridge.dst_chain_id,
+                dst_address: receivingAddress,
+                dst_token: quote.quote_base.bridge.dst_token,
+                dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
+                dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
 
-    return {
-        message: signMessage,
-    };
+                requestor: '', //user_address.value,
+                lp_id: quote.lp_info.name,
+                agreement_reached_time: agreementReachedTime,
+                expected_single_step_time:
+                    expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
+                tolerant_single_step_time:
+                    tolerantSingleStepTime == undefined ? defaultTolerantSingleStepTime : tolerantSingleStepTime,
+                earliest_refund_time:
+                    earliestRefundTime == undefined
+                        ? getDefaultEarliestRefundTime(
+                              agreementReachedTime,
+                              defaultExpectedSingleStepTime,
+                              defaultTolerantSingleStepTime,
+                          )
+                        : earliestRefundTime,
+            };
+
+            return {
+                message: signMessage,
+            };
+        case SwapType.SINGLECHAIN:
+            const signMessageSingleChain = {
+                src_chain_id: quote.quote_base.bridge.src_chain_id,
+                src_address: quote.quote_base.lp_bridge_address,
+                src_token: quote.quote_base.bridge.src_token,
+                src_amount: convertMinimumUnits(amount, srcDecimals),
+
+                dst_chain_id: quote.quote_base.bridge.dst_chain_id,
+                dst_address: receivingAddress,
+                dst_token: quote.quote_base.bridge.dst_token,
+                dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
+                dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
+
+                requestor: '', //user_address.value,
+                lp_id: quote.lp_info.name,
+                agreement_reached_time: agreementReachedTime,
+                expected_single_step_time:
+                    expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
+            };
+            return {
+                message: signMessageSingleChain,
+            };
+    }
 };
 
 export const _getSignPreambleEIP712 = (contractAddress: PublicKey, signerPubkeys: PublicKey[], msgLen: number) => {

@@ -304,6 +304,9 @@ export namespace Otmoic {
 
                 case 'solana':
                     if (option.getSignDataOnly) {
+                        if (!option.swapType) {
+                            return Promise.reject('swapType is required');
+                        }
                         const { dstAmount, dstNativeAmount } = mathReceived(quote, amount, swapToNative);
                         return _getSignDataSolana(
                             quote,
@@ -318,12 +321,16 @@ export namespace Otmoic {
                             earliestRefundTime,
                             rpcSrc,
                             rpcDst,
+                            option.swapType,
                         );
                     } else {
                         switch (option.type) {
                             case 'privateKey':
                                 if (!option.privateKey) {
                                     return Promise.reject('privateKey is required');
+                                }
+                                if (!option.swapType) {
+                                    return Promise.reject('swapType is required');
                                 }
                                 return _signQuoteByPrivateKey(
                                     quote,
@@ -337,11 +344,15 @@ export namespace Otmoic {
                                     earliestRefundTime,
                                     rpcSrc,
                                     rpcDst,
+                                    option.swapType,
                                 );
 
                             case 'phantomAPI':
                                 if (!option.phantomAPI || !option.sender) {
                                     return Promise.reject('phantomAPI and sender is required');
+                                }
+                                if (!option.swapType) {
+                                    return Promise.reject('swapType is required');
                                 }
                                 return _signQuoteByWalletPlugin(
                                     quote,
@@ -356,6 +367,7 @@ export namespace Otmoic {
                                     earliestRefundTime,
                                     rpcSrc,
                                     rpcDst,
+                                    option.swapType,
                                 );
 
                             default:

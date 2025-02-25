@@ -1,11 +1,11 @@
 import { PreBusiness, NetworkType } from '../../interface/interface';
-import { doApprove, doTransferOut, getJsonRpcProvider, _isNeedApprove } from '../../business/evm';
+import { doApprove, doInitSwap, getJsonRpcProvider, _isNeedApprove } from '../../business/evm';
 import { ContractTransactionResponse, JsonRpcProvider, ethers } from 'ethers';
 import { ResponseTransferOut } from '../../interface/api';
 import { sleep } from '../../utils/sleep';
-import { getOtmoicAddressBySystemChainId } from '../../utils/chain';
+import { getOtmoicSwapAddressBySystemChainId } from '../../utils/chain';
 
-export const _transferOutByPrivateKey = (
+export const _initSwapByPrivateKey = (
     preBusiness: PreBusiness,
     privateKey: string,
     network: NetworkType,
@@ -20,7 +20,8 @@ export const _transferOutByPrivateKey = (
             let approveTx: ContractTransactionResponse | undefined = undefined;
 
             let systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
-            let contractAddress = getOtmoicAddressBySystemChainId(systemChainId, network);
+            let contractAddress = getOtmoicSwapAddressBySystemChainId(systemChainId, network);
+
             //approve
             if (await _isNeedApprove(preBusiness, web3Wallet.address, rpc, network, contractAddress)) {
                 approveTx = await doApprove(
@@ -31,15 +32,15 @@ export const _transferOutByPrivateKey = (
                     useMaximumGasPriceAtMost,
                     contractAddress,
                 );
-                // console.log(approveTx)
+                console.log(approveTx);
 
                 while (await _isNeedApprove(preBusiness, web3Wallet.address, rpc, network, contractAddress)) {
                     await sleep(1000);
                 }
             }
 
-            //transfer out
-            const transferOutTx = await doTransferOut(
+            //init swap
+            const initSwapTx = await doInitSwap(
                 preBusiness,
                 provider,
                 web3Wallet.connect(provider),
@@ -48,7 +49,7 @@ export const _transferOutByPrivateKey = (
             );
             resolve({
                 approve: approveTx,
-                transferOut: transferOutTx,
+                transferOut: initSwapTx,
             });
         } catch (error) {
             reject(error);

@@ -11,11 +11,13 @@ import {
     ComplaintValue,
     SwapSignData,
     GasPrice,
+    SwapType,
 } from '../interface/interface';
 import {
     getChainId,
     getChainType,
     getOtmoicAddressBySystemChainId,
+    getOtmoicSwapAddressBySystemChainId,
     getExpectedSingleStepTime,
     getTolerantSingleStepTime,
     getDefaultEarliestRefundTime,
@@ -26,7 +28,13 @@ import {
     commonTokenDecimals,
 } from '../utils/chain';
 import { convertMinimumUnits, convertNativeMinimumUnits, convertStandardUnits } from '../utils/math';
-import { getTransferInConfirmData, getTransferOutConfirmData, getTransferOutData } from '../utils/data';
+import {
+    getTransferInConfirmData,
+    getTransferOutConfirmData,
+    getTransferOutData,
+    getInitSwapData,
+    getConfirmAndRefundSwapData,
+} from '../utils/data';
 import { decimals as solanaDecimals, getDefaultRPC as getSolanaDefaultRPC } from '../business/solana';
 import { toHexAddress, isZeroAddress } from '../utils/format';
 
@@ -152,6 +160,7 @@ export const _getSignDataEIP712 = async (
     earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
+    swapType: SwapType,
 ): Promise<SwapSignData> => {
     const domain = {
         name: 'OtmoicSwap',
@@ -194,70 +203,123 @@ export const _getSignDataEIP712 = async (
         quote.quote_base.bridge.src_chain_id,
         quote.quote_base.bridge.dst_chain_id,
     );
-    let defaultTolerantSingleStepTime = getTolerantSingleStepTime(
-        quote.quote_base.bridge.src_chain_id,
-        quote.quote_base.bridge.dst_chain_id,
-    );
-    const signMessage = {
-        src_chain_id: quote.quote_base.bridge.src_chain_id,
-        src_address: quote.quote_base.lp_bridge_address,
-        src_token: quote.quote_base.bridge.src_token,
-        src_amount: convertMinimumUnits(amount, srcDecimals),
 
-        dst_chain_id: quote.quote_base.bridge.dst_chain_id,
-        dst_address: receivingAddress,
-        dst_token: quote.quote_base.bridge.dst_token,
-        dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
-        dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
+    switch (swapType) {
+        case SwapType.ATOMIC:
+            let defaultTolerantSingleStepTime = getTolerantSingleStepTime(
+                quote.quote_base.bridge.src_chain_id,
+                quote.quote_base.bridge.dst_chain_id,
+            );
+            const signMessageAtomic = {
+                src_chain_id: quote.quote_base.bridge.src_chain_id,
+                src_address: quote.quote_base.lp_bridge_address,
+                src_token: quote.quote_base.bridge.src_token,
+                src_amount: convertMinimumUnits(amount, srcDecimals),
 
-        requestor: '', //user_address.value,
-        lp_id: quote.lp_info.name,
-        agreement_reached_time: agreementReachedTime,
-        expected_single_step_time:
-            expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
-        tolerant_single_step_time:
-            tolerantSingleStepTime == undefined ? defaultTolerantSingleStepTime : tolerantSingleStepTime,
-        earliest_refund_time:
-            earliestRefundTime == undefined
-                ? getDefaultEarliestRefundTime(
-                      agreementReachedTime,
-                      defaultExpectedSingleStepTime,
-                      defaultTolerantSingleStepTime,
-                  )
-                : earliestRefundTime,
-    };
+                dst_chain_id: quote.quote_base.bridge.dst_chain_id,
+                dst_address: receivingAddress,
+                dst_token: quote.quote_base.bridge.dst_token,
+                dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
+                dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
 
-    const typedData = {
-        types: {
-            EIP712Domain: [
-                { name: 'name', type: 'string' },
-                { name: 'version', type: 'string' },
-                { name: 'chainId', type: 'uint256' },
-            ],
-            Message: [
-                { name: 'src_chain_id', type: 'uint256' },
-                { name: 'src_address', type: 'string' },
-                { name: 'src_token', type: 'string' },
-                { name: 'src_amount', type: 'string' },
-                { name: 'dst_chain_id', type: 'uint256' },
-                { name: 'dst_address', type: 'string' },
-                { name: 'dst_token', type: 'string' },
-                { name: 'dst_amount', type: 'string' },
-                { name: 'dst_native_amount', type: 'string' },
-                { name: 'requestor', type: 'string' },
-                { name: 'lp_id', type: 'string' },
-                { name: 'agreement_reached_time', type: 'uint256' },
-                { name: 'expected_single_step_time', type: 'uint256' },
-                { name: 'tolerant_single_step_time', type: 'uint256' },
-                { name: 'earliest_refund_time', type: 'uint256' },
-            ],
-        },
-        primaryType: 'Message',
-        domain,
-        message: signMessage,
-    };
+                requestor: '', //user_address.value,
+                lp_id: quote.lp_info.name,
+                agreement_reached_time: agreementReachedTime,
+                expected_single_step_time:
+                    expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
+                tolerant_single_step_time:
+                    tolerantSingleStepTime == undefined ? defaultTolerantSingleStepTime : tolerantSingleStepTime,
+                earliest_refund_time:
+                    earliestRefundTime == undefined
+                        ? getDefaultEarliestRefundTime(
+                              agreementReachedTime,
+                              defaultExpectedSingleStepTime,
+                              defaultTolerantSingleStepTime,
+                          )
+                        : earliestRefundTime,
+            };
 
-    return typedData;
+            const typedDataAtomic = {
+                types: {
+                    EIP712Domain: [
+                        { name: 'name', type: 'string' },
+                        { name: 'version', type: 'string' },
+                        { name: 'chainId', type: 'uint256' },
+                    ],
+                    Message: [
+                        { name: 'src_chain_id', type: 'uint256' },
+                        { name: 'src_address', type: 'string' },
+                        { name: 'src_token', type: 'string' },
+                        { name: 'src_amount', type: 'string' },
+                        { name: 'dst_chain_id', type: 'uint256' },
+                        { name: 'dst_address', type: 'string' },
+                        { name: 'dst_token', type: 'string' },
+                        { name: 'dst_amount', type: 'string' },
+                        { name: 'dst_native_amount', type: 'string' },
+                        { name: 'requestor', type: 'string' },
+                        { name: 'lp_id', type: 'string' },
+                        { name: 'agreement_reached_time', type: 'uint256' },
+                        { name: 'expected_single_step_time', type: 'uint256' },
+                        { name: 'tolerant_single_step_time', type: 'uint256' },
+                        { name: 'earliest_refund_time', type: 'uint256' },
+                    ],
+                },
+                primaryType: 'Message',
+                domain,
+                message: signMessageAtomic,
+            };
+
+            return typedDataAtomic;
+        case SwapType.SINGLECHAIN:
+            const signMessageSingleChain = {
+                src_chain_id: quote.quote_base.bridge.src_chain_id,
+                src_address: quote.quote_base.lp_bridge_address,
+                src_token: quote.quote_base.bridge.src_token,
+                src_amount: convertMinimumUnits(amount, srcDecimals),
+
+                dst_chain_id: quote.quote_base.bridge.dst_chain_id,
+                dst_address: receivingAddress,
+                dst_token: quote.quote_base.bridge.dst_token,
+                dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
+                dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
+
+                requestor: '', //user_address.value,
+                lp_id: quote.lp_info.name,
+                agreement_reached_time: agreementReachedTime,
+                expected_single_step_time:
+                    expectedSingleStepTime == undefined ? defaultExpectedSingleStepTime : expectedSingleStepTime,
+            };
+
+            const typedDataSingleChain = {
+                types: {
+                    EIP712Domain: [
+                        { name: 'name', type: 'string' },
+                        { name: 'version', type: 'string' },
+                        { name: 'chainId', type: 'uint256' },
+                    ],
+                    Message: [
+                        { name: 'src_chain_id', type: 'uint256' },
+                        { name: 'src_address', type: 'string' },
+                        { name: 'src_token', type: 'string' },
+                        { name: 'src_amount', type: 'string' },
+                        { name: 'dst_chain_id', type: 'uint256' },
+                        { name: 'dst_address', type: 'string' },
+                        { name: 'dst_token', type: 'string' },
+                        { name: 'dst_amount', type: 'string' },
+                        { name: 'dst_native_amount', type: 'string' },
+                        { name: 'requestor', type: 'string' },
+                        { name: 'lp_id', type: 'string' },
+                        { name: 'agreement_reached_time', type: 'uint256' },
+                        { name: 'expected_single_step_time', type: 'uint256' },
+                    ],
+                },
+                primaryType: 'Message',
+                domain,
+                message: signMessageSingleChain,
+            };
+
+            return typedDataSingleChain;
+    }
 };
 
 export const getJsonRpcProvider = (preBusiness: PreBusiness, rpc: string | undefined, network: NetworkType) => {
@@ -280,6 +342,7 @@ export const _isNeedApprove = (
     userWallet: string,
     rpc: string | undefined,
     network: NetworkType,
+    contractAddress: string,
 ) =>
     new Promise<boolean>(async (resolve, reject) => {
         try {
@@ -297,7 +360,37 @@ export const _isNeedApprove = (
                 systemChainId,
                 tokenAddress,
                 rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc,
-            ).allowance(userWallet, getOtmoicAddressBySystemChainId(systemChainId, network));
+            ).allowance(userWallet, contractAddress);
+            resolve(new BigNumber(amount).comparedTo(allowance.toString()) == 1);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _isNeedApproveForDstToken = (
+    preBusiness: PreBusiness,
+    userWallet: string,
+    rpc: string | undefined,
+    network: NetworkType,
+    contractAddress: string,
+) =>
+    new Promise<boolean>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
+            const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token;
+            const amount = preBusiness.swap_asset_information.dst_amount;
+
+            if (isZeroAddress(tokenAddress)) {
+                resolve(false);
+                return;
+            }
+
+            checkTokenInfoBoxExist(systemChainId, tokenAddress);
+            let allowance = await getCache(
+                systemChainId,
+                tokenAddress,
+                rpc == undefined ? getDefaultRPC(systemChainId, network) : rpc,
+            ).allowance(userWallet, contractAddress);
             resolve(new BigNumber(amount).comparedTo(allowance.toString()) == 1);
         } catch (err) {
             reject(err);
@@ -310,6 +403,7 @@ export const doApprove = (
     wallet: Wallet | undefined,
     network: NetworkType,
     useMaximumGasPriceAtMost: boolean,
+    contractAddress: string,
 ) =>
     new Promise<ContractTransactionResponse>(async (resolve, reject) => {
         try {
@@ -326,11 +420,41 @@ export const doApprove = (
                 wallet == undefined ? await provider.getSigner() : wallet,
             );
             // const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider)
-            const approveTx = await erc20
-                .getFunction('approve')
-                .send(getOtmoicAddressBySystemChainId(systemChainId, network), amount, {
-                    gasPrice: gasPrice.amount,
-                });
+            const approveTx = await erc20.getFunction('approve').send(contractAddress, amount, {
+                gasPrice: gasPrice.amount,
+            });
+            resolve(approveTx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const doApproveForDstToken = (
+    preBusiness: PreBusiness,
+    provider: JsonRpcProvider,
+    wallet: Wallet | undefined,
+    network: NetworkType,
+    useMaximumGasPriceAtMost: boolean,
+    contractAddress: string,
+) =>
+    new Promise<ContractTransactionResponse>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id;
+            const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.dst_token;
+            const amount = preBusiness.swap_asset_information.dst_amount;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
+
+            const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider).connect(
+                wallet == undefined ? await provider.getSigner() : wallet,
+            );
+            // const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, provider)
+            const approveTx = await erc20.getFunction('approve').send(contractAddress, amount, {
+                gasPrice: gasPrice.amount,
+            });
             resolve(approveTx);
         } catch (err) {
             reject(err);
@@ -729,6 +853,332 @@ export const _getTransferOutRefundTransfer = (preBusiness: PreBusiness, network:
             resolve(transferOutRfdTx);
         } catch (err) {
             reject(err);
+        }
+    });
+
+export const doInitSwap = (
+    preBusiness: PreBusiness,
+    provider: JsonRpcProvider,
+    wallet: Wallet | undefined,
+    network: NetworkType,
+    useMaximumGasPriceAtMost: boolean,
+) =>
+    new Promise<ContractTransactionResponse>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
+
+            const otmoicSwap = new ethers.Contract(
+                getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                ABI.otmoicSwap,
+                provider,
+            ).connect(wallet == undefined ? await provider.getSigner() : wallet);
+            const data = getInitSwapData(preBusiness);
+            console.log(`init swap data`, data);
+
+            let initSwapTx: ContractTransactionResponse;
+            if (isZeroAddress(data.srcToken)) {
+                initSwapTx = await otmoicSwap
+                    .getFunction('initSwap')
+                    .send(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                        data.bidId,
+                        data.requestor,
+                        data.lpId,
+                        data.userSign,
+                        data.lpSign,
+                        {
+                            gasPrice: gasPrice.amount,
+                            value: data.srcAmount,
+                        },
+                    );
+            } else {
+                initSwapTx = await otmoicSwap
+                    .getFunction('initSwap')
+                    .send(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                        data.bidId,
+                        data.requestor,
+                        data.lpId,
+                        data.userSign,
+                        data.lpSign,
+                        {
+                            gasPrice: gasPrice.amount,
+                        },
+                    );
+            }
+            resolve(initSwapTx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getInitSwap = (preBusiness: PreBusiness, network: NetworkType) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            const otmoicSwap = new ethers.Contract(
+                getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                ABI.otmoicSwap,
+            );
+            const data = getInitSwapData(preBusiness);
+            console.log('tx datda', data);
+
+            let tx: ContractTransaction;
+            if (isZeroAddress(data.srcToken)) {
+                tx = await otmoicSwap
+                    .getFunction('initSwap')
+                    .populateTransaction(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                        data.bidId,
+                        data.requestor,
+                        data.lpId,
+                        data.userSign,
+                        data.lpSign,
+                        {
+                            value: data.srcAmount,
+                        },
+                    );
+            } else {
+                tx = await otmoicSwap
+                    .getFunction('initSwap')
+                    .populateTransaction(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                        data.bidId,
+                        data.requestor,
+                        data.lpId,
+                        data.userSign,
+                        data.lpSign,
+                    );
+            }
+
+            resolve(tx);
+        } catch (error) {
+            reject(error);
+        }
+    });
+
+export const doConfirmSwap = (
+    preBusiness: PreBusiness,
+    provider: JsonRpcProvider,
+    wallet: Wallet | undefined,
+    network: NetworkType,
+    useMaximumGasPriceAtMost: boolean,
+) =>
+    new Promise<ContractTransactionResponse>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
+
+            const otmoicSwap = new ethers.Contract(
+                getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                ABI.otmoicSwap,
+                provider,
+            ).connect(wallet == undefined ? await provider.getSigner() : wallet);
+            const data = getConfirmAndRefundSwapData(preBusiness);
+            console.log(`confirm swap data`, data);
+
+            let confirmSwapTx: ContractTransactionResponse;
+            if (isZeroAddress(data.dstToken)) {
+                confirmSwapTx = await otmoicSwap
+                    .getFunction('confirmSwap')
+                    .send(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                        {
+                            gasPrice: gasPrice.amount,
+                            value: data.dstAmount,
+                        },
+                    );
+            } else {
+                confirmSwapTx = await otmoicSwap
+                    .getFunction('confirmSwap')
+                    .send(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                        {
+                            gasPrice: gasPrice.amount,
+                        },
+                    );
+            }
+            resolve(confirmSwapTx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getConfirmSwap = (preBusiness: PreBusiness, network: NetworkType) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            const otmoicSwap = new ethers.Contract(
+                getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                ABI.otmoicSwap,
+            );
+            const data = getConfirmAndRefundSwapData(preBusiness);
+            console.log('tx datda', data);
+
+            let tx: ContractTransaction;
+            if (isZeroAddress(data.dstToken)) {
+                tx = await otmoicSwap
+                    .getFunction('confirmSwap')
+                    .populateTransaction(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                        {
+                            value: data.dstAmount,
+                        },
+                    );
+            } else {
+                tx = await otmoicSwap
+                    .getFunction('confirmSwap')
+                    .populateTransaction(
+                        data.sender,
+                        data.receiver,
+                        data.srcToken,
+                        data.srcAmount,
+                        data.dstToken,
+                        data.dstAmount,
+                        data.stepTime,
+                        data.agreementReachedTime,
+                    );
+            }
+
+            resolve(tx);
+        } catch (error) {
+            reject(error);
+        }
+    });
+
+export const doRefundSwap = (
+    preBusiness: PreBusiness,
+    provider: JsonRpcProvider,
+    wallet: Wallet | undefined,
+    network: NetworkType,
+    useMaximumGasPriceAtMost: boolean,
+) =>
+    new Promise<ContractTransactionResponse>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            let gasPrice = await _getGasPrice(provider, systemChainId, network);
+            if (useMaximumGasPriceAtMost && gasPrice.usedMaximum) {
+                reject(new Error('Gas price is too high'));
+            }
+
+            const otmoicSwap = new ethers.Contract(
+                getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                ABI.otmoicSwap,
+                provider,
+            ).connect(wallet == undefined ? await provider.getSigner() : wallet);
+            const data = getConfirmAndRefundSwapData(preBusiness);
+            console.log(`refund swap data`, data);
+
+            let refundSwapTx: ContractTransactionResponse = await otmoicSwap
+                .getFunction('refundSwap')
+                .send(
+                    data.sender,
+                    data.receiver,
+                    data.srcToken,
+                    data.srcAmount,
+                    data.dstToken,
+                    data.dstAmount,
+                    data.stepTime,
+                    data.agreementReachedTime,
+                    {
+                        gasPrice: gasPrice.amount,
+                    },
+                );
+            resolve(refundSwapTx);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+export const _getRefundSwap = (preBusiness: PreBusiness, network: NetworkType) =>
+    new Promise<ContractTransaction>(async (resolve, reject) => {
+        try {
+            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
+
+            const otmoicSwap = new ethers.Contract(
+                getOtmoicSwapAddressBySystemChainId(systemChainId, network),
+                ABI.otmoicSwap,
+            );
+            const data = getConfirmAndRefundSwapData(preBusiness);
+            console.log('tx datda', data);
+
+            let tx: ContractTransaction = await otmoicSwap
+                .getFunction('refundSwap')
+                .populateTransaction(
+                    data.sender,
+                    data.receiver,
+                    data.srcToken,
+                    data.srcAmount,
+                    data.dstToken,
+                    data.dstAmount,
+                    data.stepTime,
+                    data.agreementReachedTime,
+                );
+
+            resolve(tx);
+        } catch (error) {
+            reject(error);
         }
     });
 

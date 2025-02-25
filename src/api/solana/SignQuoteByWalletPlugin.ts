@@ -1,6 +1,6 @@
 import { decodeUTF8 } from 'tweetnacl-util';
 import { _getSignDataEIP712, _getSignPreambleEIP712 } from '../../business/solana';
-import { Quote, NetworkType, SwapSignedData } from '../../interface/interface';
+import { Quote, NetworkType, SwapSignedData, SwapType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 
 export const _signQuoteByWalletPlugin = (
@@ -16,6 +16,7 @@ export const _signQuoteByWalletPlugin = (
     earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
+    swapType: SwapType,
 ) =>
     new Promise<SwapSignedData>(async (resolve, reject) => {
         try {
@@ -34,6 +35,7 @@ export const _signQuoteByWalletPlugin = (
                 earliestRefundTime,
                 rpcSrc,
                 rpcDst,
+                swapType,
             );
             signData.message.requestor = sender;
 

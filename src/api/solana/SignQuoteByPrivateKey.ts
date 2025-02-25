@@ -2,7 +2,7 @@ import { Keypair } from '@solana/web3.js';
 import { decodeUTF8 } from 'tweetnacl-util';
 import * as nacl from 'tweetnacl';
 import { _getSignDataEIP712, _getSignPreambleEIP712 } from '../../business/solana';
-import { Quote, NetworkType, SwapSignedData } from '../../interface/interface';
+import { Quote, NetworkType, SwapSignedData, SwapType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 import { removePrefix0x } from '../../utils/format';
 
@@ -18,6 +18,7 @@ export const _signQuoteByPrivateKey = (
     earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
+    swapType: SwapType,
 ) =>
     new Promise<SwapSignedData>(async (resolve, reject) => {
         try {
@@ -37,6 +38,7 @@ export const _signQuoteByPrivateKey = (
                 earliestRefundTime,
                 rpcSrc,
                 rpcDst,
+                swapType,
             );
             signData.message.requestor = keypair.publicKey.toBase58();
 

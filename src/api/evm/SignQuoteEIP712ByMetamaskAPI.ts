@@ -1,5 +1,5 @@
 import { _getSignDataEIP712 } from '../../business/evm';
-import { Quote, SwapSignData, SwapSignedData, NetworkType } from '../../interface/interface';
+import { Quote, SwapSignData, SwapSignedData, NetworkType, SwapType } from '../../interface/interface';
 import { mathReceived } from '../../utils/math';
 
 export const _signQuoteEIP712ByMetamaskAPI = (
@@ -15,6 +15,7 @@ export const _signQuoteEIP712ByMetamaskAPI = (
     earliestRefundTime: number | undefined,
     rpcSrc: string | undefined,
     rpcDst: string | undefined,
+    swapType: SwapType,
 ) =>
     new Promise<SwapSignedData>(async (resolve, reject) => {
         try {
@@ -33,6 +34,7 @@ export const _signQuoteEIP712ByMetamaskAPI = (
                 earliestRefundTime,
                 rpcSrc,
                 rpcDst,
+                swapType,
             );
 
             signData.message.requestor = sender;

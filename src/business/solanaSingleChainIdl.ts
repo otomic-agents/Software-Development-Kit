@@ -1,6 +1,6 @@
 export default {
     version: '0.1.0',
-    name: 'obridge',
+    name: 'obridge_swap',
     instructions: [
         {
             name: 'initialize',
@@ -132,7 +132,7 @@ export default {
             ],
         },
         {
-            name: 'prepare',
+            name: 'submitSwap',
             accounts: [
                 {
                     name: 'payer',
@@ -145,7 +145,12 @@ export default {
                     isSigner: true,
                 },
                 {
-                    name: 'mint',
+                    name: 'to',
+                    isMut: false,
+                    isSigner: false,
+                },
+                {
+                    name: 'srcToken',
                     isMut: false,
                     isSigner: false,
                     isOptional: true,
@@ -153,6 +158,12 @@ export default {
                 {
                     name: 'source',
                     isMut: true,
+                    isSigner: false,
+                    isOptional: true,
+                },
+                {
+                    name: 'dstToken',
+                    isMut: false,
                     isSigner: false,
                     isOptional: true,
                 },
@@ -173,7 +184,13 @@ export default {
                     isSigner: false,
                 },
                 {
-                    name: 'tokenSettings',
+                    name: 'srcTokenSettings',
+                    isMut: false,
+                    isSigner: false,
+                    isOptional: true,
+                },
+                {
+                    name: 'dstTokenSettings',
                     isMut: false,
                     isSigner: false,
                     isOptional: true,
@@ -204,15 +221,11 @@ export default {
                     },
                 },
                 {
-                    name: 'to',
-                    type: 'publicKey',
-                },
-                {
-                    name: 'solAmount',
+                    name: 'srcAmount',
                     type: 'u64',
                 },
                 {
-                    name: 'tokenAmount',
+                    name: 'dstAmount',
                     type: 'u64',
                 },
                 {
@@ -222,17 +235,13 @@ export default {
                     },
                 },
                 {
-                    name: 'isOut',
-                    type: 'bool',
-                },
-                {
                     name: 'memo',
                     type: 'bytes',
                 },
             ],
         },
         {
-            name: 'confirm',
+            name: 'confirmSwap',
             accounts: [
                 {
                     name: 'payer',
@@ -245,12 +254,24 @@ export default {
                     isSigner: false,
                 },
                 {
-                    name: 'to',
+                    name: 'fromDestination',
                     isMut: true,
                     isSigner: false,
+                    isOptional: true,
                 },
                 {
-                    name: 'destination',
+                    name: 'to',
+                    isMut: true,
+                    isSigner: true,
+                },
+                {
+                    name: 'toSource',
+                    isMut: true,
+                    isSigner: false,
+                    isOptional: true,
+                },
+                {
+                    name: 'toDestination',
                     isMut: true,
                     isSigner: false,
                     isOptional: true,
@@ -277,7 +298,13 @@ export default {
                     isSigner: false,
                 },
                 {
-                    name: 'feeDestination',
+                    name: 'srcFeeDestination',
+                    isMut: true,
+                    isSigner: false,
+                    isOptional: true,
+                },
+                {
+                    name: 'dstFeeDestination',
                     isMut: true,
                     isSigner: false,
                     isOptional: true,
@@ -301,20 +328,10 @@ export default {
                         array: ['u8', 32],
                     },
                 },
-                {
-                    name: 'preimage',
-                    type: {
-                        array: ['u8', 32],
-                    },
-                },
-                {
-                    name: 'isOut',
-                    type: 'bool',
-                },
             ],
         },
         {
-            name: 'refund',
+            name: 'refundSwap',
             accounts: [
                 {
                     name: 'from',
@@ -356,10 +373,6 @@ export default {
                     type: {
                         array: ['u8', 32],
                     },
-                },
-                {
-                    name: 'isOut',
-                    type: 'bool',
                 },
             ],
         },
@@ -411,35 +424,27 @@ export default {
                         type: 'publicKey',
                     },
                     {
-                        name: 'tokenProgram',
+                        name: 'srcToken',
                         type: 'publicKey',
                     },
                     {
-                        name: 'mint',
+                        name: 'dstToken',
                         type: 'publicKey',
                     },
                     {
-                        name: 'source',
-                        type: 'publicKey',
-                    },
-                    {
-                        name: 'escrowAta',
-                        type: 'publicKey',
-                    },
-                    {
-                        name: 'solAmount',
+                        name: 'srcAmount',
                         type: 'u64',
                     },
                     {
-                        name: 'tokenAmount',
+                        name: 'dstAmount',
                         type: 'u64',
                     },
                     {
-                        name: 'solFee',
+                        name: 'srcTokenFee',
                         type: 'u64',
                     },
                     {
-                        name: 'tokenFee',
+                        name: 'dstTokenFee',
                         type: 'u64',
                     },
                     {
@@ -447,10 +452,6 @@ export default {
                         type: {
                             defined: 'Lock',
                         },
-                    },
-                    {
-                        name: 'isOut',
-                        type: 'bool',
                     },
                 ],
             },
@@ -463,25 +464,11 @@ export default {
                 kind: 'struct',
                 fields: [
                     {
-                        name: 'hash',
-                        type: {
-                            array: ['u8', 32],
-                        },
-                    },
-                    {
                         name: 'agreementReachedTime',
                         type: 'i64',
                     },
                     {
-                        name: 'expectedSingleStepTime',
-                        type: 'i64',
-                    },
-                    {
-                        name: 'tolerantSingleStepTime',
-                        type: 'i64',
-                    },
-                    {
-                        name: 'earliestRefundTime',
+                        name: 'stepTime',
                         type: 'i64',
                     },
                 ],
@@ -506,46 +493,41 @@ export default {
         },
         {
             code: 6003,
-            name: 'InvalidAccount',
-            msg: 'invalid account',
-        },
-        {
-            code: 6004,
             name: 'InvalidFeeRate',
             msg: 'invalid fee rate',
         },
         {
-            code: 6005,
+            code: 6004,
             name: 'InvalidSender',
             msg: 'invalid sender',
         },
         {
-            code: 6006,
+            code: 6005,
             name: 'InvalidRefundTime',
             msg: 'invalid refund time',
         },
         {
-            code: 6007,
+            code: 6006,
             name: 'DeadlineExceeded',
             msg: 'deadline exceeded',
         },
         {
-            code: 6008,
+            code: 6007,
             name: 'PreimageMismatch',
             msg: 'preimage mismatch',
         },
         {
-            code: 6009,
+            code: 6008,
             name: 'NotRefundable',
             msg: 'not refundable yet',
         },
         {
-            code: 6010,
-            name: 'InvalidDirection',
-            msg: 'invalid direction',
+            code: 6009,
+            name: 'NotSOLToken',
+            msg: 'not SOL token',
         },
         {
-            code: 6011,
+            code: 6010,
             name: 'InvalidTokenSettings',
             msg: 'invalid token settings',
         },

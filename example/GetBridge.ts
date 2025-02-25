@@ -1,11 +1,11 @@
 import Otmoic, { NetworkType, Bridge } from '../src/index';
 
-// mainnet relay
-const RELA_URL = 'https://5b4522f4.nathanielight.myterminus.com';
-const NETWORK = NetworkType.MAINNET;
-// // testnet relay
-// const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
-// const NETWORK = NetworkType.TESTNET;
+// // mainnet relay
+// const RELA_URL = 'https://5b4522f4.nathanielight.myterminus.com';
+// const NETWORK = NetworkType.MAINNET;
+// testnet relay
+const RELA_URL = 'https://5b4522f4.vaughnmedellins394.myterminus.com';
+const NETWORK = NetworkType.TESTNET;
 
 const RPCS = {};
 

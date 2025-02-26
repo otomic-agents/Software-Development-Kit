@@ -7,6 +7,7 @@ import {
     TransactionInstruction,
     Transaction,
     LAMPORTS_PER_SOL,
+    VersionedTransaction,
 } from '@solana/web3.js';
 import {
     getMint,
@@ -69,6 +70,24 @@ const cache: Cache = {
 
 const isOut = true;
 const isIn = false;
+
+export class EmptyWallet {
+    readonly publicKey: PublicKey;
+
+    constructor(publicKey: PublicKey) {
+        this.publicKey = publicKey;
+    }
+
+    async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
+        // 空实现，直接返回未签名的交易
+        return tx;
+    }
+
+    async signAllTransactions<T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
+        // 空实现，直接返回未签名的交易数组
+        return txs;
+    }
+}
 
 export const getProvider = (rpc: string): Connection => {
     return new Connection(rpc, 'confirmed');
@@ -313,14 +332,7 @@ export const _getTransferOutTransaction = (
                 setProvider(
                     new AnchorProvider(
                         new Connection('http://localhost'),
-                        new AnchorWallet(
-                            Keypair.fromSeed(
-                                Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1, 1,
-                                ]),
-                            ),
-                        ),
+                        new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                         {},
                     ),
                 );

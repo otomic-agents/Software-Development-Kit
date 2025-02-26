@@ -1,6 +1,6 @@
 {
     "name": "otmoic-sdk",
-    "version": "0.0.93",
+    "version": "0.0.101",
     "description": "You can use this SDK to perform cross-chain and exchange on the otmoic platform",
     "main": "dist/src/index.js",
     "scripts": {

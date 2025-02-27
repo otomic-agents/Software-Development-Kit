@@ -461,19 +461,14 @@ export const doApproveForDstToken = (
         }
     });
 
-export const _getApproveTransfer = (preBusiness: PreBusiness, network: NetworkType) =>
+export const _getApproveTransfer = (preBusiness: PreBusiness, network: NetworkType, contractAddress: string) =>
     new Promise<ContractTransaction>(async (resolve, reject) => {
         try {
-            const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
             const tokenAddress = preBusiness.swap_asset_information.quote.quote_base.bridge.src_token;
             const amount = preBusiness.swap_asset_information.amount;
 
             const erc20 = new ethers.Contract(tokenAddress, ABI.erc20, undefined);
-            resolve(
-                await erc20
-                    .getFunction('approve')
-                    .populateTransaction(getOtmoicAddressBySystemChainId(systemChainId, network), amount),
-            );
+            resolve(await erc20.getFunction('approve').populateTransaction(contractAddress, amount));
         } catch (error) {
             reject(error);
         }

@@ -111,6 +111,8 @@ import { getDidName } from './utils/did';
 import { Transaction } from '@solana/web3.js';
 import { ContractTransaction, ContractTransactionResponse, JsonRpcProvider } from 'ethers';
 
+import { getOtmoicSwapAddressBySystemChainId, getOtmoicAddressBySystemChainId } from './utils/chain';
+
 export {
     Bridge,
     OnQuoteIF,
@@ -187,13 +189,48 @@ export namespace Otmoic {
             userWallet: string,
             rpc: string | undefined,
             network: NetworkType,
-            contractAddress: string,
-        ): Promise<boolean> => _isNeedApprove(preBusiness, userWallet, rpc, network, contractAddress);
+            swapType: SwapType,
+        ): Promise<boolean> => {
+            let contractAddress: string;
+            switch (swapType) {
+                case SwapType.ATOMIC:
+                    contractAddress = getOtmoicAddressBySystemChainId(
+                        preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
+                        network,
+                    );
+                    break;
+                case SwapType.SINGLECHAIN:
+                    contractAddress = getOtmoicSwapAddressBySystemChainId(
+                        preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
+                        network,
+                    );
+                    break;
+            }
+            return _isNeedApprove(preBusiness, userWallet, rpc, network, contractAddress);
+        };
 
         export const GetApproveTransfer = (
             preBusiness: PreBusiness,
             network: NetworkType,
-        ): Promise<ContractTransaction> => _getApproveTransfer(preBusiness, network);
+            swapType: SwapType,
+        ): Promise<ContractTransaction> => {
+            let contractAddress: string;
+            switch (swapType) {
+                case SwapType.ATOMIC:
+                    contractAddress = getOtmoicAddressBySystemChainId(
+                        preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
+                        network,
+                    );
+                    break;
+                case SwapType.SINGLECHAIN:
+                    contractAddress = getOtmoicSwapAddressBySystemChainId(
+                        preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id,
+                        network,
+                    );
+                    break;
+            }
+            return _getApproveTransfer(preBusiness, network, contractAddress);
+        };
 
         export const GetGasPrice = (
             provider: JsonRpcProvider,
@@ -386,55 +423,148 @@ export namespace Otmoic {
             rpc: string | undefined,
             option: SwapTransactionOption,
         ): Promise<ContractTransaction | ResponseTransferOut | Transaction | ResponseSolana> => {
+            if (!option.swapType) {
+                return Promise.reject('swapType is required');
+            }
             switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
                 case 'evm':
-                    if (option.getTxDataOnly) {
-                        return _getTransferOutTransfer(preBusiness, network);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
-                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
-                                }
-                                return _transferOutByPrivateKey(
-                                    preBusiness,
-                                    option.privateKey,
-                                    network,
-                                    rpc,
-                                    option.useMaximumGasPriceAtMost,
-                                );
+                    switch (option.swapType) {
+                        case SwapType.ATOMIC: {
+                            if (option.getTxDataOnly) {
+                                return _getTransferOutTransfer(preBusiness, network);
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                            return Promise.reject(
+                                                'privateKey and useMaximumGasPriceAtMost is required',
+                                            );
+                                        }
+                                        return _transferOutByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                            option.useMaximumGasPriceAtMost,
+                                        );
 
-                            case 'metamaskAPI':
-                                if (!option.metamaskAPI) {
-                                    return Promise.reject('metamaskAPI is required');
-                                }
-                                return _transferOutByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+                                    case 'metamaskAPI':
+                                        if (!option.metamaskAPI) {
+                                            return Promise.reject('metamaskAPI is required');
+                                        }
+                                        return _transferOutByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
 
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
                         }
+
+                        case SwapType.SINGLECHAIN: {
+                            if (option.getTxDataOnly) {
+                                return _getInitSwap(preBusiness, network);
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                            return Promise.reject(
+                                                'privateKey and useMaximumGasPriceAtMost is required',
+                                            );
+                                        }
+                                        return _initSwapByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                            option.useMaximumGasPriceAtMost,
+                                        );
+
+                                    case 'metamaskAPI':
+                                        if (!option.metamaskAPI) {
+                                            return Promise.reject('metamaskAPI is required');
+                                        }
+                                        return _initSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
+                        }
+
+                        default:
+                            return Promise.reject(`not support swapType: ${option.swapType}`);
                     }
 
                 case 'solana':
-                    if (option.getTxDataOnly) {
-                        return _getTransferOutTransaction(preBusiness, option.provider, network, option.pluginProvider);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey) {
-                                    return Promise.reject('privateKey is required');
-                                }
-                                return _transferOutSolanaByPrivateKey(preBusiness, option.privateKey, network, rpc);
+                    switch (option.swapType) {
+                        case SwapType.ATOMIC: {
+                            if (option.getTxDataOnly) {
+                                return _getTransferOutTransaction(
+                                    preBusiness,
+                                    option.provider,
+                                    network,
+                                    option.pluginProvider,
+                                );
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey) {
+                                            return Promise.reject('privateKey is required');
+                                        }
+                                        return _transferOutSolanaByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                        );
 
-                            case 'phantomAPI':
-                                if (!option.phantomAPI) {
-                                    return Promise.reject('phantomAPI is required');
-                                }
-                                return _transferOutByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
+                                    case 'phantomAPI':
+                                        if (!option.phantomAPI) {
+                                            return Promise.reject('phantomAPI is required');
+                                        }
+                                        return _transferOutByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
 
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
                         }
+
+                        case SwapType.SINGLECHAIN: {
+                            if (option.getTxDataOnly) {
+                                return _getInitSwapTransaction(
+                                    preBusiness,
+                                    option.provider,
+                                    network,
+                                    option.pluginProvider,
+                                );
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey) {
+                                            return Promise.reject('privateKey is required');
+                                        }
+                                        return _initSwapSolanaByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                        );
+
+                                    case 'phantomAPI':
+                                        if (!option.phantomAPI) {
+                                            return Promise.reject('phantomAPI is required');
+                                        }
+                                        return _initSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
+
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
+                        }
+
+                        default:
+                            return Promise.reject(`not support swapType: ${option.swapType}`);
                     }
 
                 default:
@@ -524,75 +654,160 @@ export namespace Otmoic {
             rpc: string | undefined,
             sender: string,
             option: SwapTransactionOption,
-        ): Promise<ContractTransaction | ContractTransactionResponse | Transaction | ResponseSolana> => {
+        ): Promise<
+            ContractTransaction | ContractTransactionResponse | ResponseTransferOut | Transaction | ResponseSolana
+        > => {
+            if (!option.swapType) {
+                return Promise.reject('swapType is required');
+            }
             switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.dst_chain_id)) {
                 case 'evm':
-                    if (option.getTxDataOnly) {
-                        return _getTransferInConfirmTransfer(preBusiness, network, sender);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
-                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
-                                }
-                                return _transferInConfirmByPrivateKey(
-                                    preBusiness,
-                                    option.privateKey,
-                                    network,
-                                    rpc,
-                                    sender,
-                                    option.useMaximumGasPriceAtMost,
-                                );
+                    switch (option.swapType) {
+                        case SwapType.ATOMIC: {
+                            if (option.getTxDataOnly) {
+                                return _getTransferInConfirmTransfer(preBusiness, network, sender);
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                            return Promise.reject(
+                                                'privateKey and useMaximumGasPriceAtMost is required',
+                                            );
+                                        }
+                                        return _transferInConfirmByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                            sender,
+                                            option.useMaximumGasPriceAtMost,
+                                        );
 
-                            case 'metamaskAPI':
-                                if (!option.metamaskAPI) {
-                                    return Promise.reject('metamaskAPI is required');
-                                }
-                                return _transferInConfirmByMetamaskAPI(
-                                    preBusiness,
-                                    option.metamaskAPI,
-                                    network,
-                                    rpc,
-                                    sender,
-                                );
+                                    case 'metamaskAPI':
+                                        if (!option.metamaskAPI) {
+                                            return Promise.reject('metamaskAPI is required');
+                                        }
+                                        return _transferInConfirmByMetamaskAPI(
+                                            preBusiness,
+                                            option.metamaskAPI,
+                                            network,
+                                            rpc,
+                                            sender,
+                                        );
 
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
                         }
+
+                        case SwapType.SINGLECHAIN: {
+                            if (option.getTxDataOnly) {
+                                return _getConfirmSwap(preBusiness, network);
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                            return Promise.reject(
+                                                'privateKey and useMaximumGasPriceAtMost is required',
+                                            );
+                                        }
+                                        return _confirmSwapByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                            option.useMaximumGasPriceAtMost,
+                                        );
+
+                                    case 'metamaskAPI':
+                                        if (!option.metamaskAPI) {
+                                            return Promise.reject('metamaskAPI is required');
+                                        }
+                                        return _confirmSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
+                        }
+
+                        default:
+                            return Promise.reject(`not support swapType: ${option.swapType}`);
                     }
 
                 case 'solana':
-                    if (option.getTxDataOnly) {
-                        return Promise.reject('not support getTxDataOnly');
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey) {
-                                    return Promise.reject('privateKey is required');
-                                }
-                                return _transferInConfirmSolanaByPrivateKey(
-                                    preBusiness,
-                                    option.privateKey,
-                                    network,
-                                    rpc,
-                                    sender,
-                                );
+                    switch (option.swapType) {
+                        case SwapType.ATOMIC: {
+                            if (option.getTxDataOnly) {
+                                return Promise.reject('not support getTxDataOnly');
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey) {
+                                            return Promise.reject('privateKey is required');
+                                        }
+                                        return _transferInConfirmSolanaByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                            sender,
+                                        );
 
-                            case 'phantomAPI':
-                                if (!option.phantomAPI) {
-                                    return Promise.reject('phantomAPI is required');
-                                }
-                                return _transferInConfirmByWalletPlugin(
-                                    preBusiness,
-                                    option.phantomAPI,
-                                    network,
-                                    rpc,
-                                    sender,
-                                );
+                                    case 'phantomAPI':
+                                        if (!option.phantomAPI) {
+                                            return Promise.reject('phantomAPI is required');
+                                        }
+                                        return _transferInConfirmByWalletPlugin(
+                                            preBusiness,
+                                            option.phantomAPI,
+                                            network,
+                                            rpc,
+                                            sender,
+                                        );
 
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
                         }
+
+                        case SwapType.SINGLECHAIN: {
+                            if (option.getTxDataOnly) {
+                                return _getConfirmSwapTransaction(
+                                    preBusiness,
+                                    option.provider,
+                                    network,
+                                    option.pluginProvider,
+                                );
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey) {
+                                            return Promise.reject('privateKey is required');
+                                        }
+                                        return _confirmSwapSolanaByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                        );
+
+                                    case 'phantomAPI':
+                                        if (!option.phantomAPI) {
+                                            return Promise.reject('phantomAPI is required');
+                                        }
+                                        return _confirmSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
+
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
+                        }
+
+                        default:
+                            return Promise.reject(`not support swapType: ${option.swapType}`);
                     }
 
                 default:
@@ -608,260 +823,162 @@ export namespace Otmoic {
             rpc: string | undefined,
             option: SwapTransactionOption,
         ): Promise<ContractTransaction | ContractTransactionResponse | Transaction | ResponseSolana> => {
+            if (!option.swapType) {
+                return Promise.reject('swapType is required');
+            }
             switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
                 case 'evm':
-                    if (option.getTxDataOnly) {
-                        return _getTransferOutRefundTransfer(preBusiness, network);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
-                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
-                                }
-                                return _transferOutRefundByPrivateKey(
-                                    preBusiness,
-                                    option.privateKey,
-                                    network,
-                                    rpc,
-                                    option.useMaximumGasPriceAtMost,
-                                );
+                    switch (option.swapType) {
+                        case SwapType.ATOMIC: {
+                            if (option.getTxDataOnly) {
+                                return _getTransferOutRefundTransfer(preBusiness, network);
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                            return Promise.reject(
+                                                'privateKey and useMaximumGasPriceAtMost is required',
+                                            );
+                                        }
+                                        return _transferOutRefundByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                            option.useMaximumGasPriceAtMost,
+                                        );
 
-                            case 'metamaskAPI':
-                                if (!option.metamaskAPI) {
-                                    return Promise.reject('metamaskAPI is required');
-                                }
-                                return _transferOutRefundByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+                                    case 'metamaskAPI':
+                                        if (!option.metamaskAPI) {
+                                            return Promise.reject('metamaskAPI is required');
+                                        }
+                                        return _transferOutRefundByMetamaskAPI(
+                                            preBusiness,
+                                            option.metamaskAPI,
+                                            network,
+                                            rpc,
+                                        );
 
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
                         }
+
+                        case SwapType.SINGLECHAIN: {
+                            if (option.getTxDataOnly) {
+                                return _getRefundSwap(preBusiness, network);
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
+                                            return Promise.reject(
+                                                'privateKey and useMaximumGasPriceAtMost is required',
+                                            );
+                                        }
+                                        return _refundSwapByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                            option.useMaximumGasPriceAtMost,
+                                        );
+
+                                    case 'metamaskAPI':
+                                        if (!option.metamaskAPI) {
+                                            return Promise.reject('metamaskAPI is required');
+                                        }
+                                        return _refundSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
+
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
+                        }
+
+                        default:
+                            return Promise.reject(`not support swapType: ${option.swapType}`);
                     }
 
                 case 'solana':
-                    if (option.getTxDataOnly) {
-                        return _getTransferOutRefundTransaction(
-                            preBusiness,
-                            option.provider,
-                            network,
-                            option.pluginProvider,
-                        );
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey) {
-                                    return Promise.reject('privateKey is required');
-                                }
-                                return _transferOutRefundSolanaByPrivateKey(
+                    switch (option.swapType) {
+                        case SwapType.ATOMIC: {
+                            if (option.getTxDataOnly) {
+                                return _getTransferOutRefundTransaction(
                                     preBusiness,
-                                    option.privateKey,
+                                    option.provider,
                                     network,
-                                    rpc,
+                                    option.pluginProvider,
                                 );
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey) {
+                                            return Promise.reject('privateKey is required');
+                                        }
+                                        return _transferOutRefundSolanaByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                        );
 
-                            case 'phantomAPI':
-                                if (!option.phantomAPI) {
-                                    return Promise.reject('phantomAPI is required');
+                                    case 'phantomAPI':
+                                        if (!option.phantomAPI) {
+                                            return Promise.reject('phantomAPI is required');
+                                        }
+                                        return _transferOutRefundByWalletPlugin(
+                                            preBusiness,
+                                            option.phantomAPI,
+                                            network,
+                                            rpc,
+                                        );
+
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
                                 }
-                                return _transferOutRefundByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
-
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
+                            }
                         }
+
+                        case SwapType.SINGLECHAIN: {
+                            if (option.getTxDataOnly) {
+                                return _getRefundSwapTransaction(
+                                    preBusiness,
+                                    option.provider,
+                                    network,
+                                    option.pluginProvider,
+                                );
+                            } else {
+                                switch (option.type) {
+                                    case 'privateKey':
+                                        if (!option.privateKey) {
+                                            return Promise.reject('privateKey is required');
+                                        }
+                                        return _refundSwapSolanaByPrivateKey(
+                                            preBusiness,
+                                            option.privateKey,
+                                            network,
+                                            rpc,
+                                        );
+
+                                    case 'phantomAPI':
+                                        if (!option.phantomAPI) {
+                                            return Promise.reject('phantomAPI is required');
+                                        }
+                                        return _refundSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
+
+                                    default:
+                                        return Promise.reject(`not support type: ${option.type}`);
+                                }
+                            }
+                        }
+
+                        default:
+                            return Promise.reject(`not support swapType: ${option.swapType}`);
                     }
 
                 default:
                     throw new Error(
-                        `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
-                    );
-            }
-        };
-
-        export const initSwap = (
-            preBusiness: PreBusiness,
-            network: NetworkType,
-            rpc: string | undefined,
-            option: SwapTransactionOption,
-        ): Promise<ContractTransaction | ResponseTransferOut | Transaction | ResponseSolana> => {
-            switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
-                case 'evm':
-                    if (option.getTxDataOnly) {
-                        return _getInitSwap(preBusiness, network);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
-                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
-                                }
-                                return _initSwapByPrivateKey(
-                                    preBusiness,
-                                    option.privateKey,
-                                    network,
-                                    rpc,
-                                    option.useMaximumGasPriceAtMost,
-                                );
-
-                            case 'metamaskAPI':
-                                if (!option.metamaskAPI) {
-                                    return Promise.reject('metamaskAPI is required');
-                                }
-                                return _initSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
-
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
-                        }
-                    }
-                case 'solana':
-                    if (option.getTxDataOnly) {
-                        return _getInitSwapTransaction(preBusiness, option.provider, network, option.pluginProvider);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey) {
-                                    return Promise.reject('privateKey is required');
-                                }
-                                return _initSwapSolanaByPrivateKey(preBusiness, option.privateKey, network, rpc);
-
-                            case 'phantomAPI':
-                                if (!option.phantomAPI) {
-                                    return Promise.reject('phantomAPI is required');
-                                }
-                                return _initSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
-
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
-                        }
-                    }
-
-                default:
-                    return Promise.reject(
-                        `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
-                    );
-            }
-        };
-
-        export const confirmSwap = (
-            preBusiness: PreBusiness,
-            network: NetworkType,
-            rpc: string | undefined,
-            option: SwapTransactionOption,
-        ): Promise<ContractTransaction | ResponseTransferOut | Transaction | ResponseSolana> => {
-            switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
-                case 'evm':
-                    if (option.getTxDataOnly) {
-                        return _getConfirmSwap(preBusiness, network);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
-                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
-                                }
-                                return _confirmSwapByPrivateKey(
-                                    preBusiness,
-                                    option.privateKey,
-                                    network,
-                                    rpc,
-                                    option.useMaximumGasPriceAtMost,
-                                );
-
-                            case 'metamaskAPI':
-                                if (!option.metamaskAPI) {
-                                    return Promise.reject('metamaskAPI is required');
-                                }
-                                return _confirmSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
-
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
-                        }
-                    }
-
-                case 'solana':
-                    if (option.getTxDataOnly) {
-                        return _getConfirmSwapTransaction(preBusiness, option.provider, network, option.pluginProvider);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey) {
-                                    return Promise.reject('privateKey is required');
-                                }
-                                return _confirmSwapSolanaByPrivateKey(preBusiness, option.privateKey, network, rpc);
-
-                            case 'phantomAPI':
-                                if (!option.phantomAPI) {
-                                    return Promise.reject('phantomAPI is required');
-                                }
-                                return _confirmSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
-
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
-                        }
-                    }
-
-                default:
-                    return Promise.reject(
-                        `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
-                    );
-            }
-        };
-
-        export const refundSwap = (
-            preBusiness: PreBusiness,
-            network: NetworkType,
-            rpc: string | undefined,
-            option: SwapTransactionOption,
-        ): Promise<ContractTransaction | ContractTransactionResponse | Transaction | ResponseSolana> => {
-            switch (getChainType(preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id)) {
-                case 'evm':
-                    if (option.getTxDataOnly) {
-                        return _getRefundSwap(preBusiness, network);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey || option.useMaximumGasPriceAtMost === undefined) {
-                                    return Promise.reject('privateKey and useMaximumGasPriceAtMost is required');
-                                }
-                                return _refundSwapByPrivateKey(
-                                    preBusiness,
-                                    option.privateKey,
-                                    network,
-                                    rpc,
-                                    option.useMaximumGasPriceAtMost,
-                                );
-
-                            case 'metamaskAPI':
-                                if (!option.metamaskAPI) {
-                                    return Promise.reject('metamaskAPI is required');
-                                }
-                                return _refundSwapByMetamaskAPI(preBusiness, option.metamaskAPI, network, rpc);
-
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
-                        }
-                    }
-
-                case 'solana':
-                    if (option.getTxDataOnly) {
-                        return _getRefundSwapTransaction(preBusiness, option.provider, network, option.pluginProvider);
-                    } else {
-                        switch (option.type) {
-                            case 'privateKey':
-                                if (!option.privateKey) {
-                                    return Promise.reject('privateKey is required');
-                                }
-                                return _refundSwapSolanaByPrivateKey(preBusiness, option.privateKey, network, rpc);
-
-                            case 'phantomAPI':
-                                if (!option.phantomAPI) {
-                                    return Promise.reject('phantomAPI is required');
-                                }
-                                return _refundSwapByWalletPlugin(preBusiness, option.phantomAPI, network, rpc);
-
-                            default:
-                                return Promise.reject(`not support type: ${option.type}`);
-                        }
-                    }
-
-                default:
-                    return Promise.reject(
                         `not support chain: ${preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id}`,
                     );
             }

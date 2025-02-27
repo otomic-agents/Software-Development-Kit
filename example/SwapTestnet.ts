@@ -44,6 +44,7 @@ const doTxOut = (preBusiness: PreBusiness) =>
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
             useMaximumGasPriceAtMost: false,
+            swapType: SwapType.ATOMIC,
         });
         console.log('response tx out', resp);
         resolve();
@@ -113,6 +114,7 @@ const doTxOutRefund = (preBusiness: PreBusiness) =>
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
             useMaximumGasPriceAtMost: false,
+            swapType: SwapType.ATOMIC,
         });
         console.log('response tx out refund', resp);
         resolve();

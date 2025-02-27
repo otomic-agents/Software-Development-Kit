@@ -52,6 +52,7 @@ const doTxOut = (preBusiness: PreBusiness) =>
         const txHash = await Otmoic.business.transferOut(preBusiness, NETWORK, RPC_SOLANA, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
+            swapType: SwapType.ATOMIC,
         });
         console.log('response tx out', txHash);
         resolve();
@@ -115,6 +116,7 @@ const doTxRefund = (preBusiness: PreBusiness) =>
         const { txHash } = (await Otmoic.business.transferOutRefund(preBusiness, NETWORK, RPC_SOLANA, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
+            swapType: SwapType.ATOMIC,
         })) as ResponseSolana;
         console.log('response tx out refund', txHash);
         resolve();

@@ -39,10 +39,11 @@ const doInitSwap = (preBusiness: PreBusiness) =>
     new Promise<void>(async (resolve, reject) => {
         console.log('init swap');
 
-        const resp = await Otmoic.business.initSwap(preBusiness, NETWORK, RPC_BSC, {
+        const resp = await Otmoic.business.transferOut(preBusiness, NETWORK, RPC_BSC, {
             type: 'privateKey',
             privateKey: process.env.WALLET_KEY as string,
             useMaximumGasPriceAtMost: false,
+            swapType: SwapType.SINGLECHAIN,
         });
         console.log('response init swap', resp);
         resolve();

@@ -284,6 +284,7 @@ export interface SwapTransactionOption {
     useMaximumGasPriceAtMost?: boolean;
     provider?: Connection;
     pluginProvider?: Provider;
+    swapType?: SwapType;
 }
 
 export interface GasPrice {

@@ -19,10 +19,9 @@ import {
 import { fetchDigitalAsset } from '@metaplex-foundation/mpl-token-metadata';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { publicKey } from '@metaplex-foundation/umi';
-import { BN, Program, Idl, setProvider, AnchorProvider, Wallet as AnchorWallet, Provider } from '@coral-xyz/anchor';
+import { BN, Program, Idl, setProvider, AnchorProvider, Provider } from '@coral-xyz/anchor';
 import msgpack5 from 'msgpack5';
 import pako from 'pako';
-import retry from 'async-retry';
 import idl from './solanaIdl';
 import idl_singlechain from './solanaSingleChainIdl';
 import { Obridge } from './obridgeType';
@@ -79,12 +78,10 @@ export class EmptyWallet {
     }
 
     async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
-        // 空实现，直接返回未签名的交易
         return tx;
     }
 
     async signAllTransactions<T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
-        // 空实现，直接返回未签名的交易数组
         return txs;
     }
 }
@@ -507,14 +504,7 @@ export const _getTransferOutConfirmTransaction = (
                 setProvider(
                     new AnchorProvider(
                         new Connection('http://localhost'),
-                        new AnchorWallet(
-                            Keypair.fromSeed(
-                                Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1, 1,
-                                ]),
-                            ),
-                        ),
+                        new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                         {},
                     ),
                 );
@@ -651,20 +641,13 @@ export const _getTransferOutRefundTransaction = (
         try {
             const systemChainId = preBusiness.swap_asset_information.quote.quote_base.bridge.src_chain_id;
 
-            // setup a dummy provider
             let otmoic: Program<Obridge>;
             if (pluginProvider == undefined) {
+                // setup a dummy provider
                 setProvider(
                     new AnchorProvider(
                         new Connection('http://localhost'),
-                        new AnchorWallet(
-                            Keypair.fromSeed(
-                                Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1, 1,
-                                ]),
-                            ),
-                        ),
+                        new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                         {},
                     ),
                 );
@@ -789,14 +772,7 @@ export const _getInitSwapTransaction = (
                 setProvider(
                     new AnchorProvider(
                         new Connection('http://localhost'),
-                        new AnchorWallet(
-                            Keypair.fromSeed(
-                                Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1, 1,
-                                ]),
-                            ),
-                        ),
+                        new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                         {},
                     ),
                 );
@@ -971,14 +947,7 @@ export const _getConfirmSwapTransaction = (
                 setProvider(
                     new AnchorProvider(
                         new Connection('http://localhost'),
-                        new AnchorWallet(
-                            Keypair.fromSeed(
-                                Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1, 1,
-                                ]),
-                            ),
-                        ),
+                        new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                         {},
                     ),
                 );
@@ -1160,14 +1129,7 @@ export const _getRefundSwapTransaction = (
                 setProvider(
                     new AnchorProvider(
                         new Connection('http://localhost'),
-                        new AnchorWallet(
-                            Keypair.fromSeed(
-                                Uint8Array.from([
-                                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                    1, 1, 1, 1,
-                                ]),
-                            ),
-                        ),
+                        new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                         {},
                     ),
                 );
@@ -1284,14 +1246,7 @@ export const doTransferIn = (preBusiness: PreBusiness, provider: Connection, net
             setProvider(
                 new AnchorProvider(
                     new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
-                        ),
-                    ),
+                    new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                     {},
                 ),
             );
@@ -1441,14 +1396,7 @@ export const doTransferInConfirm = (
             setProvider(
                 new AnchorProvider(
                     new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
-                        ),
-                    ),
+                    new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                     {},
                 ),
             );
@@ -1576,14 +1524,7 @@ export const doTransferInRefund = (
             setProvider(
                 new AnchorProvider(
                     new Connection('http://localhost'),
-                    new AnchorWallet(
-                        Keypair.fromSeed(
-                            Uint8Array.from([
-                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                1, 1, 1,
-                            ]),
-                        ),
-                    ),
+                    new EmptyWallet(new PublicKey(new Uint8Array(32).fill(1))),
                     {},
                 ),
             );

@@ -233,8 +233,12 @@ export const _getSignDataEIP712 = async (
                     earliestRefundTime == undefined
                         ? getDefaultEarliestRefundTime(
                               agreementReachedTime,
-                              defaultExpectedSingleStepTime,
-                              defaultTolerantSingleStepTime,
+                              expectedSingleStepTime == undefined
+                                  ? defaultExpectedSingleStepTime
+                                  : expectedSingleStepTime,
+                              tolerantSingleStepTime == undefined
+                                  ? defaultTolerantSingleStepTime
+                                  : tolerantSingleStepTime,
                           )
                         : earliestRefundTime,
             };

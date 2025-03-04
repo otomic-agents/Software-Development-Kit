@@ -243,14 +243,14 @@ export const getOtmoicSwapAddressBySystemChainId = (systemChainId: ChainId, netw
             return isMainnet ? '' : '';
         case ChainId.BSC:
             return isMainnet
-                ? '0x22dD71312bC00823634676EEe5B289936E0B54c1'
+                ? '0x0D8fBda3509E72f39b272Df8f25d1490ef7bcD61'
                 : '0x22dD71312bC00823634676EEe5B289936E0B54c1';
         case ChainId.ETH:
-            return isMainnet ? '' : '';
+            return isMainnet ? '0x0D8fBda3509E72f39b272Df8f25d1490ef7bcD61' : '';
         case ChainId.POLYGON:
             return isMainnet ? '' : '';
         case ChainId.OPT:
-            return isMainnet ? '' : '';
+            return isMainnet ? '0x0D8fBda3509E72f39b272Df8f25d1490ef7bcD61' : '';
         case ChainId.NEAR:
             return isMainnet ? '' : '';
         case ChainId.XRP:

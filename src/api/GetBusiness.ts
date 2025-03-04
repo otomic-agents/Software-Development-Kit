@@ -19,12 +19,14 @@ export const _getBusiness = (relayUrl: string, hash: string) =>
             });
     });
 
-export const _getBusinessFull = (relayUrl: string, hash: string, swapType: SwapType) =>
+export const _getBusinessFull = (relayUrl: string, hash: string, swapType?: SwapType) =>
     new Promise<BusinessFullData>((resolve, reject) => {
-        let queryUrl =
-            swapType == SwapType.ATOMIC
-                ? `${relayUrl}/relay/web/fetch_business_hash`
-                : `${relayUrl}/relay/web/single_swap/fetch_business_hash`;
+        // let queryUrl =
+        //     swapType == SwapType.ATOMIC
+        //         ? `${relayUrl}/relay/web/fetch_business_hash`
+        //         : `${relayUrl}/relay/web/single_swap/fetch_business_hash`;
+        
+        let queryUrl = `${relayUrl}/relay/web/fetch_business_hash`;
         superagent
             .post(queryUrl)
             .query({

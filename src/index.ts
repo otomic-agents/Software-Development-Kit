@@ -1055,9 +1055,9 @@ export namespace Otmoic {
 
         getBusiness = (hash: string, options: GetBusinessOptions = {}): Promise<Business | BusinessFullData> => {
             if (options.detailed) {
-                if (!options.swapType) {
-                    return Promise.reject('swapType is required');
-                }
+                // if (!options.swapType) {
+                //     return Promise.reject('swapType is required');
+                // }
                 return _getBusinessFull(this.relayUrl, hash, options.swapType);
             } else {
                 return _getBusiness(this.relayUrl, hash);

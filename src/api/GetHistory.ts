@@ -1,12 +1,13 @@
 import superagent from 'superagent';
 import { BusinessFullData, SwapType } from '../interface/interface';
 
-export const _getHistory = (relayUrl: string, address: string, swapType: SwapType) =>
+export const _getHistory = (relayUrl: string, address: string, swapType?: SwapType) =>
     new Promise<BusinessFullData[]>((resolve, reject) => {
-        let queryUrl =
-            swapType == SwapType.ATOMIC
-                ? `${relayUrl}/relay/web/fetch_history`
-                : `${relayUrl}/relay/web/single_swap/fetch_history`;
+        // let queryUrl =
+        //     swapType == SwapType.ATOMIC
+        //         ? `${relayUrl}/relay/web/fetch_history`
+        //         : `${relayUrl}/relay/web/single_swap/fetch_history`;
+        const queryUrl = `${relayUrl}/relay/web/fetch_history`
         superagent
             .post(queryUrl)
             .query({

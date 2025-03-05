@@ -1050,7 +1050,7 @@ export namespace Otmoic {
         swap = (quote: Quote, signData: SwapSignData, signed: string, swapType: SwapType): Promise<PreBusiness> =>
             _swap(quote, signData, signed, this.relayUrl, swapType);
 
-        getHistory = (address: string, swapType: SwapType): Promise<BusinessFullData[]> =>
+        getHistory = (address: string, swapType?: SwapType): Promise<BusinessFullData[]> =>
             _getHistory(this.relayUrl, address, swapType);
 
         getBusiness = (hash: string, options: GetBusinessOptions = {}): Promise<Business | BusinessFullData> => {

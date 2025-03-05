@@ -42,7 +42,7 @@ import {
     commonTokenDecimals,
 } from '../utils/chain';
 import { decimals as evmDecimals, getDefaultRPC as getEvmDefaultRPC } from '../business/evm';
-import { removePrefix0x, isZeroAddress } from '../utils/format';
+import { removePrefix0x, isZeroAddress, toHexAddress } from '../utils/format';
 import { generateUuid, generateUuidSwap } from '../utils/data';
 import { sleep } from '../utils/sleep';
 export type Lock = {
@@ -229,7 +229,7 @@ export const _getSignDataEIP712 = async (
                 src_amount: convertMinimumUnits(amount, srcDecimals),
 
                 dst_chain_id: quote.quote_base.bridge.dst_chain_id,
-                dst_address: receivingAddress,
+                dst_address: toHexAddress(receivingAddress),
                 dst_token: quote.quote_base.bridge.dst_token,
                 dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
                 dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),
@@ -266,7 +266,7 @@ export const _getSignDataEIP712 = async (
                 src_amount: convertMinimumUnits(amount, srcDecimals),
 
                 dst_chain_id: quote.quote_base.bridge.dst_chain_id,
-                dst_address: receivingAddress,
+                dst_address: toHexAddress(receivingAddress),
                 dst_token: quote.quote_base.bridge.dst_token,
                 dst_amount: convertMinimumUnits(dstAmount, dstDecimals),
                 dst_native_amount: convertNativeMinimumUnits(quote.quote_base.bridge.dst_chain_id, dstNativeAmount),

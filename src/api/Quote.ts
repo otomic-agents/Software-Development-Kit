@@ -30,6 +30,10 @@ export class QuoteManager {
             this.gotQuote = true;
         });
 
+        this.socket.on('quote_info', (data) => {
+            console.log('quote_info:', data);
+        });
+
         this.socket.on('connect', () => {
             if (!this.gotQuote) {
                 const bridgeName = `${askIF.bridge.src_chain_id}_${askIF.bridge.dst_chain_id}_${askIF.bridge.src_token}_${askIF.bridge.dst_token}`;

@@ -22,6 +22,8 @@ export interface QuoteBase {
     lp_node_uri: string;
     quote_hash: string;
     capabilities?: string;
+    error_code: number;
+    error_message?: string;
 }
 
 export interface AuthenticationLimiter {

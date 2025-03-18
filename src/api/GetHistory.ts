@@ -7,7 +7,7 @@ export const _getHistory = (relayUrl: string, address: string, swapType?: SwapTy
         //     swapType == SwapType.ATOMIC
         //         ? `${relayUrl}/relay/web/fetch_history`
         //         : `${relayUrl}/relay/web/single_swap/fetch_history`;
-        const queryUrl = `${relayUrl}/relay/web/fetch_history`
+        const queryUrl = `${relayUrl}/relay/web/fetch_history`;
         superagent
             .post(queryUrl)
             .query({

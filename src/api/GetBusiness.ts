@@ -25,7 +25,7 @@ export const _getBusinessFull = (relayUrl: string, hash: string, swapType?: Swap
         //     swapType == SwapType.ATOMIC
         //         ? `${relayUrl}/relay/web/fetch_business_hash`
         //         : `${relayUrl}/relay/web/single_swap/fetch_business_hash`;
-        
+
         let queryUrl = `${relayUrl}/relay/web/fetch_business_hash`;
         superagent
             .post(queryUrl)

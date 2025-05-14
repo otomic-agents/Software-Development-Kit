@@ -1,6 +1,6 @@
 import Otmoic, { Bridge, NetworkType, Quote, SwapSignedData, PreBusiness, SwapType } from '../src/index';
 
-const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud';
+const RELA_URL = 'https://relay-1.mainnet.otmoic.com';
 const NETWORK = NetworkType.MAINNET;
 const RPC_BSC = undefined;
 const RPC_OPT = 'https://optimism.llamarpc.com';

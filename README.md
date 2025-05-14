@@ -19,7 +19,7 @@ To use the otmoic-sdk, follow these steps:
     ```ts
     import Otmoic from 'otmoic-sdk';
 
-    const RELA_URL = 'https://relay-1.mainnet.otmoic.cloud';
+    const RELA_URL = 'https://relay-1.mainnet.otmoic.com';
     const relay = new Otmoic.Relay(RELA_URL);
     ```
 

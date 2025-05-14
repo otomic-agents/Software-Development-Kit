@@ -5,7 +5,7 @@ export const submitComplain = (network: NetworkType, value: ComplaintValue, sign
     new Promise<boolean | string>(async (resolve, reject) => {
         superagent
             .post(
-                `https://${network == NetworkType.MAINNET ? 'reputation-agent-mainnet' : 'reputation-agent'}.otmoic.cloud/submit-complaint`,
+                `https://${network == NetworkType.MAINNET ? 'reputation-agent-mainnet' : 'reputation-agent'}.otmoic.com/submit-complaint`,
             )
             .send({
                 params: [value, signed, name.replace('@', '.')],

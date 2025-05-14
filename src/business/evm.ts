@@ -137,7 +137,7 @@ export const getDefaultRPC = (systemChainId: ChainId, network: NetworkType) => {
         case ChainId.BSC:
             return isMainnet ? 'https://bsc-dataseed.bnbchain.org' : 'https://bsc-testnet.public.blastapi.io';
         case ChainId.ETH:
-            return isMainnet ? 'https://rpc.ankr.com/eth' : 'https://ethereum-sepolia-rpc.publicnode.com';
+            return isMainnet ? 'https://eth.llamarpc.com' : 'https://ethereum-sepolia-rpc.publicnode.com';
         case ChainId.POLYGON:
             return isMainnet ? 'https://polygon-bor-rpc.publicnode.com' : 'https://polygon-mumbai-pokt.nodies.app';
         case ChainId.OPT:
